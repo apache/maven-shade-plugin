@@ -502,11 +502,11 @@ Transformers in <<<org.apache.maven.plugins.shade.resource>>>
 
 ** Aggregating Apache Groovy extension modules descriptors with the {GroovyResourceTransformer}
 
-The Apache Groovy language provides extension modules located at
-<<<META-INF/services/org.codehaus.groovy.runtime.ExtensionModule>>>, these modules use the property file format.
-<<<GroovyResourceTransformer>>> automates the assembly of Groovy extension modules <<<NOTICE>>>.
+  The Apache Groovy language provides extension modules located at
+  <<<META-INF/services/org.codehaus.groovy.runtime.ExtensionModule>>>, these modules use the property file format.
+  <<<GroovyResourceTransformer>>> automates the assembly of Groovy extension modules <<<NOTICE>>>.
 
-For example, to simply merge the extension modules of several jars:
+  For example, to simply merge the extension modules of several jars:
 
 +-----
 <project>
