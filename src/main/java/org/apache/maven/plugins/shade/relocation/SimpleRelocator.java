@@ -176,14 +176,14 @@ public class SimpleRelocator
             path = path.substring( 0, path.length() - 6 );
         }
 
-        if ( !isIncluded( path ) || isExcluded( path ) )
-        {
-            return false;
-        }
-
         // Allow for annoying option of an extra / on the front of a path. See MSHADE-119; comes from
         // getClass().getResource("/a/b/c.properties").
-        return path.startsWith( pathPattern ) || path.startsWith ( "/" + pathPattern );
+        if ( !path.isEmpty() && path.charAt( 0 ) == '/' )
+        {
+            path = path.substring( 1 );
+        }
+
+        return isIncluded( path ) && !isExcluded( path ) && path.startsWith( pathPattern );
     }
 
     public boolean canRelocateClass( String clazz )
