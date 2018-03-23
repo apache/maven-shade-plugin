@@ -67,8 +67,8 @@
   <properties>
     <mavenVersion>3.0</mavenVersion>
     <currentVersion>${project.version}</currentVersion>
-    <asmVersion>6.0_BETA</asmVersion>
     <surefire.version>2.21.0</surefire.version>
+    <asmVersion>6.0</asmVersion>
   </properties>
 
   <contributors>
@@ -131,6 +131,7 @@
       <artifactId>asm-commons</artifactId>
       <version>${asmVersion}</version>
     </dependency>
+
     <dependency>
       <groupId>org.jdom</groupId>
       <artifactId>jdom2</artifactId>
