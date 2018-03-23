@@ -34,7 +34,7 @@ class ArtifactSelector
 
     private Collection<ArtifactId> excludes;
 
-    public ArtifactSelector( Artifact projectArtifact, ArtifactSet artifactSet, String groupPrefix )
+    ArtifactSelector( Artifact projectArtifact, ArtifactSet artifactSet, String groupPrefix )
     {
         this( ( artifactSet != null ) ? artifactSet.getIncludes() : null,
               ( artifactSet != null ) ? artifactSet.getExcludes() : null, groupPrefix );
@@ -45,7 +45,7 @@ class ArtifactSelector
         }
     }
 
-    public ArtifactSelector( Collection<String> includes, Collection<String> excludes, String groupPrefix )
+    ArtifactSelector( Collection<String> includes, Collection<String> excludes, String groupPrefix )
     {
         this.includes = toIds( includes );
         this.excludes = toIds( excludes );

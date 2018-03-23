@@ -165,7 +165,7 @@ public class ServicesResourceTransformer
         extends ByteArrayOutputStream
     {
 
-        public ServiceStream()
+        ServiceStream()
         {
             super( 1024 );
         }

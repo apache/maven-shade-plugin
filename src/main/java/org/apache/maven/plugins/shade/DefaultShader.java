@@ -558,7 +558,7 @@ public class DefaultShader
 
         List<Relocator> relocators;
 
-        public RelocatorRemapper( List<Relocator> relocators )
+        RelocatorRemapper( List<Relocator> relocators )
         {
             this.relocators = relocators;
         }

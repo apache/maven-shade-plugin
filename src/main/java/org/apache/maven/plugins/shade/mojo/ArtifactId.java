@@ -37,17 +37,17 @@ class ArtifactId
 
     private final String classifier;
 
-    public ArtifactId( Dependency dependency )
+    ArtifactId( Dependency dependency )
     {
         this( dependency.getGroupId(), dependency.getArtifactId(), dependency.getType(), dependency.getClassifier() );
     }
 
-    public ArtifactId( Artifact artifact )
+    ArtifactId( Artifact artifact )
     {
         this( artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), artifact.getClassifier() );
     }
 
-    public ArtifactId( String groupId, String artifactId, String type, String classifier )
+    ArtifactId( String groupId, String artifactId, String type, String classifier )
     {
         this.groupId = ( groupId != null ) ? groupId : "";
         this.artifactId = ( artifactId != null ) ? artifactId : "";
@@ -55,7 +55,7 @@ class ArtifactId
         this.classifier = ( classifier != null ) ? classifier : "";
     }
 
-    public ArtifactId( String id )
+    ArtifactId( String id )
     {
         String[] tokens = new String[0];
         if ( id != null && id.length() > 0 )
