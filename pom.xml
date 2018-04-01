@@ -67,7 +67,7 @@
   <properties>
     <mavenVersion>3.0</mavenVersion>
     <currentVersion>${project.version}</currentVersion>
-    <asmVersion>6.0_BETA</asmVersion>
+    <asmVersion>6.1.1</asmVersion>
   </properties>
 
   <contributors>
