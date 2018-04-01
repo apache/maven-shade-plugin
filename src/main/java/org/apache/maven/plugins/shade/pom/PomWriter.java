@@ -19,14 +19,14 @@ package org.apache.maven.plugins.shade.pom;
  * under the License.
  */
 
-import org.apache.maven.model.Model;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.Namespace;
-import org.jdom.output.Format;
-
 import java.io.IOException;
 import java.io.Writer;
+
+import org.apache.maven.model.Model;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
+import org.jdom2.output.Format;
 
 /**
  * @author Jason van Zyl

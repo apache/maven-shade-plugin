@@ -19,19 +19,6 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.jdom.Attribute;
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -39,6 +26,19 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+
+import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.jdom2.Attribute;
+import org.jdom2.Content;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * Appends multiple occurrences of some XML file.
@@ -98,8 +98,7 @@ public class XmlAppendingTransformer
         {
             Element root = r.getRootElement();
 
-            for ( @SuppressWarnings( "unchecked" )
-            Iterator<Attribute> itr = root.getAttributes().iterator(); itr.hasNext(); )
+            for ( Iterator<Attribute> itr = root.getAttributes().iterator(); itr.hasNext(); )
             {
                 Attribute a = itr.next();
                 itr.remove();
@@ -112,8 +111,7 @@ public class XmlAppendingTransformer
                 }
             }
 
-            for ( @SuppressWarnings( "unchecked" )
-            Iterator<Content> itr = root.getChildren().iterator(); itr.hasNext(); )
+            for ( Iterator<Element> itr = root.getChildren().iterator(); itr.hasNext(); )
             {
                 Content n = itr.next();
                 itr.remove();
