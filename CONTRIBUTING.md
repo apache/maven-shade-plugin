@@ -14,7 +14,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-Contributing to Apache Maven Help Plugin
+Contributing to Apache Maven Shade Plugin
 ======================
 
 You have found a bug or you have an idea for a cool new feature? Contributing
