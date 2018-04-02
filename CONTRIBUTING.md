@@ -57,7 +57,7 @@ There are some guidelines which will make applying PRs easier for us:
   + Check for unnecessary whitespace with `git diff --check` before committing.
 + Make sure your commit messages are in the proper format. Your commit message should contain the key of the JIRA issue.
 ```
-[MPH-XXX] - Subject of the JIRA Ticket
+[MSHADE-XXX] - Subject of the JIRA Ticket
  Optional supplemental description.
 ```
 + Make sure you have added the necessary tests (JUnit/IT) for your changes.
@@ -78,7 +78,7 @@ Additional Resources
 --------------------
 
 + [Contributing patches](https://maven.apache.org/guides/development/guide-maven-development.html#Creating_and_submitting_a_patch)
-+ [Apache Maven Help JIRA project page](https://issues.apache.org/jira/projects/MPH/)
++ [Apache Maven Help JIRA project page](https://issues.apache.org/jira/projects/MSHADE/)
 + [Contributor License Agreement][cla]
 + [General GitHub documentation](https://help.github.com/)
 + [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
