@@ -187,8 +187,16 @@ public class DefaultShader
 
                     if ( !entry.isDirectory() && !isFiltered( jarFilters, name ) )
                     {
-                        shadeSingleJar( shadeRequest, resources, transformers, remapper, jos, duplicates, jar, jarFile,
-                                        entry, name );
+                        try
+                        {
+                            shadeSingleJar( shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
+                                            jarFile, entry, name );
+                        }
+                        catch ( Exception e )
+                        {
+                            throw new IOException( String.format( "Problem shading JAR %s entry %s: %s", jar, name, e ),
+                                                   e );
+                        }
                     }
                 }
 
