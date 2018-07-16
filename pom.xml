@@ -66,6 +66,7 @@
 
   <properties>
     <mavenVersion>3.0</mavenVersion>
+    <javaVersion>7</javaVersion>
     <currentVersion>${project.version}</currentVersion>
     <surefire.version>2.21.0</surefire.version>
     <asmVersion>6.0</asmVersion>
