@@ -89,7 +89,7 @@ Additional Resources
 + #Maven IRC channel on freenode.org
 
 [license]: https://www.apache.org/licenses/LICENSE-2.0
-[dev-ml-list]: https://maven.apache.org/mail-lists.html
+[dev-ml-list]: https://maven.apache.org/mailing-lists.html
 [code-style]: https://maven.apache.org/developers/conventions/code.html
 [cla]: https://www.apache.org/licenses/#clas
 [maven-wiki]: https://cwiki.apache.org/confluence/display/MAVEN/Index
