@@ -25,7 +25,7 @@
   <parent>
     <artifactId>maven-plugins</artifactId>
     <groupId>org.apache.maven.plugins</groupId>
-    <version>31</version>
+    <version>32</version>
     <relativePath>../../pom/maven/maven-plugins/pom.xml</relativePath>
   </parent>
 
@@ -68,7 +68,6 @@
     <mavenVersion>3.0</mavenVersion>
     <javaVersion>7</javaVersion>
     <currentVersion>${project.version}</currentVersion>
-    <surefire.version>2.21.0</surefire.version>
     <asmVersion>6.0</asmVersion>
   </properties>
 
@@ -226,11 +225,6 @@
             </execution>
           </executions>
         </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-plugin-plugin</artifactId>
-            <version>3.5</version>
-          </plugin>
       </plugins>
     </pluginManagement>
 
@@ -250,15 +244,6 @@
       </plugin>
     </plugins>
   </build>
-
-  <reporting>
-    <plugins>
-       <plugin>
-        <artifactId>maven-plugin-plugin</artifactId>
-        <version>3.5</version>
-      </plugin>
-    </plugins>
-  </reporting>
 
   <profiles>
     <profile>
@@ -284,10 +269,6 @@
                 <goal>clean</goal>
                 <goal>install</goal>
               </goals>
-              <properties>
-                <!-- e.g. ensure that Java7 picks up TLSv1.2 when connecting with Central -->
-                <https.protocols>${https.protocols}</https.protocols>
-              </properties>
             </configuration>
           </plugin>
         </plugins>
