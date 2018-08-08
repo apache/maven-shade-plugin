@@ -135,7 +135,7 @@ public class MinijarFilter
             ioe.initCause( e );
             throw ioe;
         }
-        catch ( ArrayIndexOutOfBoundsException e )
+        catch ( ArrayIndexOutOfBoundsException | IllegalArgumentException e )
         {
             // trap ArrayIndexOutOfBoundsExceptions caused by malformed dependency classes (MSHADE-107)
             log.warn( dependency.toString()
