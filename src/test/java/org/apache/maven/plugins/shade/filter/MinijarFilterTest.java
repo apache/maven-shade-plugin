@@ -20,7 +20,7 @@ package org.apache.maven.plugins.shade.filter;
  */
 
 import static org.junit.Assert.assertEquals;
-
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,6 +35,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.utils.io.Java7Support;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -46,20 +47,28 @@ public class MinijarFilterTest
     private File emptyFile;
 
     @Before
-    public void init() throws IOException {
+    public void init()
+        throws IOException
+    {
         TemporaryFolder tempFolder = new TemporaryFolder();
         tempFolder.create();
         this.emptyFile = tempFolder.newFile();
 
     }
 
+    /**
+     * This test will fail on JDK 7 cause the used jdependency needs at least 
+     * JDK 8.
+     */
     @Test
     public void testWithMockProject()
         throws IOException
     {
+        assumeFalse( "Expected to run under JDK8+", Java7Support.isJava7() );
+
         ArgumentCaptor<CharSequence> logCaptor = ArgumentCaptor.forClass( CharSequence.class );
 
-        MavenProject mavenProject = mockProject(emptyFile);
+        MavenProject mavenProject = mockProject( emptyFile );
 
         Log log = mock( Log.class );
 
@@ -80,8 +89,8 @@ public class MinijarFilterTest
         ArgumentCaptor<CharSequence> logCaptor = ArgumentCaptor.forClass( CharSequence.class );
 
         // project with pom packaging and no artifact.
-        MavenProject mavenProject = mockProject(null);
-        mavenProject.setPackaging("pom");
+        MavenProject mavenProject = mockProject( null );
+        mavenProject.setPackaging( "pom" );
 
         Log log = mock( Log.class );
 
@@ -92,13 +101,14 @@ public class MinijarFilterTest
         verify( log, times( 1 ) ).info( logCaptor.capture() );
 
         // verify no access to project's artifacts
-        verify( mavenProject, times(0) ).getArtifacts();
+        verify( mavenProject, times( 0 ) ).getArtifacts();
 
         assertEquals( "Minimized 0 -> 0", logCaptor.getValue() );
 
     }
 
-    private MavenProject mockProject(File file) {
+    private MavenProject mockProject( File file )
+    {
         MavenProject mavenProject = mock( MavenProject.class );
 
         Artifact artifact = mock( Artifact.class );
@@ -111,15 +121,8 @@ public class MinijarFilterTest
         when( mavenProject.getArtifact() ).thenReturn( artifact );
 
         DefaultArtifact dependencyArtifact =
-            new DefaultArtifact(
-                "dep.com",
-                "dep.aid",
-                "1.0",
-                "compile",
-                "jar",
-                "classifier2",
-                null);
-        dependencyArtifact.setFile(file);
+            new DefaultArtifact( "dep.com", "dep.aid", "1.0", "compile", "jar", "classifier2", null );
+        dependencyArtifact.setFile( file );
 
         Set<Artifact> artifacts = new TreeSet<Artifact>();
         artifacts.add( dependencyArtifact );
