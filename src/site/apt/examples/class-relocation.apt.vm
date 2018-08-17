@@ -70,3 +70,20 @@ Relocating Classes
   into the package <<<org.shaded.plexus.util>>> by moving the corresponding JAR file entries and rewritting the
   affected bytecode. The class <<<Xpp3Dom>>> and some others will remain in their original package.
 
+
+  It's also possible to narrow the pattern with the <<<include>>> tag:
+
+
++-----
+<project>
+  ...
+                <relocation>
+                  <pattern>org.codehaus.plexus.util</pattern>
+                  <shadedPattern>org.shaded.plexus.util</shadedPattern>
+                  <includes>
+                    <include>org.codehaud.plexus.util.io.*</include>
+                  </includes>
+                </relocation>
+  ...
+</project>
++-----
