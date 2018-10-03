@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,5 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+assert new File(basedir, 'build.log').exists();
 
-asfMavenTlpPlgnBuild(jdk:['7','8','9','10','11'])
+content = new File(basedir, 'build.log').text;
+assert content.contains( '=== RunnableTest ===');
+assert content.contains( 'Hello world one!');
+assert content.contains( 'Hello world two!');
