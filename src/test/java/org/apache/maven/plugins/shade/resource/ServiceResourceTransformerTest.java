@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -52,7 +53,7 @@ public class ServiceResourceTransformerTest {
         List<Relocator> relocators = Lists.<Relocator>newArrayList( relocator );
 
         String content = "org.foo.Service\norg.foo.exclude.OtherService\n";
-        byte[] contentBytes = content.getBytes( "UTF-8" );
+        byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
         InputStream contentStream = new ByteArrayInputStream( contentBytes );
         String contentResource = "META-INF/services/org.foo.something.another";
         String contentResourceShaded = "META-INF/services/borg.foo.something.another";
@@ -96,7 +97,7 @@ public class ServiceResourceTransformerTest {
         List<Relocator> relocators = Lists.<Relocator>newArrayList( relocator );
 
         String content = "org.foo.Service\n";
-        byte[] contentBytes = content.getBytes( "UTF-8" );
+        byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
         InputStream contentStream = new ByteArrayInputStream( contentBytes );
         String contentResource = "META-INF/services/org.something.another";
 
@@ -105,7 +106,7 @@ public class ServiceResourceTransformerTest {
         contentStream.close();
 
         content = "org.blah.Service\n";
-        contentBytes = content.getBytes( "UTF-8" );
+        contentBytes = content.getBytes( StandardCharsets.UTF_8 );
         contentStream = new ByteArrayInputStream( contentBytes );
         contentResource = "META-INF/services/org.something.another";
 

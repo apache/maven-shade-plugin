@@ -22,7 +22,6 @@ package org.apache.maven.plugins.shade.resource;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.codehaus.plexus.util.IOUtil;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,7 +66,7 @@ public class AppendingTransformer
     {
         jos.putNextEntry( new JarEntry( resource ) );
 
-        IOUtil.copy( new ByteArrayInputStream( data.toByteArray() ), jos );
+        jos.write( data.toByteArray() );
         data.reset();
     }
 }

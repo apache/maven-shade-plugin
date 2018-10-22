@@ -27,12 +27,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
@@ -159,9 +159,7 @@ public class DefaultShader
 
             List<Filter> jarFilters = getFilters( jar, shadeRequest.getFilters() );
 
-            JarFile jarFile = newJarFile( jar );
-
-            try
+            try ( JarFile jarFile = newJarFile( jar ) )
             {
 
                 for ( Enumeration<JarEntry> j = jarFile.entries(); j.hasMoreElements(); )
@@ -183,7 +181,7 @@ public class DefaultShader
                         // later
                         continue;
                     }
-                    
+
                     if ( "module-info.class".equals( name ) )
                     {
                         getLogger().warn( "Discovered module-info.class. "
@@ -204,10 +202,6 @@ public class DefaultShader
                 }
 
             }
-            finally
-            {
-                jarFile.close();
-            }
         }
     }
 
@@ -217,10 +211,8 @@ public class DefaultShader
                                  JarEntry entry, String name )
         throws IOException, MojoExecutionException
     {
-        InputStream in = null;
-        try
+        try ( InputStream in = jarFile.getInputStream( entry ) )
         {
-            in = jarFile.getInputStream( entry );
             String mappedName = remapper.map( name );
 
             int idx = mappedName.lastIndexOf( '/' );
@@ -262,13 +254,6 @@ public class DefaultShader
                     addResource( resources, jos, mappedName, entry.getTime(), in );
                 }
             }
-
-            in.close();
-            in = null;
-        }
-        finally
-        {
-            IOUtil.close( in );
         }
     }
 
@@ -281,8 +266,7 @@ public class DefaultShader
         {
             for ( File jar : shadeRequest.getJars() )
             {
-                JarFile jarFile = newJarFile( jar );
-                try
+                try ( JarFile jarFile = newJarFile( jar ) )
                 {
                     for ( Enumeration<JarEntry> en = jarFile.entries(); en.hasMoreElements(); )
                     {
@@ -291,23 +275,14 @@ public class DefaultShader
                         if ( manifestTransformer.canTransformResource( resource ) )
                         {
                             resources.add( resource );
-                            InputStream inputStream = jarFile.getInputStream( entry );
-                            try
+                            try ( InputStream inputStream = jarFile.getInputStream( entry ) )
                             {
                                 manifestTransformer.processResource( resource, inputStream,
-                                                                     shadeRequest.getRelocators() );
-                            }
-                            finally
-                            {
-                                inputStream.close();
+                                        shadeRequest.getRelocators() );
                             }
                             break;
                         }
                     }
-                }
-                finally
-                {
-                    jarFile.close();
                 }
             }
             if ( manifestTransformer.hasTransformedResource() )
@@ -332,14 +307,14 @@ public class DefaultShader
     {
         for ( Collection<File> jarz : overlapping.keySet() )
         {
-            List<String> jarzS = new LinkedList<>();
+            List<String> jarzS = new ArrayList<>();
 
             for ( File jjar : jarz )
             {
                 jarzS.add( jjar.getName() );
             }
 
-            List<String> classes = new LinkedList<>();
+            List<String> classes = new ArrayList<>();
 
             for ( String clazz : overlapping.get( jarz ) )
             {
@@ -483,7 +458,7 @@ public class DefaultShader
             // Now we put it back on so the class file is written out with the right extension.
             jos.putNextEntry( new JarEntry( mappedName + ".class" ) );
 
-            IOUtil.copy( renamedClass, jos );
+            jos.write( renamedClass );
         }
         catch ( ZipException e )
         {
@@ -532,15 +507,15 @@ public class DefaultShader
     {
         jos.putNextEntry( new JarEntry( name ) );
 
-        String sourceContent = IOUtil.toString( new InputStreamReader( is, "UTF-8" ) );
+        String sourceContent = IOUtil.toString( new InputStreamReader( is, StandardCharsets.UTF_8 ) );
 
         for ( Relocator relocator : relocators )
         {
             sourceContent = relocator.applyToSourceContent( sourceContent );
         }
 
-        final Writer writer = new OutputStreamWriter( jos, "UTF-8" );
-        IOUtil.copy( sourceContent, writer );
+        final Writer writer = new OutputStreamWriter( jos, StandardCharsets.UTF_8 );
+        writer.write( sourceContent );
         writer.flush();
 
         resources.add( name );

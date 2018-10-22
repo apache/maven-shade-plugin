@@ -54,25 +54,16 @@ public class IncludeResourceTransformer
 
     public boolean hasTransformedResource()
     {
-        return file != null ? file.exists() : false;
+        return file != null && file.exists();
     }
 
     public void modifyOutputStream( JarOutputStream jos )
         throws IOException
     {
-        InputStream in = null;
-        try
+        try ( InputStream in = new FileInputStream( file ) )
         {
             jos.putNextEntry( new JarEntry( resource ) );
-
-            in = new FileInputStream( file );
             IOUtil.copy( in, jos );
-            in.close();
-            in = null;
-        }
-        finally
-        {
-            IOUtil.close( in );
         }
     }
     

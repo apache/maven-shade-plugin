@@ -40,32 +40,32 @@ public class SimpleRelocatorTest
         SimpleRelocator relocator;
 
         relocator = new SimpleRelocator( "org.foo", null, null, null );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/Class" ) );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/Class.class" ) );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/bar/Class" ) );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/bar/Class.class" ) );
-        assertEquals( false, relocator.canRelocatePath( "com/foo/bar/Class" ) );
-        assertEquals( false, relocator.canRelocatePath( "com/foo/bar/Class.class" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/Foo/Class" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/Foo/Class.class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/Class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/Class.class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/bar/Class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/bar/Class.class" ) );
+        assertFalse( relocator.canRelocatePath( "com/foo/bar/Class" ) );
+        assertFalse( relocator.canRelocatePath( "com/foo/bar/Class.class" ) );
+        assertFalse( relocator.canRelocatePath( "org/Foo/Class" ) );
+        assertFalse( relocator.canRelocatePath( "org/Foo/Class.class" ) );
 
         relocator = new SimpleRelocator( "org.foo", null, null, Arrays.asList(
                 "org.foo.Excluded", "org.foo.public.*", "org.foo.Public*Stuff") );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/Class" ) );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/Class.class" ) );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/excluded" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/Excluded" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/Excluded.class" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/public" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/public/Class" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/public/Class.class" ) );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/publicRELOC/Class" ) );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/PrivateStuff" ) );
-        assertEquals( true, relocator.canRelocatePath( "org/foo/PrivateStuff.class" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/PublicStuff" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/PublicStuff.class" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/PublicUtilStuff" ) );
-        assertEquals( false, relocator.canRelocatePath( "org/foo/PublicUtilStuff.class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/Class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/Class.class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/excluded" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/Excluded" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/Excluded.class" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/public" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/public/Class" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/public/Class.class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/publicRELOC/Class" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/PrivateStuff" ) );
+        assertTrue( relocator.canRelocatePath( "org/foo/PrivateStuff.class" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/PublicStuff" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/PublicStuff.class" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/PublicUtilStuff" ) );
+        assertFalse( relocator.canRelocatePath( "org/foo/PublicUtilStuff.class" ) );
     }
 
     public void testCanRelocateClass()
@@ -73,22 +73,22 @@ public class SimpleRelocatorTest
         SimpleRelocator relocator;
 
         relocator = new SimpleRelocator( "org.foo", null, null, null );
-        assertEquals( true, relocator.canRelocateClass( "org.foo.Class" ) );
-        assertEquals( true, relocator.canRelocateClass( "org.foo.bar.Class" ) );
-        assertEquals( false, relocator.canRelocateClass( "com.foo.bar.Class" ) );
-        assertEquals( false, relocator.canRelocateClass( "org.Foo.Class" ) );
+        assertTrue( relocator.canRelocateClass( "org.foo.Class" ) );
+        assertTrue( relocator.canRelocateClass( "org.foo.bar.Class" ) );
+        assertFalse( relocator.canRelocateClass( "com.foo.bar.Class" ) );
+        assertFalse( relocator.canRelocateClass( "org.Foo.Class" ) );
 
         relocator = new SimpleRelocator( "org.foo", null, null, Arrays.asList(
                 "org.foo.Excluded", "org.foo.public.*", "org.foo.Public*Stuff") );
-        assertEquals( true, relocator.canRelocateClass( "org.foo.Class" ) );
-        assertEquals( true, relocator.canRelocateClass( "org.foo.excluded" ) );
-        assertEquals( false, relocator.canRelocateClass( "org.foo.Excluded" ) );
-        assertEquals( false, relocator.canRelocateClass( "org.foo.public" ) );
-        assertEquals( false, relocator.canRelocateClass( "org.foo.public.Class" ) );
-        assertEquals( true, relocator.canRelocateClass( "org.foo.publicRELOC.Class" ) );
-        assertEquals( true, relocator.canRelocateClass( "org.foo.PrivateStuff" ) );
-        assertEquals( false, relocator.canRelocateClass( "org.foo.PublicStuff" ) );
-        assertEquals( false, relocator.canRelocateClass( "org.foo.PublicUtilStuff" ) );
+        assertTrue( relocator.canRelocateClass( "org.foo.Class" ) );
+        assertTrue( relocator.canRelocateClass( "org.foo.excluded" ) );
+        assertFalse( relocator.canRelocateClass( "org.foo.Excluded" ) );
+        assertFalse( relocator.canRelocateClass( "org.foo.public" ) );
+        assertFalse( relocator.canRelocateClass( "org.foo.public.Class" ) );
+        assertTrue( relocator.canRelocateClass( "org.foo.publicRELOC.Class" ) );
+        assertTrue( relocator.canRelocateClass( "org.foo.PrivateStuff" ) );
+        assertFalse( relocator.canRelocateClass( "org.foo.PublicStuff" ) );
+        assertFalse( relocator.canRelocateClass( "org.foo.PublicUtilStuff" ) );
     }
 
     public void testCanRelocateRawString()
@@ -96,10 +96,10 @@ public class SimpleRelocatorTest
         SimpleRelocator relocator;
 
         relocator = new SimpleRelocator( "org/foo", null, null, null, true );
-        assertEquals( true, relocator.canRelocatePath( "(I)org/foo/bar/Class;" ) );
+        assertTrue( relocator.canRelocatePath( "(I)org/foo/bar/Class;" ) );
         
         relocator = new SimpleRelocator( "^META-INF/org.foo.xml$", null, null, null, true );
-        assertEquals( true, relocator.canRelocatePath( "META-INF/org.foo.xml" ) );
+        assertTrue( relocator.canRelocatePath( "META-INF/org.foo.xml" ) );
     }
 
     //MSHADE-119, make sure that the easy part of this works.
@@ -167,12 +167,12 @@ public class SimpleRelocatorTest
         SimpleRelocator relocator =
             new SimpleRelocator( "META-INF/maven", "META-INF/shade/maven", null,
                                  Collections.singletonList( "META-INF/maven/com.foo.bar/artifactId/pom.*" ) );
-        assertEquals( false, relocator.canRelocatePath( "META-INF/maven/com.foo.bar/artifactId/pom.properties" ) );
-        assertEquals( false, relocator.canRelocatePath( "META-INF/maven/com.foo.bar/artifactId/pom.xml" ) );
-        assertEquals( true,  relocator.canRelocatePath( "META-INF/maven/com/foo/bar/artifactId/pom.properties" ) );
-        assertEquals( true,  relocator.canRelocatePath( "META-INF/maven/com/foo/bar/artifactId/pom.xml" ) );
-        assertEquals( true,  relocator.canRelocatePath( "META-INF/maven/com-foo-bar/artifactId/pom.properties" ) );
-        assertEquals( true,  relocator.canRelocatePath( "META-INF/maven/com-foo-bar/artifactId/pom.xml" ) );
+        assertFalse( relocator.canRelocatePath( "META-INF/maven/com.foo.bar/artifactId/pom.properties" ) );
+        assertFalse( relocator.canRelocatePath( "META-INF/maven/com.foo.bar/artifactId/pom.xml" ) );
+        assertTrue( relocator.canRelocatePath( "META-INF/maven/com/foo/bar/artifactId/pom.properties" ) );
+        assertTrue( relocator.canRelocatePath( "META-INF/maven/com/foo/bar/artifactId/pom.xml" ) );
+        assertTrue( relocator.canRelocatePath( "META-INF/maven/com-foo-bar/artifactId/pom.properties" ) );
+        assertTrue( relocator.canRelocatePath( "META-INF/maven/com-foo-bar/artifactId/pom.xml" ) );
 
     }
 }

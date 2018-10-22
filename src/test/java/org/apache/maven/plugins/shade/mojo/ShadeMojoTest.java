@@ -105,8 +105,8 @@ public class ShadeMojoTest
         Field field = c.getDeclaredField( "CLASS_REALM_PACKAGE_IMPORT" );
         assertEquals( "org.codehaus.plexus.util.xml.pull", field.get( null ) );
 
-        Method method = c.getDeclaredMethod( "getClassRealmPackageImport", new Class[0] );
-        assertEquals( "org.codehaus.plexus.util.xml.pull", method.invoke( null, new Object[0] ) );
+        Method method = c.getDeclaredMethod( "getClassRealmPackageImport" );
+        assertEquals( "org.codehaus.plexus.util.xml.pull", method.invoke( null ) );
     }
 
     /**
@@ -202,7 +202,7 @@ public class ShadeMojoTest
         sessionField.set( mojo, mock( MavenSession.class ) );
 
         // invoke getFilters()
-        Method getFilters = ShadeMojo.class.getDeclaredMethod( "getFilters", new Class[0] );
+        Method getFilters = ShadeMojo.class.getDeclaredMethod( "getFilters" );
         getFilters.setAccessible( true );
         List<Filter> filters = (List<Filter>) getFilters.invoke( mojo);
 
