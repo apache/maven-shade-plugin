@@ -19,7 +19,6 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,7 +88,7 @@ public class ResourceBundleAppendingTransformer implements ResourceTransformer
         {
             jos.putNextEntry( new JarEntry( dataEntry.getKey() ) );
 
-            IOUtil.copy( new ByteArrayInputStream( dataEntry.getValue().toByteArray() ), jos );
+            jos.write( dataEntry.getValue().toByteArray() );
             dataEntry.getValue().reset();
         }
     }

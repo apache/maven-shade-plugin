@@ -153,7 +153,7 @@ public class MinijarFilterTest
     }
 
     @Test
-    public void finsishedShouldProduceMessageForClassesTotalZero()
+    public void finishedShouldProduceMessageForClassesTotalZero()
     {
         ArgumentCaptor<CharSequence> logCaptor = ArgumentCaptor.forClass( CharSequence.class );
 

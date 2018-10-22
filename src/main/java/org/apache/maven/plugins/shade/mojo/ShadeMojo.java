@@ -695,22 +695,12 @@ public class ShadeMojo
     private void copyFiles( File source, File target )
         throws IOException
     {
-        InputStream in = null;
-        OutputStream out = null;
-        try
+        try ( InputStream in = new FileInputStream( source ) )
         {
-            in = new FileInputStream( source );
-            out = new FileOutputStream( target );
-            IOUtil.copy( in, out );
-            out.close();
-            out = null;
-            in.close();
-            in = null;
-        }
-        finally
-        {
-            IOUtil.close( in );
-            IOUtil.close( out );
+            try ( OutputStream out = new FileOutputStream( target ) )
+            {
+                IOUtil.copy( in, out );
+            }
         }
     }
 

@@ -117,22 +117,17 @@ public class MinijarFilter
     private ClazzpathUnit addDependencyToClasspath( Clazzpath cp, Artifact dependency )
         throws IOException
     {
-        InputStream is = null;
         ClazzpathUnit clazzpathUnit = null;
-        try
+        try ( InputStream is = new FileInputStream( dependency.getFile() ) )
         {
-            is = new FileInputStream( dependency.getFile() );
             clazzpathUnit = cp.addClazzpathUnit( is, dependency.toString() );
-            is.close();
-            is = null;
         }
         catch ( ZipException e )
         {
             log.warn( dependency.getFile()
                 + " could not be unpacked/read for minimization; dependency is probably malformed." );
             IOException ioe = new IOException( "Dependency " + dependency.toString() + " in file "
-                + dependency.getFile() + " could not be unpacked. File is probably corrupt" );
-            ioe.initCause( e );
+                + dependency.getFile() + " could not be unpacked. File is probably corrupt", e );
             throw ioe;
         }
         catch ( ArrayIndexOutOfBoundsException | IllegalArgumentException e )
@@ -140,10 +135,6 @@ public class MinijarFilter
             // trap ArrayIndexOutOfBoundsExceptions caused by malformed dependency classes (MSHADE-107)
             log.warn( dependency.toString()
                 + " could not be analyzed for minimization; dependency is probably malformed." );
-        }
-        finally
-        {
-            IOUtil.close( is );
         }
 
         return clazzpathUnit;

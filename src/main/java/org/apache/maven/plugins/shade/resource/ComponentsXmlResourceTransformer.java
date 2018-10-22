@@ -20,7 +20,6 @@ package org.apache.maven.plugins.shade.resource;
  */
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.WriterFactory;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -76,7 +75,7 @@ public class ComponentsXmlResourceTransformer
         }
         catch ( Exception e )
         {
-            throw (IOException) new IOException( "Error parsing components.xml in " + is ).initCause( e );
+            throw new IOException( "Error parsing components.xml in " + is, e );
         }
 
         // Only try to merge in components if there are some elements in the component-set
@@ -136,7 +135,7 @@ public class ComponentsXmlResourceTransformer
 
         jos.putNextEntry( new JarEntry( COMPONENTS_XML_PATH ) );
 
-        IOUtil.copy( data, jos );
+        jos.write( data );
 
         components.clear();
     }
@@ -151,8 +150,7 @@ public class ComponentsXmlResourceTransformer
     {
         ByteArrayOutputStream baos = new ByteArrayOutputStream( 1024 * 4 );
 
-        Writer writer = WriterFactory.newXmlWriter( baos );
-        try
+        try ( Writer writer = WriterFactory.newXmlWriter( baos ) )
         {
             Xpp3Dom dom = new Xpp3Dom( "component-set" );
 
@@ -166,13 +164,6 @@ public class ComponentsXmlResourceTransformer
             }
 
             Xpp3DomWriter.write( writer, dom );
-
-            writer.close();
-            writer = null;
-        }
-        finally
-        {
-            IOUtil.close( writer );
         }
 
         return baos.toByteArray();

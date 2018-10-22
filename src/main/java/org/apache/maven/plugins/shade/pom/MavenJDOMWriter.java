@@ -19,6 +19,7 @@ package org.apache.maven.plugins.shade.pom;
  * under the License.
  */
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -113,22 +114,22 @@ public class MavenJDOMWriter
      */
     protected Element findAndReplaceProperties( Counter counter, Element parent, String name, Map props )
     {
-        boolean shouldExist = props != null && !props.isEmpty();
+        Map<String, String> properties = props;
+        boolean shouldExist = properties != null && !properties.isEmpty();
         Element element = updateElement( counter, parent, name, shouldExist );
         if ( shouldExist )
         {
             Counter innerCounter = new Counter( counter.getDepth() + 1 );
-            // while ( it.hasNext() )
-            for ( Map.Entry<String, String> entry : ( (Map<String, String>) props ).entrySet() )
+            for ( Map.Entry<String, String> entry : properties.entrySet() )
             {
                 String key = entry.getKey();
                 findAndReplaceSimpleElement( innerCounter, element, key, entry.getValue(), null );
             }
-            List lst = new ArrayList( props.keySet() );
-            Iterator it = element.getChildren().iterator();
+            List<String> lst = new ArrayList<>( properties.keySet() );
+            Iterator<Element> it = element.getChildren().iterator();
             while ( it.hasNext() )
             {
-                Element elem = (Element) it.next();
+                Element elem = it.next();
                 String key = elem.getName();
                 if ( !lst.contains( key ) )
                 {
@@ -155,7 +156,7 @@ public class MavenJDOMWriter
         {
             Element element = parent.getChild( name, parent.getNamespace() );
             // if exist and is default value or if doesn't exist.. just keep the way it is..
-            if ( ( element != null && defaultValue.equals( element.getText() ) ) || element == null )
+            if ( element == null || defaultValue.equals( element.getText() ) )
             {
                 return element;
             }
@@ -178,14 +179,14 @@ public class MavenJDOMWriter
      * @param list
      * @param parent
      */
-    protected Element findAndReplaceSimpleLists( Counter counter, Element parent, java.util.Collection<String> list,
+    protected Element findAndReplaceSimpleLists( Counter counter, Element parent, Collection<String> list,
                                                  String parentName, String childName )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentName, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childName, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childName, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -196,7 +197,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -252,7 +253,7 @@ public class MavenJDOMWriter
     {
         int contentIndex = 0;
         int elementCounter = 0;
-        Iterator it = parent.getContent().iterator();
+        Iterator<Content> it = parent.getContent().iterator();
         Text lastText = null;
         int offset = 0;
         while ( it.hasNext() && elementCounter <= counter.getCurrentIndex() )
@@ -272,20 +273,20 @@ public class MavenJDOMWriter
         }
         if ( lastText != null && lastText.getTextTrim().length() == 0 )
         {
-            lastText = (Text) lastText.clone();
+            lastText = lastText.clone();
         }
         else
         {
-            String starter = lineSeparator;
+            StringBuilder starter = new StringBuilder( lineSeparator );
             for ( int i = 0; i < counter.getDepth(); i++ )
             {
-                starter = starter + "    "; // TODO make settable?
+                starter.append( "    " ); // TODO make settable?
             }
-            lastText = factory.text( starter );
+            lastText = factory.text( starter.toString() );
         }
         if ( parent.getContentSize() == 0 )
         {
-            Text finalText = (Text) lastText.clone();
+            Text finalText = lastText.clone();
             finalText.setText( finalText.getText().substring( 0, finalText.getText().length() - "    ".length() ) );
             parent.addContent( contentIndex, finalText );
         }
@@ -303,13 +304,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateContributor( Counter counter, Element parent, Collection<Contributor> list,
-                                       java.lang.String parentTag, java.lang.String childTag )
+                                       String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -320,7 +321,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -355,13 +356,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateDependency( Counter counter, Element parent, Collection<Dependency> list,
-                                      java.lang.String parentTag, java.lang.String childTag )
+                                      String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -372,7 +373,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -407,13 +408,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateDeveloper( Counter counter, Element parent, Collection<Developer> list,
-                                     java.lang.String parentTag, java.lang.String childTag )
+                                     String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -424,7 +425,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -459,13 +460,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateExclusion( Counter counter, Element parent, Collection<Exclusion> list,
-                                     java.lang.String parentTag, java.lang.String childTag )
+                                     String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -476,7 +477,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -511,13 +512,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateExtension( Counter counter, Element parent, Collection<Extension> list,
-                                     java.lang.String parentTag, java.lang.String childTag )
+                                     String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -528,7 +529,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -563,13 +564,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateLicense( Counter counter, Element parent, Collection<License> list,
-                                   java.lang.String parentTag, java.lang.String childTag )
+                                   String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -580,7 +581,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -615,13 +616,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateMailingList( Counter counter, Element parent, Collection<MailingList> list,
-                                       java.lang.String parentTag, java.lang.String childTag )
+                                       String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -632,7 +633,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -666,14 +667,14 @@ public class MavenJDOMWriter
      * @param list
      * @param parent
      */
-    protected void iterateNotifier( Counter counter, Element parent, java.util.Collection<Notifier> list,
-                                    java.lang.String parentTag, java.lang.String childTag )
+    protected void iterateNotifier( Counter counter, Element parent, Collection<Notifier> list,
+                                    String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -684,7 +685,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -719,13 +720,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iteratePlugin( Counter counter, Element parent, Collection<Plugin> list,
-                                  java.lang.String parentTag, java.lang.String childTag )
+                                  String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -736,7 +737,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -771,13 +772,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iteratePluginExecution( Counter counter, Element parent, Collection<PluginExecution> list,
-                                           java.lang.String parentTag, java.lang.String childTag )
+                                           String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -788,7 +789,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -823,13 +824,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateProfile( Counter counter, Element parent, Collection<Profile> list,
-                                   java.lang.String parentTag, java.lang.String childTag )
+                                   String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -840,7 +841,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -875,13 +876,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateReportPlugin( Counter counter, Element parent, Collection<ReportPlugin> list,
-                                        java.lang.String parentTag, java.lang.String childTag )
+                                        String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -892,7 +893,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -927,13 +928,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateReportSet( Counter counter, Element parent, Collection<ReportSet> list,
-                                     java.lang.String parentTag, java.lang.String childTag )
+                                     String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -944,7 +945,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -979,13 +980,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateRepository( Counter counter, Element parent, Collection<Repository> list,
-                                      java.lang.String parentTag, java.lang.String childTag )
+                                      String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -996,7 +997,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -1031,13 +1032,13 @@ public class MavenJDOMWriter
      * @param parent
      */
     protected void iterateResource( Counter counter, Element parent, Collection<Resource> list,
-                                    java.lang.String parentTag, java.lang.String childTag )
+                                    String parentTag, String childTag )
     {
         boolean shouldExist = list != null && list.size() > 0;
         Element element = updateElement( counter, parent, parentTag, shouldExist );
         if ( shouldExist )
         {
-            Iterator<?> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
+            Iterator<Element> elIt = element.getChildren( childTag, element.getNamespace() ).iterator();
             if ( !elIt.hasNext() )
             {
                 elIt = null;
@@ -1048,7 +1049,7 @@ public class MavenJDOMWriter
                 Element el;
                 if ( elIt != null && elIt.hasNext() )
                 {
-                    el = (Element) elIt.next();
+                    el = elIt.next();
                     if ( !elIt.hasNext() )
                     {
                         elIt = null;
@@ -2117,7 +2118,7 @@ public class MavenJDOMWriter
      * @deprecated
      */
     public void write( Model project, Document document, OutputStream stream )
-        throws java.io.IOException
+        throws IOException
     {
         updateModel( project, "project", new Counter( 0 ), document.getRootElement() );
         XMLOutputter outputter = new XMLOutputter();
@@ -2135,7 +2136,7 @@ public class MavenJDOMWriter
      * @param document
      */
     public void write( Model project, Document document, OutputStreamWriter writer )
-        throws java.io.IOException
+        throws IOException
     {
         Format format = Format.getRawFormat();
         format.setEncoding( writer.getEncoding() ).setLineSeparator( System.getProperty( "line.separator" ) );
@@ -2151,7 +2152,7 @@ public class MavenJDOMWriter
      * @param document
      */
     public void write( Model project, Document document, Writer writer, Format jdomFormat )
-        throws java.io.IOException
+        throws IOException
     {
         updateModel( project, "project", new Counter( 0 ), document.getRootElement() );
         XMLOutputter outputter = new XMLOutputter();
