@@ -47,7 +47,7 @@ import org.codehaus.plexus.util.xml.Xpp3DomWriter;
 public class PluginXmlResourceTransformer
     implements ResourceTransformer
 {
-    private List<Xpp3Dom> mojos = new LinkedList<Xpp3Dom>();
+    private List<Xpp3Dom> mojos = new LinkedList<>();
 
     public static final String PLUGIN_XML_PATH = "META-INF/maven/plugin.xml";
 

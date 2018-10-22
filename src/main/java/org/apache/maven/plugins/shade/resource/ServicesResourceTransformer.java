@@ -51,7 +51,7 @@ public class ServicesResourceTransformer
 
     private static final String SERVICES_PATH = "META-INF/services";
 
-    private Map<String, ServiceStream> serviceEntries = new HashMap<String, ServiceStream>();
+    private Map<String, ServiceStream> serviceEntries = new HashMap<>();
 
     private List<Relocator> relocators;
 

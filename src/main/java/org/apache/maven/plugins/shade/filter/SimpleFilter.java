@@ -49,7 +49,7 @@ public class SimpleFilter
      */
     public SimpleFilter( Set<File> jars, Set<String> includes, Set<String> excludes )
     {
-        this.jars = ( jars != null ) ? new HashSet<File>( jars ) : new HashSet<File>();
+        this.jars = ( jars != null ) ? new HashSet<>( jars ) : new HashSet<File>();
         this.includes = normalizePatterns( includes );
         this.excludes = normalizePatterns( excludes );
     }
@@ -125,7 +125,7 @@ public class SimpleFilter
 
     private Set<String> normalizePatterns( Set<String> patterns )
     {
-        Set<String> result = new HashSet<String>();
+        Set<String> result = new HashSet<>();
 
         if ( patterns != null )
         {

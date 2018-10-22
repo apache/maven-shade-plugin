@@ -46,9 +46,9 @@ import java.util.jar.JarOutputStream;
 public class ApacheNoticeResourceTransformer
     implements ResourceTransformer
 {
-    Set<String> entries = new LinkedHashSet<String>();
+    Set<String> entries = new LinkedHashSet<>();
 
-    Map<String, Set<String>> organizationEntries = new LinkedHashMap<String, Set<String>>();
+    Map<String, Set<String>> organizationEntries = new LinkedHashMap<>();
 
     String projectName = ""; // MSHADE-101 :: NullPointerException when projectName is missing
 
@@ -142,7 +142,7 @@ public class ApacheNoticeResourceTransformer
                             currentOrg = organizationEntries.get( sb.toString().trim() );
                             if ( currentOrg == null )
                             {
-                                currentOrg = new TreeSet<String>();
+                                currentOrg = new TreeSet<>();
                                 organizationEntries.put( sb.toString().trim(), currentOrg );
                             }
                             sb = new StringBuilder();

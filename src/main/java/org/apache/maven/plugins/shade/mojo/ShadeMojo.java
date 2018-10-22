@@ -384,10 +384,10 @@ public class ShadeMojo
 
         setupHintedShader();
 
-        Set<File> artifacts = new LinkedHashSet<File>();
-        Set<String> artifactIds = new LinkedHashSet<String>();
-        Set<File> sourceArtifacts = new LinkedHashSet<File>();
-        Set<File> testArtifacts = new LinkedHashSet<File>();
+        Set<File> artifacts = new LinkedHashSet<>();
+        Set<String> artifactIds = new LinkedHashSet<>();
+        Set<File> sourceArtifacts = new LinkedHashSet<>();
+        Set<File> testArtifacts = new LinkedHashSet<>();
 
         ArtifactSelector artifactSelector =
             new ArtifactSelector( project.getArtifact(), artifactSet, shadedGroupFilter );
@@ -744,7 +744,7 @@ public class ShadeMojo
 
     private List<Relocator> getRelocators()
     {
-        List<Relocator> relocators = new ArrayList<Relocator>();
+        List<Relocator> relocators = new ArrayList<>();
 
         if ( relocations == null )
         {
@@ -773,12 +773,12 @@ public class ShadeMojo
     private List<Filter> getFilters()
         throws MojoExecutionException
     {
-        List<Filter> filters = new ArrayList<Filter>();
-        List<SimpleFilter> simpleFilters = new ArrayList<SimpleFilter>();
+        List<Filter> filters = new ArrayList<>();
+        List<SimpleFilter> simpleFilters = new ArrayList<>();
 
         if ( this.filters != null && this.filters.length > 0 )
         {
-            Map<Artifact, ArtifactId> artifacts = new HashMap<Artifact, ArtifactId>();
+            Map<Artifact, ArtifactId> artifacts = new HashMap<>();
 
             artifacts.put( project.getArtifact(), new ArtifactId( project.getArtifact() ) );
 
@@ -791,7 +791,7 @@ public class ShadeMojo
             {
                 ArtifactId pattern = new ArtifactId( filter.getArtifact() );
 
-                Set<File> jars = new HashSet<File>();
+                Set<File> jars = new HashSet<>();
 
                 for ( Map.Entry<Artifact, ArtifactId> entry : artifacts.entrySet() )
                 {
@@ -909,11 +909,11 @@ public class ShadeMojo
     private void createDependencyReducedPom( Set<String> artifactsToRemove )
         throws IOException, DependencyGraphBuilderException, ProjectBuildingException
     {
-        List<Dependency> dependencies = new ArrayList<Dependency>();
+        List<Dependency> dependencies = new ArrayList<>();
 
         boolean modified = false;
 
-        List<Dependency> transitiveDeps = new ArrayList<Dependency>();
+        List<Dependency> transitiveDeps = new ArrayList<>();
 
         // NOTE: By using the getArtifacts() we get the completely evaluated artifacts
         // including the system scoped artifacts with expanded values of properties used.

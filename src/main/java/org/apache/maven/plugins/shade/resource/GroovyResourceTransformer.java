@@ -41,9 +41,9 @@ public class GroovyResourceTransformer
 
     static final String EXT_MODULE_NAME = "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule";
 
-    private List<String> extensionClassesList = new ArrayList<String>();
+    private List<String> extensionClassesList = new ArrayList<>();
 
-    private List<String> staticExtensionClassesList = new ArrayList<String>();
+    private List<String> staticExtensionClassesList = new ArrayList<>();
 
     private String extModuleName = "no-module-name";
 

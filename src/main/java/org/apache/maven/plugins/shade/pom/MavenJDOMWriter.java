@@ -1085,7 +1085,7 @@ public class MavenJDOMWriter
         if ( parentDom.getChildCount() > 0 )
         {
             Xpp3Dom[] childs = parentDom.getChildren();
-            Collection<Xpp3Dom> domChilds = new ArrayList<Xpp3Dom>();
+            Collection<Xpp3Dom> domChilds = new ArrayList<>();
             Collections.addAll( domChilds, childs );
             // int domIndex = 0;
             for ( Object o : parent.getChildren() )
