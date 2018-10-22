@@ -41,7 +41,7 @@ import org.codehaus.plexus.util.IOUtil;
  */
 public class ResourceBundleAppendingTransformer implements ResourceTransformer
 {
-    private Map<String, ByteArrayOutputStream>  dataMap = new HashMap<String, ByteArrayOutputStream>();
+    private Map<String, ByteArrayOutputStream>  dataMap = new HashMap<>();
     
     private Pattern resourceBundlePattern;
     

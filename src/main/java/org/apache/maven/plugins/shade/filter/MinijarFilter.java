@@ -151,7 +151,7 @@ public class MinijarFilter
 
     private void removePackages( ClazzpathUnit artifactUnit )
     {
-        Set<String> packageNames = new HashSet<String>();
+        Set<String> packageNames = new HashSet<>();
         removePackages( artifactUnit.getClazzes(), packageNames );
         removePackages( artifactUnit.getTransitiveDependencies(), packageNames );
     }

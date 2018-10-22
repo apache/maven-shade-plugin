@@ -58,7 +58,7 @@ class ArtifactSelector
 
     private static Collection<ArtifactId> toIds( Collection<String> patterns )
     {
-        Collection<ArtifactId> result = new HashSet<ArtifactId>();
+        Collection<ArtifactId> result = new HashSet<>();
 
         if ( patterns != null )
         {

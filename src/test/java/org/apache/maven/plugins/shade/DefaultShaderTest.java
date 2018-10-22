@@ -62,17 +62,17 @@ public class DefaultShaderTest
     {
         Shader s = newShader();
 
-        Set<File> set = new LinkedHashSet<File>();
+        Set<File> set = new LinkedHashSet<>();
 
         set.add( new File( "src/test/jars/test-artifact-1.0-SNAPSHOT.jar" ) );
 
-        List<Relocator> relocators = new ArrayList<Relocator>();
+        List<Relocator> relocators = new ArrayList<>();
 
         relocators.add( new SimpleRelocator( "org.apache.maven.plugins.shade", null, null, null ) );
 
-        List<ResourceTransformer> resourceTransformers = new ArrayList<ResourceTransformer>();
+        List<ResourceTransformer> resourceTransformers = new ArrayList<>();
 
-        List<Filter> filters = new ArrayList<Filter>();
+        List<Filter> filters = new ArrayList<>();
 
         File file = new File( "target/testShaderWithStaticInitializedClass.jar" );
 
@@ -111,22 +111,22 @@ public class DefaultShaderTest
     {
         DefaultShader s = newShader();
 
-        Set<File> set = new LinkedHashSet<File>();
+        Set<File> set = new LinkedHashSet<>();
 
         set.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
 
         set.add( new File( "src/test/jars/plexus-utils-1.4.1.jar" ) );
 
-        List<Relocator> relocators = new ArrayList<Relocator>();
+        List<Relocator> relocators = new ArrayList<>();
 
         relocators.add( new SimpleRelocator( "org/codehaus/plexus/util/", "_plexus/util/__", null,
                                              Arrays.<String> asList() ) );
 
-        List<ResourceTransformer> resourceTransformers = new ArrayList<ResourceTransformer>();
+        List<ResourceTransformer> resourceTransformers = new ArrayList<>();
 
         resourceTransformers.add( new ComponentsXmlResourceTransformer() );
 
-        List<Filter> filters = new ArrayList<Filter>();
+        List<Filter> filters = new ArrayList<>();
 
         File file = new File( "target/foo-relocate-class.jar" );
 
@@ -165,21 +165,21 @@ public class DefaultShaderTest
     {
         DefaultShader s = newShader();
 
-        Set<File> set = new LinkedHashSet<File>();
+        Set<File> set = new LinkedHashSet<>();
 
         set.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
 
         set.add( new File( "src/test/jars/plexus-utils-1.4.1.jar" ) );
 
-        List<Relocator> relocators = new ArrayList<Relocator>();
+        List<Relocator> relocators = new ArrayList<>();
 
         relocators.add( new SimpleRelocator( "org/codehaus/plexus/util", shadedPattern, null, Arrays.asList( excludes ) ) );
 
-        List<ResourceTransformer> resourceTransformers = new ArrayList<ResourceTransformer>();
+        List<ResourceTransformer> resourceTransformers = new ArrayList<>();
 
         resourceTransformers.add( new ComponentsXmlResourceTransformer() );
 
-        List<Filter> filters = new ArrayList<Filter>();
+        List<Filter> filters = new ArrayList<>();
 
         ShadeRequest shadeRequest = new ShadeRequest();
         shadeRequest.setJars( set );

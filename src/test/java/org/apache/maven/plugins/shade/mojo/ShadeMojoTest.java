@@ -79,16 +79,16 @@ public class ShadeMojoTest
 
         Shader s = (Shader) lookup( Shader.ROLE, "default" );
 
-        Set<File> set = new LinkedHashSet<File>();
+        Set<File> set = new LinkedHashSet<>();
         set.add( new File( getBasedir(), "src/test/jars/test-artifact-1.0-SNAPSHOT.jar" ) );
 
-        List<Relocator> relocators = new ArrayList<Relocator>();
+        List<Relocator> relocators = new ArrayList<>();
         relocators.add( new SimpleRelocator( "org.codehaus.plexus.util", "hidden", null, Arrays.asList(
                 "org.codehaus.plexus.util.xml.Xpp3Dom", "org.codehaus.plexus.util.xml.pull.*") ) );
 
-        List<ResourceTransformer> resourceTransformers = new ArrayList<ResourceTransformer>();
+        List<ResourceTransformer> resourceTransformers = new ArrayList<>();
 
-        List<Filter> filters = new ArrayList<Filter>();
+        List<Filter> filters = new ArrayList<>();
 
         ShadeRequest shadeRequest = new ShadeRequest();
         shadeRequest.setJars( set );
@@ -220,22 +220,22 @@ public class ShadeMojoTest
     {
         Shader s = (Shader) lookup( Shader.ROLE );
 
-        Set<File> set = new LinkedHashSet<File>();
+        Set<File> set = new LinkedHashSet<>();
 
         set.add( new File( getBasedir(), "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
 
         set.add( new File( getBasedir(), "src/test/jars/plexus-utils-1.4.1.jar" ) );
 
-        List<Relocator> relocators = new ArrayList<Relocator>();
+        List<Relocator> relocators = new ArrayList<>();
 
         relocators.add( new SimpleRelocator( "org/codehaus/plexus/util", shadedPattern, null, Arrays.asList(
                 "org/codehaus/plexus/util/xml/Xpp3Dom", "org/codehaus/plexus/util/xml/pull.*") ) );
 
-        List<ResourceTransformer> resourceTransformers = new ArrayList<ResourceTransformer>();
+        List<ResourceTransformer> resourceTransformers = new ArrayList<>();
 
         resourceTransformers.add( new ComponentsXmlResourceTransformer() );
 
-        List<Filter> filters = new ArrayList<Filter>();
+        List<Filter> filters = new ArrayList<>();
 
         ShadeRequest shadeRequest = new ShadeRequest();
         shadeRequest.setJars( set );

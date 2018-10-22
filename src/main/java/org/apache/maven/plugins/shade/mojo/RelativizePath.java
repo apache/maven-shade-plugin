@@ -96,7 +96,7 @@ public final class RelativizePath
 
     static List<String> parentDirs( File of )
     {
-        List<String> results = new ArrayList<String>();
+        List<String> results = new ArrayList<>();
         for ( File p = of.getParentFile() ; p != null ; p = p.getParentFile() )
         {
             if ( !"".equals( p.getName() ) )

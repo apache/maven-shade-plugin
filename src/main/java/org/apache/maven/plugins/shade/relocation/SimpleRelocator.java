@@ -113,7 +113,7 @@ public class SimpleRelocator
 
         if ( patterns != null && !patterns.isEmpty() )
         {
-            normalized = new LinkedHashSet<String>();
+            normalized = new LinkedHashSet<>();
 
             for ( String pattern : patterns )
             {

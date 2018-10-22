@@ -73,11 +73,11 @@ public class DefaultShader
     public void shade( ShadeRequest shadeRequest )
         throws IOException, MojoExecutionException
     {
-        Set<String> resources = new HashSet<String>();
+        Set<String> resources = new HashSet<>();
 
         ResourceTransformer manifestTransformer = null;
         List<ResourceTransformer> transformers =
-            new ArrayList<ResourceTransformer>( shadeRequest.getResourceTransformers() );
+            new ArrayList<>( shadeRequest.getResourceTransformers() );
         for ( Iterator<ResourceTransformer> it = transformers.iterator(); it.hasNext(); )
         {
             ResourceTransformer transformer = it.next();
@@ -332,14 +332,14 @@ public class DefaultShader
     {
         for ( Collection<File> jarz : overlapping.keySet() )
         {
-            List<String> jarzS = new LinkedList<String>();
+            List<String> jarzS = new LinkedList<>();
 
             for ( File jjar : jarz )
             {
                 jarzS.add( jjar.getName() );
             }
 
-            List<String> classes = new LinkedList<String>();
+            List<String> classes = new LinkedList<>();
 
             for ( String clazz : overlapping.get( jarz ) )
             {
@@ -383,7 +383,7 @@ public class DefaultShader
 
     private List<Filter> getFilters( File jar, List<Filter> filters )
     {
-        List<Filter> list = new ArrayList<Filter>();
+        List<Filter> list = new ArrayList<>();
 
         for ( Filter filter : filters )
         {

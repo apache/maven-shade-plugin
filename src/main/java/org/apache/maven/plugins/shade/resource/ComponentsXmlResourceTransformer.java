@@ -45,7 +45,7 @@ import java.util.jar.JarOutputStream;
 public class ComponentsXmlResourceTransformer
     implements ResourceTransformer
 {
-    private Map<String, Xpp3Dom> components = new LinkedHashMap<String, Xpp3Dom>();
+    private Map<String, Xpp3Dom> components = new LinkedHashMap<>();
 
     public static final String COMPONENTS_XML_PATH = "META-INF/plexus/components.xml";
 

@@ -124,7 +124,7 @@ public class MinijarFilterTest
             new DefaultArtifact( "dep.com", "dep.aid", "1.0", "compile", "jar", "classifier2", null );
         dependencyArtifact.setFile( file );
 
-        Set<Artifact> artifacts = new TreeSet<Artifact>();
+        Set<Artifact> artifacts = new TreeSet<>();
         artifacts.add( dependencyArtifact );
 
         when( mavenProject.getArtifacts() ).thenReturn( artifacts );
