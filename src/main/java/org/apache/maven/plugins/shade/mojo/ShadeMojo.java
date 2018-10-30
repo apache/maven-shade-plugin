@@ -19,23 +19,6 @@ package org.apache.maven.plugins.shade.mojo;
  * under the License.
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenSession;
@@ -79,6 +62,23 @@ import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Mojo that performs shading delegating to the Shader component.
@@ -1138,49 +1138,60 @@ public class ShadeMojo
                                          List<Dependency> transitiveDeps )
                                              throws DependencyGraphBuilderException
     {
-        DependencyNode node = dependencyGraphBuilder.buildDependencyGraph( project, null );
-        boolean modified = false;
-        for ( DependencyNode n2 : node.getChildren() )
+        MavenProject original = session.getProjectBuildingRequest().getProject();
+        try
         {
-            for ( DependencyNode n3 : n2.getChildren() )
+            session.getProjectBuildingRequest().setProject( project );
+            DependencyNode node = dependencyGraphBuilder
+                .buildDependencyGraph( session.getProjectBuildingRequest(), null );
+            boolean modified = false;
+            for ( DependencyNode n2 : node.getChildren() )
             {
-                // check if it really isn't in the list of original dependencies. Maven
-                // prior to 2.0.8 may grab versions from transients instead of
-                // from the direct deps in which case they would be marked included
-                // instead of OMITTED_FOR_DUPLICATE
-
-                // also, if not promoting the transitives, level 2's would be included
-                boolean found = false;
-                for ( Dependency dep : transitiveDeps )
+                for ( DependencyNode n3 : n2.getChildren() )
                 {
-                    if ( dep.getArtifactId().equals( n3.getArtifact().getArtifactId() )
-                        && dep.getGroupId().equals( n3.getArtifact().getGroupId() )
-                        && ( dep.getType() == null || dep.getType().equals( n3.getArtifact().getType() ) ) )
-                    {
-                        found = true;
-                        break;
-                    }
-                }
+                    // check if it really isn't in the list of original dependencies. Maven
+                    // prior to 2.0.8 may grab versions from transients instead of
+                    // from the direct deps in which case they would be marked included
+                    // instead of OMITTED_FOR_DUPLICATE
 
-                if ( !found )
-                {
-                    for ( Dependency dep : dependencies )
+                    // also, if not promoting the transitives, level 2's would be included
+                    boolean found = false;
+                    for ( Dependency dep : transitiveDeps )
                     {
-                        if ( dep.getArtifactId().equals( n2.getArtifact().getArtifactId() )
-                            && dep.getGroupId().equals( n2.getArtifact().getGroupId() )
-                            && ( dep.getType() == null || dep.getType().equals( n2.getArtifact().getType() ) ) )
+                        if ( dep.getArtifactId().equals( n3.getArtifact().getArtifactId() ) //
+                            && dep.getGroupId().equals( n3.getArtifact().getGroupId() ) //
+                            && ( dep.getType() == null || dep.getType().equals( n3.getArtifact().getType() ) ) )
                         {
-                            Exclusion exclusion = new Exclusion();
-                            exclusion.setArtifactId( n3.getArtifact().getArtifactId() );
-                            exclusion.setGroupId( n3.getArtifact().getGroupId() );
-                            dep.addExclusion( exclusion );
-                            modified = true;
+                            found = true;
                             break;
+                        }
+                    }
+
+                    if ( !found )
+                    {
+                        for ( Dependency dep : dependencies )
+                        {
+                            if ( dep.getArtifactId().equals( n2.getArtifact().getArtifactId() ) //
+                                && dep.getGroupId().equals( n2.getArtifact().getGroupId() ) //
+                                && ( dep.getType() == null || dep.getType().equals( n2.getArtifact().getType() ) ) )
+                            {
+                                Exclusion exclusion = new Exclusion();
+                                exclusion.setArtifactId( n3.getArtifact().getArtifactId() );
+                                exclusion.setGroupId( n3.getArtifact().getGroupId() );
+                                dep.addExclusion( exclusion );
+                                modified = true;
+                                break;
+                            }
                         }
                     }
                 }
             }
+            return modified;
         }
-        return modified;
+        finally
+        {
+            // restore it
+            session.getProjectBuildingRequest().setProject( original );
+        }
     }
 }
