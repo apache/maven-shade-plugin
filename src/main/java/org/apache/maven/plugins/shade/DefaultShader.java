@@ -172,7 +172,7 @@ public class DefaultShader
                     
                     if ( entry.isDirectory() || isFiltered( jarFilters, name ) )
                     {
-                        confinue;
+                        continue;
                     }
 
 
