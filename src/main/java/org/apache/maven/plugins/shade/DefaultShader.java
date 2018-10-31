@@ -169,6 +169,12 @@ public class DefaultShader
                     JarEntry entry = j.nextElement();
 
                     String name = entry.getName();
+                    
+                    if ( entry.isDirectory() || isFiltered( jarFilters, name ) )
+                    {
+                        continue;
+                    }
+
 
                     if ( "META-INF/INDEX.LIST".equals( name ) )
                     {
@@ -185,18 +191,15 @@ public class DefaultShader
                         continue;
                     }
 
-                    if ( !entry.isDirectory() && !isFiltered( jarFilters, name ) )
+                    try
                     {
-                        try
-                        {
-                            shadeSingleJar( shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
-                                            jarFile, entry, name );
-                        }
-                        catch ( Exception e )
-                        {
-                            throw new IOException( String.format( "Problem shading JAR %s entry %s: %s", jar, name, e ),
-                                                   e );
-                        }
+                        shadeSingleJar( shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
+                                        jarFile, entry, name );
+                    }
+                    catch ( Exception e )
+                    {
+                        throw new IOException( String.format( "Problem shading JAR %s entry %s: %s", jar, name, e ),
+                                               e );
                     }
                 }
 
