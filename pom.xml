@@ -30,7 +30,7 @@
   </parent>
 
   <artifactId>maven-shade-plugin</artifactId>
-  <version>3.2.1</version>
+  <version>3.2.2-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Apache Maven Shade Plugin</name>
@@ -47,7 +47,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-shade-plugin.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven-shade-plugin.git</developerConnection>
     <url>https://github.com/apache/maven-shade-plugin/tree/${project.scm.tag}</url>
-    <tag>maven-shade-plugin-3.2.1</tag>
+    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>jira</system>
