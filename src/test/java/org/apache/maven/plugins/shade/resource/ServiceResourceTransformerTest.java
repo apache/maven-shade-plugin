@@ -89,6 +89,50 @@ public class ServiceResourceTransformerTest {
             tempJar.delete();
         }
     }
+    
+    @Test
+    public void concatanationAppliedMultipleTimes() throws Exception {
+        SimpleRelocator relocator =
+            new SimpleRelocator( "org.eclipse", "org.eclipse1234", null, null );
+        List<Relocator> relocators = Lists.<Relocator>newArrayList( relocator );
+
+        String content = "org.eclipse.osgi.launch.EquinoxFactory\n";
+        byte[] contentBytes = content.getBytes( "UTF-8" );
+        InputStream contentStream = new ByteArrayInputStream( contentBytes );
+        String contentResource = "META-INF/services/org.osgi.framework.launch.FrameworkFactory";
+
+        ServicesResourceTransformer xformer = new ServicesResourceTransformer();
+        xformer.processResource( contentResource, contentStream, relocators );
+        contentStream.close();
+
+        File tempJar = File.createTempFile("shade.", ".jar");
+        tempJar.deleteOnExit();
+        FileOutputStream fos = new FileOutputStream( tempJar );
+        JarOutputStream jos = new JarOutputStream( fos );
+        try {
+            xformer.modifyOutputStream( jos );
+            jos.close();
+            jos = null;
+            JarFile jarFile = new JarFile( tempJar );
+            JarEntry jarEntry = jarFile.getJarEntry( contentResource );
+            assertNotNull( jarEntry );
+            InputStream entryStream = jarFile.getInputStream( jarEntry );
+            try {
+                String xformedContent = IOUtils.toString(entryStream, "utf-8");
+                assertEquals( "org.eclipse1234.osgi.launch.EquinoxFactory" + System.getProperty( "line.separator" ), xformedContent );
+                
+            } finally {
+                IOUtils.closeQuietly( entryStream );
+                jarFile.close();
+            }
+        } finally {
+            if (jos != null)
+            {
+                IOUtils.closeQuietly( jos );
+            }
+            tempJar.delete();
+        }
+    }
 
     @Test
     public void concatenation() throws Exception {

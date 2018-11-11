@@ -138,20 +138,6 @@ public class ServicesResourceTransformer
 
             while ( ( className = reader.readLine() ) != null )
             {
-
-                if ( relocators != null )
-                {
-                    for ( Relocator relocator : relocators )
-                    {
-                        //if the class can be relocated then relocate it
-                        if ( relocator.canRelocateClass( className ) )
-                        {
-                            className = relocator.applyToSourceContent( className );
-                            break;
-                        }
-                    }
-                }
-
                 writer.println( className );
                 writer.flush();
             }
