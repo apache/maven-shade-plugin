@@ -20,21 +20,25 @@ package org.apache.maven.plugins.shade;
  */
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import junit.framework.TestCase;
 
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.codehaus.plexus.logging.AbstractLogger;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.objectweb.asm.ClassReader;
@@ -50,6 +54,75 @@ public class DefaultShaderTest
 {
     private static final String[] EXCLUDES = new String[] { "org/codehaus/plexus/util/xml/Xpp3Dom",
         "org/codehaus/plexus/util/xml/pull.*" };
+
+    public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
+        final DefaultShader shader = new DefaultShader();
+        final List<String> debugMessages = new ArrayList<>();
+        final List<String> warnMessages = new ArrayList<>();
+        shader.enableLogging( new AbstractLogger(
+                Logger.LEVEL_INFO, "TEST_DefaultShaderTest_testOverlappingResourcesAreLogged" )
+        {
+            @Override
+            public void debug( final String s, final Throwable throwable )
+            {
+                debugMessages.add(s);
+            }
+
+            @Override
+            public void info( final String s, final Throwable throwable )
+            {
+                // no-op
+            }
+
+            @Override
+            public void warn( final String s, final Throwable throwable )
+            {
+                warnMessages.add(s);
+            }
+
+            @Override
+            public void error( final String s, final Throwable throwable )
+            {
+                // no-op
+            }
+
+            @Override
+            public void fatalError( final String s, final Throwable throwable )
+            {
+                // no-op
+            }
+
+            @Override
+            public Logger getChildLogger( final String s )
+            {
+                return this;
+            }
+        });
+
+        // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
+        // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
+        final Set<File> set = new LinkedHashSet<File>();
+        set.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
+        set.add( new File( "src/test/jars/plexus-utils-1.4.1.jar" ) );
+
+        final ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars( set );
+        shadeRequest.setRelocators( Collections.<Relocator>emptyList() );
+        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>emptyList() );
+        shadeRequest.setFilters( Collections.<Filter>emptyList() );
+        shadeRequest.setUberJar( new File( "target/foo-custom_testOverlappingResourcesAreLogged.jar" ) );
+        shader.shade( shadeRequest );
+
+        final String failureWarnMessage = warnMessages.toString();
+        assertTrue(failureWarnMessage, warnMessages.contains(
+                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resources: "));
+        assertTrue(failureWarnMessage, warnMessages.contains("  - META-INF/MANIFEST.MF"));
+
+        final String failureDebugMessage = debugMessages.toString();
+        assertTrue(failureDebugMessage, debugMessages.contains(
+                "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar"
+                        .replace('/', File.separatorChar)));
+    }
 
     public void testShaderWithDefaultShadedPattern()
         throws Exception
