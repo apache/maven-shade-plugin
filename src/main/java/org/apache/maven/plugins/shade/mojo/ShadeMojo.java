@@ -81,6 +81,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 /**
@@ -765,12 +766,22 @@ public class ShadeMojo
 
     private List<ResourceTransformer> getResourceTransformers()
     {
-        if ( transformers == null )
+        final List<ResourceTransformer> transformers;
+        if ( this.transformers == null )
         {
-            return getDefaultResourceTransformers();
+            transformers = getDefaultResourceTransformers();
+        }
+        else
+        {
+            transformers = new ArrayList<>( Arrays.asList( this.transformers ) );
         }
 
-        return Arrays.asList( transformers );
+        for ( final ResourceTransformer transformer : ServiceLoader.load( ResourceTransformer.class ) )
+        {
+            transformers.add( transformer );
+        }
+
+        return transformers;
     }
 
     private List<ResourceTransformer> getDefaultResourceTransformers()
@@ -841,6 +852,18 @@ public class ShadeMojo
                     Collections.<String>emptySet(),
                     new HashSet<>( Arrays.asList( "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA" ) ) ) );
         }
+        for ( final Filter filter : ServiceLoader.load( Filter.class ) )
+        {
+            if ( SimpleFilter.class.isInstance( filter ) )
+            {
+                simpleFilters.add ( SimpleFilter.class.cast( filter ) );
+            }
+            else
+            {
+                filters.add( filter );
+            }
+        }
+
 
         filters.addAll( simpleFilters );
 
