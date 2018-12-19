@@ -40,7 +40,9 @@ import org.apache.maven.plugins.shade.filter.SimpleFilter;
 import org.apache.maven.plugins.shade.pom.PomWriter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ServicesResourceTransformer;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
@@ -76,6 +78,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -764,10 +767,42 @@ public class ShadeMojo
     {
         if ( transformers == null )
         {
-            return Collections.emptyList();
+            return getDefaultResourceTransformers();
         }
 
         return Arrays.asList( transformers );
+    }
+
+    private List<ResourceTransformer> getDefaultResourceTransformers()
+    {
+        final List<ResourceTransformer> transformers = new LinkedList<>();
+        if ( missTransformer( ServicesResourceTransformer.class ) )
+        {
+            getLog().debug( "Adding ServicesResourceTransformer transformer" );
+            transformers.add( new ServicesResourceTransformer() );
+        }
+        if ( missTransformer( ManifestResourceTransformer.class ) )
+        {
+            getLog().debug( "Adding ManifestResourceTransformer transformer" );
+            transformers.add( new ManifestResourceTransformer() );
+        }
+        return transformers;
+    }
+
+    private boolean missTransformer( final Class<?> type )
+    {
+        if ( transformers == null )
+        {
+            return true;
+        }
+        for ( final ResourceTransformer transformer : transformers )
+        {
+            if ( type.isInstance( transformer ) )
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private List<Filter> getFilters()
@@ -778,39 +813,13 @@ public class ShadeMojo
 
         if ( this.filters != null && this.filters.length > 0 )
         {
-            Map<Artifact, ArtifactId> artifacts = new HashMap<Artifact, ArtifactId>();
-
-            artifacts.put( project.getArtifact(), new ArtifactId( project.getArtifact() ) );
-
-            for ( Artifact artifact : project.getArtifacts() )
-            {
-                artifacts.put( artifact, new ArtifactId( artifact ) );
-            }
+            Map<Artifact, ArtifactId> artifacts = getArtifactIds();
 
             for ( ArchiveFilter filter : this.filters )
             {
                 ArtifactId pattern = new ArtifactId( filter.getArtifact() );
 
-                Set<File> jars = new HashSet<File>();
-
-                for ( Map.Entry<Artifact, ArtifactId> entry : artifacts.entrySet() )
-                {
-                    if ( entry.getValue().matches( pattern ) )
-                    {
-                        Artifact artifact = entry.getKey();
-
-                        jars.add( artifact.getFile() );
-
-                        if ( createSourcesJar )
-                        {
-                            File file = resolveArtifactSources( artifact );
-                            if ( file != null )
-                            {
-                                jars.add( file );
-                            }
-                        }
-                    }
-                }
+                Set<File> jars = getMatchingJars( artifacts, pattern );
 
                 if ( jars.isEmpty() )
                 {
@@ -821,6 +830,16 @@ public class ShadeMojo
 
                 simpleFilters.add( new SimpleFilter( jars, filter.getIncludes(), filter.getExcludes() ) );
             }
+        }
+        else if ( this.filters == null )
+        {
+            getLog().debug( "Adding META-INF/*.SF, META-INF/*.DSA and META-INF/*.RSA exclusions" );
+
+            Map<Artifact, ArtifactId> artifacts = getArtifactIds();
+            simpleFilters.add( new SimpleFilter(
+                    getMatchingJars( artifacts , new ArtifactId( "*:*" ) ),
+                    Collections.<String>emptySet(),
+                    new HashSet<>( Arrays.asList( "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA" ) ) ) );
         }
 
         filters.addAll( simpleFilters );
@@ -840,6 +859,44 @@ public class ShadeMojo
         }
 
         return filters;
+    }
+
+    private Set<File> getMatchingJars( final Map<Artifact, ArtifactId> artifacts, final ArtifactId pattern )
+    {
+        final Set<File> jars = new HashSet<File>();
+
+        for ( final Map.Entry<Artifact, ArtifactId> entry : artifacts.entrySet() )
+        {
+            if ( entry.getValue().matches( pattern ) )
+            {
+                final Artifact artifact = entry.getKey();
+
+                jars.add( artifact.getFile() );
+
+                if ( createSourcesJar )
+                {
+                    final File file = resolveArtifactSources( artifact );
+                    if ( file != null )
+                    {
+                        jars.add( file );
+                    }
+                }
+            }
+        }
+        return jars;
+    }
+
+    private Map<Artifact, ArtifactId> getArtifactIds()
+    {
+        final Map<Artifact, ArtifactId> artifacts = new HashMap<Artifact, ArtifactId>();
+
+        artifacts.put( project.getArtifact(), new ArtifactId( project.getArtifact() ) );
+
+        for ( final Artifact artifact : project.getArtifacts() )
+        {
+            artifacts.put( artifact, new ArtifactId( artifact ) );
+        }
+        return artifacts;
     }
 
     private File shadedArtifactFileWithClassifier()
