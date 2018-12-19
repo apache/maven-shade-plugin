@@ -95,10 +95,12 @@ public class ShadeMojoTest
         final Field excludes = filter.getClass().getDeclaredField("excludes");
         excludes.setAccessible(true);
         final Collection<String> excludesValues = Collection.class.cast(excludes.get(filter));
-        assertEquals(3, excludesValues.size());
+        final String debugExcludes = excludesValues.toString();
+        assertEquals(debugExcludes, 3, excludesValues.size());
         for ( final String exclude : Arrays.asList( "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA" ) )
         {
-            assertTrue(exclude, excludesValues.contains(exclude) );
+            assertTrue(exclude + " is not in " + debugExcludes,
+                    excludesValues.contains( exclude.replace( '/', File.separatorChar ) ) );
         }
 
         final Field includes = filter.getClass().getDeclaredField("includes");
