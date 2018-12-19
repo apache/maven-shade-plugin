@@ -75,4 +75,6 @@ ${project.name}
 
   * {{{./examples/resource-transformers.html}Resource Transformers}}
 
+  * {{{./examples/implicit-configuration.html}Implicit Configuration}}
+
   []

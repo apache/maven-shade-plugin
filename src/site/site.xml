@@ -65,6 +65,7 @@ under the License.
       <item name="Executable JAR" href="examples/executable-jar.html"/>
       <item name="Resource Transformers" href="examples/resource-transformers.html"/>
       <item name="Using another Shader implementation" href="examples/use-shader-other-impl.html"/>
+      <item name="Implicit configuration" href="examples/implicit-configuration.html"/>
     </menu>
   </body>
 </project>
