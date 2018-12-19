@@ -538,3 +538,10 @@ Transformers in <<<org.apache.maven.plugins.shade.resource>>>
  ...
 </project>
 +-----
+
+* Default transformers
+
+    If no transformer is configured (which means you didn't opened/closed <<<transformers>>>
+    because an empty list is considered valid) then a default setup is done. It adds <<<ServicesResourceTransformer>>>
+    and <<<ManifestResourceTransformer>>>.
+
