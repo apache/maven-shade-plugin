@@ -19,6 +19,8 @@ package org.apache.maven.plugins.shade.mojo;
  * under the License.
  */
 
+import static java.util.Collections.singletonList;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenSession;
@@ -776,40 +778,21 @@ public class ShadeMojo
     private List<ResourceTransformer> getDefaultResourceTransformers()
     {
         final List<ResourceTransformer> transformers = new LinkedList<>();
-        if ( missTransformer( ServicesResourceTransformer.class ) )
-        {
-            getLog().debug( "Adding ServicesResourceTransformer transformer" );
-            transformers.add( new ServicesResourceTransformer() );
-        }
-        if ( missTransformer( ManifestResourceTransformer.class ) )
-        {
-            getLog().debug( "Adding ManifestResourceTransformer transformer" );
-            transformers.add( new ManifestResourceTransformer() );
-        }
-        return transformers;
-    }
 
-    private boolean missTransformer( final Class<?> type )
-    {
-        if ( transformers == null )
-        {
-            return true;
-        }
-        for ( final ResourceTransformer transformer : transformers )
-        {
-            if ( type.isInstance( transformer ) )
-            {
-                return false;
-            }
-        }
-        return true;
+        getLog().debug( "Adding ServicesResourceTransformer transformer" );
+        transformers.add( new ServicesResourceTransformer() );
+
+        getLog().debug( "Adding ManifestResourceTransformer transformer" );
+        transformers.add( new ManifestResourceTransformer() );
+
+        return transformers;
     }
 
     private List<Filter> getFilters()
         throws MojoExecutionException
     {
-        List<Filter> filters = new ArrayList<Filter>();
-        List<SimpleFilter> simpleFilters = new ArrayList<SimpleFilter>();
+        List<Filter> filters = new LinkedList<Filter>();
+        List<SimpleFilter> simpleFilters = new LinkedList<>();
 
         if ( this.filters != null && this.filters.length > 0 )
         {
@@ -833,13 +816,7 @@ public class ShadeMojo
         }
         else if ( this.filters == null )
         {
-            getLog().debug( "Adding META-INF/*.SF, META-INF/*.DSA and META-INF/*.RSA exclusions" );
-
-            Map<Artifact, ArtifactId> artifacts = getArtifactIds();
-            simpleFilters.add( new SimpleFilter(
-                    getMatchingJars( artifacts , new ArtifactId( "*:*" ) ),
-                    Collections.<String>emptySet(),
-                    new HashSet<>( Arrays.asList( "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA" ) ) ) );
+            simpleFilters.addAll( getDefaultFilters() );
         }
 
         filters.addAll( simpleFilters );
@@ -859,6 +836,17 @@ public class ShadeMojo
         }
 
         return filters;
+    }
+
+    private List<SimpleFilter> getDefaultFilters()
+    {
+        getLog().debug( "Adding META-INF/*.SF, META-INF/*.DSA and META-INF/*.RSA exclusions" );
+
+        Map<Artifact, ArtifactId> artifacts = getArtifactIds();
+        return singletonList( new SimpleFilter(
+                getMatchingJars( artifacts , new ArtifactId( "*:*" ) ),
+                Collections.<String>emptySet(),
+                new HashSet<>( Arrays.asList( "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA" ) ) ) );
     }
 
     private Set<File> getMatchingJars( final Map<Artifact, ArtifactId> artifacts, final ArtifactId pattern )
