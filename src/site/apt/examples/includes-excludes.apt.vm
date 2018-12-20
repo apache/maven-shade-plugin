@@ -122,6 +122,19 @@ Selecting Contents for Uber JAR
   was introduced in plugin version 1.3. It excludes all signature related files from every artifact, regardless of its
   group or artifact id.
 
+  Note that if you didn't specify a not null <<<filters>>> value then the following setup will be done:
+
++----
+<filter>
+  <artifact>*:*</artifact>
+  <excludes>
+    <exclude>META-INF/*.SF</exclude>
+    <exclude>META-INF/*.DSA</exclude>
+    <exclude>META-INF/*.RSA</exclude>
+  </excludes>
+</filter>
++----
+
   Besides user-specified filters, the plugin can also be configured to automatically remove all classes of dependencies
   that are not used by the project, thereby minimizing the resulting uber JAR:
 
