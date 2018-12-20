@@ -504,6 +504,11 @@ public class ShadeMojo
                         projectHelper.attachArtifact( project, "java-source", shadedClassifierName + "-sources",
                                                       sourcesJar );
                     }
+                    if ( shadeTestJar )
+                    {
+                        projectHelper.attachArtifact( project, "test-jar", shadedClassifierName + "-tests",
+                                                      testJar );
+                    }
                 }
                 else if ( !renamed )
                 {
@@ -519,8 +524,6 @@ public class ShadeMojo
                             File shadedSources = shadedSourcesArtifactFile();
 
                             replaceFile( shadedSources, sourcesJar );
-
-                            projectHelper.attachArtifact( project, "java-source", "sources", shadedSources );
                         }
 
                         if ( shadeTestJar )
@@ -529,8 +532,6 @@ public class ShadeMojo
                             File shadedTests = shadedTestArtifactFile();
 
                             replaceFile( shadedTests, testJar );
-
-                            projectHelper.attachArtifact( project, "jar", "tests", shadedTests );
                         }
 
                         if ( createDependencyReducedPom )
