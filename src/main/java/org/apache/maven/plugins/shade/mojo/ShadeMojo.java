@@ -1252,9 +1252,7 @@ public class ShadeMojo
                     boolean found = false;
                     for ( Dependency dep : transitiveDeps )
                     {
-                        if ( dep.getArtifactId().equals( n3.getArtifact().getArtifactId() ) //
-                            && dep.getGroupId().equals( n3.getArtifact().getGroupId() ) //
-                            && ( dep.getType() == null || dep.getType().equals( n3.getArtifact().getType() ) ) )
+                        if ( getId( dep ).equals( getId( n3.getArtifact() ) ) )
                         {
                             found = true;
                             break;
@@ -1269,9 +1267,7 @@ public class ShadeMojo
                     {
                         for ( Dependency dep : dependencies )
                         {
-                            if ( dep.getArtifactId().equals( n2.getArtifact().getArtifactId() ) //
-                                && dep.getGroupId().equals( n2.getArtifact().getGroupId() ) //
-                                && ( dep.getType() == null || dep.getType().equals( n2.getArtifact().getType() ) ) )
+                            if ( getId( dep ).equals( getId( n2.getArtifact() ) ) )
                             {
                                 Exclusion exclusion = new Exclusion();
                                 exclusion.setArtifactId( n3.getArtifact().getArtifactId() );
