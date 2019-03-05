@@ -1178,9 +1178,17 @@ public class ShadeMojo
                                 Exclusion exclusion = new Exclusion();
                                 exclusion.setArtifactId( n3.getArtifact().getArtifactId() );
                                 exclusion.setGroupId( n3.getArtifact().getGroupId() );
-                                dep.addExclusion( exclusion );
-                                modified = true;
-                                break;
+                                // only add an exclusion if it's not already present.
+                                for ( Exclusion ex : dep.getExclusions() )
+                                {
+                                    if ( !ex.getArtifactId().equals( exclusion.getArtifactId() )
+                                        || !ex.getGroupId().equals( exclusion.getGroupId() ) )
+                                    {
+                                        dep.addExclusion( exclusion );
+                                        modified = true;
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
