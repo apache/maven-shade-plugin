@@ -332,6 +332,17 @@ public class ShadeMojo
     private boolean minimizeJar;
 
     /**
+     * When {@code true}, classes will be safe from getting stripped down by {@code minimizeJar} if they are
+     * services (i. e. referenced by a text file contained in {@code META-INF/services}.
+     *
+     * @see #minimizeJar
+     *
+     * @since 3.2.2
+     */
+    @Parameter
+    private boolean keepServices;
+
+    /**
      * The path to the output file for the shaded artifact. When this parameter is set, the created archive will neither
      * replace the project's main artifact nor will it be attached. Hence, this parameter causes the parameters
      * {@link #finalName}, {@link #shadedArtifactAttached}, {@link #shadedClassifierName} and
@@ -821,7 +832,7 @@ public class ShadeMojo
 
             try
             {
-                filters.add( new MinijarFilter( project, getLog(), simpleFilters ) );
+                filters.add( new MinijarFilter( project, getLog(), simpleFilters, keepServices ) );
             }
             catch ( IOException e )
             {
