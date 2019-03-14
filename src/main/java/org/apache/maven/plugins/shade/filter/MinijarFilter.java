@@ -20,6 +20,7 @@ package org.apache.maven.plugins.shade.filter;
  */
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.IOUtil;
@@ -27,15 +28,22 @@ import org.vafer.jdependency.Clazz;
 import org.vafer.jdependency.Clazzpath;
 import org.vafer.jdependency.ClazzpathUnit;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.zip.ZipException;
 
 /**
@@ -111,7 +119,87 @@ public class MinijarFilter
             removable.removeAll( artifactUnit.getTransitiveDependencies() );
             removeSpecificallyIncludedClasses( project,
                 simpleFilters == null ? Collections.<SimpleFilter>emptyList() : simpleFilters );
+            removeServices( project, cp );
         }
+    }
+
+    private void removeServices( final MavenProject project, final Clazzpath cp )
+    {
+        boolean repeatScan;
+        do
+        {
+            repeatScan = false;
+            final Set<Clazz> neededClasses = cp.getClazzes();
+            neededClasses.removeAll( removable );
+            try
+            {
+                for ( final String fileName : project.getRuntimeClasspathElements() )
+                {
+                    try ( final JarFile jar = new JarFile( fileName ) )
+                    {
+                        for ( final Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements(); )
+                        {
+                            final JarEntry jarEntry = entries.nextElement();
+                            if ( jarEntry.isDirectory() || !jarEntry.getName().startsWith( "META-INF/services/" ) )
+                            {
+                                continue;
+                            }
+
+                            final String serviceClassName =
+                              jarEntry.getName().substring( "META-INF/services/".length() );
+                            final boolean isNeededClass = neededClasses.contains( cp.getClazz( serviceClassName ) );
+                            if ( !isNeededClass )
+                            {
+                                continue;
+                            }
+
+                            try ( final BufferedReader bufferedReader =
+                            new BufferedReader( new InputStreamReader( jar.getInputStream( jarEntry ), UTF_8 ) ) )
+                            {
+                                for ( String line = bufferedReader.readLine(); line != null;
+                                    line = bufferedReader.readLine() )
+                                {
+                                    final String className = line.split( "#", 2 )[0].trim();
+                                    if ( className.isEmpty() )
+                                    {
+                                        continue;
+                                    }
+
+                                    final Clazz clazz = cp.getClazz( className );
+                                    if ( clazz == null || !removable.contains( clazz ) )
+                                    {
+                                        continue;
+                                    }
+
+                                    log.info( className + " was not removed because it is a service" );
+                                    removeClass( cp, clazz );
+                                    repeatScan = true; // check whether the found classes use services in turn
+                                }
+                            }
+                            catch ( final IOException e )
+                            {
+                                log.warn( e.getMessage() );
+                            }
+                        }
+                    }
+                    catch ( final IOException e )
+                    {
+                        log.warn( e.getMessage() );
+                    }
+                }
+            }
+            catch ( final DependencyResolutionRequiredException e )
+            {
+                log.warn( e.getMessage() );
+            }
+        }
+        while ( repeatScan );
+    }
+
+    private void removeClass( final Clazzpath clazzPath, final Clazz clazz )
+    {
+        removable.remove( clazz );
+        removable.removeAll( clazz.getTransitiveDependencies() );
     }
 
     private ClazzpathUnit addDependencyToClasspath( Clazzpath cp, Artifact dependency )
