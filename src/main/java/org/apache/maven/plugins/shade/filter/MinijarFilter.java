@@ -79,18 +79,17 @@ public class MinijarFilter
     public MinijarFilter( MavenProject project, Log log )
         throws IOException
     {
-        this( project, log, Collections.<SimpleFilter>emptyList(), false );
+        this( project, log, Collections.<SimpleFilter>emptyList() );
     }
 
     /**
      * @param project {@link MavenProject}
      * @param log {@link Log}
      * @param simpleFilters {@link SimpleFilter}
-     * @param keepServices don't eliminate classes needed by {@code META-INF/services}
      * @throws IOException in case of errors.
      * @since 1.6
      */
-    public MinijarFilter( MavenProject project, Log log, List<SimpleFilter> simpleFilters, final boolean keepServices )
+    public MinijarFilter( MavenProject project, Log log, List<SimpleFilter> simpleFilters )
         throws IOException
     {
       this.log = log;
@@ -118,11 +117,7 @@ public class MinijarFilter
             removable.removeAll( artifactUnit.getTransitiveDependencies() );
             removeSpecificallyIncludedClasses( project,
                 simpleFilters == null ? Collections.<SimpleFilter>emptyList() : simpleFilters );
-
-            if ( keepServices )
-            {
-                removeServices( project, cp );
-            }
+            removeServices( project, cp );
         }
     }
 

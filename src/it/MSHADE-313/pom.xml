@@ -67,7 +67,6 @@ under the License.
             <configuration>
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <minimizeJar>true</minimizeJar>
-              <keepServices>true</keepServices>
             </configuration>
           </execution>
         </executions>
