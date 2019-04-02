@@ -28,6 +28,8 @@ import org.vafer.jdependency.Clazz;
 import org.vafer.jdependency.Clazzpath;
 import org.vafer.jdependency.ClazzpathUnit;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -138,13 +140,19 @@ public class MinijarFilter
                         }
 
                         try ( final BufferedReader bufferedReader =
-                           new BufferedReader( new InputStreamReader( jar.getInputStream( jarEntry ) ) ) )
+                           new BufferedReader( new InputStreamReader( jar.getInputStream( jarEntry ), UTF_8 ) ) )
                         {
                             for ( String className = bufferedReader.readLine(); className != null;
                                 className = bufferedReader.readLine() )
                             {
-                               log.info( className + " was not removed because it is a service" );
-                               removeClass( cp , className );
+                                className = className.split( "#", 2 )[0].trim();
+                                if ( className.isEmpty() )
+                                {
+                                    continue;
+                                }
+
+                                log.info( className + " was not removed because it is a service" );
+                                removeClass( cp, className );
                             }
                         }
                         catch ( final IOException e )
@@ -168,6 +176,11 @@ public class MinijarFilter
     private void removeClass( final Clazzpath clazzPath, final String className )
     {
         final Clazz clazz = clazzPath.getClazz( className );
+        if ( clazz == null )
+        {
+            return;
+        }
+
         removable.remove( clazz );
         removable.removeAll( clazz.getTransitiveDependencies() );
     }
