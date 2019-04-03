@@ -142,10 +142,10 @@ public class MinijarFilter
                         try ( final BufferedReader bufferedReader =
                            new BufferedReader( new InputStreamReader( jar.getInputStream( jarEntry ), UTF_8 ) ) )
                         {
-                            for ( String className = bufferedReader.readLine(); className != null;
-                                className = bufferedReader.readLine() )
+                            for ( String line = bufferedReader.readLine(); line != null;
+                                line = bufferedReader.readLine() )
                             {
-                                className = className.split( "#", 2 )[0].trim();
+                                final String className = line.split( "#", 2 )[0].trim();
                                 if ( className.isEmpty() )
                                 {
                                     continue;
