@@ -23,17 +23,6 @@ under the License.
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.apache.maven.its.shade.mj</groupId>
-  <artifactId>aggregate</artifactId>
+  <artifactId>service</artifactId>
   <version>1.0</version>
-  <packaging>pom</packaging>
-
-  <name>MSHADE-313</name>
-  <description>
-    Prevent minimizeJar from excluding classes that are used by services.
-  </description>
-
-  <modules>
-    <module>service</module>
-    <module>test</module>
-  </modules>
 </project>

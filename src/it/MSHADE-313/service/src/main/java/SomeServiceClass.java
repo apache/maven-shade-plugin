@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -16,38 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
-import java.util.jar.*;
 
-String[] wanted =
+public class SomeServiceClass implements SomeServiceInterface
 {
-    "Main.class",
-    "SomeServiceInterface.class",
-    "SomeServiceClass.class",
-    "SomeReferencedClass.class"
-};
-
-String[] unwanted =
-{
-    "SomeUnreferencedClass.class"
-};
-
-JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.0.jar" ) );
-
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
-    {
-        throw new IllegalStateException( "wanted path is missing: " + path );
-    }
+    private static SomeReferencedClass anEssentialDependency;
 }
-
-for ( String path : unwanted )
-{
-    if ( jarFile.getEntry( path ) != null )
-    {
-        throw new IllegalStateException( "unwanted path is present: " + path );
-    }
-}
-
-jarFile.close();
