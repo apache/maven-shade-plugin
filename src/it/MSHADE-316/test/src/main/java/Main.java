@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.mojo;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,38 +17,13 @@ package org.apache.maven.plugins.shade.mojo;
  * under the License.
  */
 
-import java.util.Set;
-
-/**
- * @author David Blevins
- */
-public class ArchiveFilter
+public class Main
 {
-    private String artifact;
+    public SomeUsedClass essentialDependency;
 
-    private Set<String> includes;
-
-    private Set<String> excludes;
-
-    private boolean excludeDefaults = true;
-
-    public String getArtifact()
+    public static void main( String[] args ) throws ClassNotFoundException
     {
-        return artifact;
-    }
-
-    public Set<String> getIncludes()
-    {
-        return includes;
-    }
-
-    public Set<String> getExcludes()
-    {
-        return excludes;
-    }
-
-    public boolean getExcludeDefaults()
-    {
-        return excludeDefaults;
+        Class.forName( "x.y.z.SomeExemptedClass" );
+        Class.forName( "x.y.z.AnotherExemptedClass" );
     }
 }

@@ -490,7 +490,7 @@ public class ShadeMojo
                         replaceFile( finalFile, testJar );
                         testJar = finalFile;
                     }
-                    
+                
                     renamed = true;
                 }
 
@@ -712,7 +712,7 @@ public class ShadeMojo
         coordinate.setVersion( artifact.getVersion() );
         coordinate.setExtension( "jar" );
         coordinate.setClassifier( "sources" );
-        
+
         Artifact resolvedArtifact;
         try
         {
@@ -809,7 +809,7 @@ public class ShadeMojo
                     continue;
                 }
 
-                simpleFilters.add( new SimpleFilter( jars, filter.getIncludes(), filter.getExcludes() ) );
+                simpleFilters.add( new SimpleFilter( jars, filter ) );
             }
         }
 
