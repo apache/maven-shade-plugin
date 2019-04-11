@@ -150,7 +150,7 @@ public class ShadeMojo
      * syntax <code>groupId</code> is equivalent to <code>groupId:*:*:*</code>, <code>groupId:artifactId</code> is
      * equivalent to <code>groupId:artifactId:*:*</code> and <code>groupId:artifactId:classifier</code> is equivalent to
      * <code>groupId:artifactId:*:classifier</code>. For example:
-     * 
+     *
      * <pre>
      * &lt;artifactSet&gt;
      *   &lt;includes&gt;
@@ -167,7 +167,7 @@ public class ShadeMojo
 
     /**
      * Packages to be relocated. For example:
-     * 
+     *
      * <pre>
      * &lt;relocations&gt;
      *   &lt;relocation&gt;
@@ -182,7 +182,7 @@ public class ShadeMojo
      *   &lt;/relocation&gt;
      * &lt;/relocations&gt;
      * </pre>
-     * 
+     *
      * <em>Note:</em> Support for includes exists only since version 1.4.
      */
     @SuppressWarnings( "MismatchedReadAndWriteOfArray" )
@@ -203,7 +203,7 @@ public class ShadeMojo
      * to use an include to collect a set of files from the archive then use excludes to further reduce the set. By
      * default, all files are included and no files are excluded. If multiple filters apply to an artifact, the
      * intersection of the matched files will be included in the final JAR. For example:
-     * 
+     *
      * <pre>
      * &lt;filters&gt;
      *   &lt;filter&gt;
@@ -330,6 +330,12 @@ public class ShadeMojo
      */
     @Parameter
     private boolean minimizeJar;
+
+    /**
+     * @since 3.2.2
+     */
+    @Parameter
+    private Set<String> exemptions;
 
     /**
      * The path to the output file for the shaded artifact. When this parameter is set, the created archive will neither
@@ -490,7 +496,7 @@ public class ShadeMojo
                         replaceFile( finalFile, testJar );
                         testJar = finalFile;
                     }
-                    
+
                     renamed = true;
                 }
 
@@ -722,7 +728,7 @@ public class ShadeMojo
         coordinate.setVersion( artifact.getVersion() );
         coordinate.setExtension( "jar" );
         coordinate.setClassifier( "sources" );
-        
+
         Artifact resolvedArtifact;
         try
         {
@@ -831,7 +837,7 @@ public class ShadeMojo
 
             try
             {
-                filters.add( new MinijarFilter( project, getLog(), simpleFilters ) );
+                filters.add( new MinijarFilter( project, getLog(), simpleFilters, exemptions ) );
             }
             catch ( IOException e )
             {
@@ -1007,7 +1013,7 @@ public class ShadeMojo
                 }
 
                 File f = dependencyReducedPomLocation;
-                // MSHADE-225 
+                // MSHADE-225
                 // Works for now, maybe there's a better algorithm where no for-loop is required
                 if ( loopCounter == 0 )
                 {

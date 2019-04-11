@@ -104,7 +104,7 @@ public class SimpleFilter
         return matchPaths( excludes, classFile );
     }
 
-    private boolean matchPaths( Set<String> patterns, String classFile )
+    static boolean matchPaths( Set<String> patterns, String classFile )
     {
         for ( String pattern : patterns )
         {
@@ -118,12 +118,12 @@ public class SimpleFilter
         return false;
     }
 
-    private String normalizePath( String path )
+    static String normalizePath( String path )
     {
         return ( path != null ) ? path.replace( File.separatorChar == '/' ? '\\' : '/', File.separatorChar ) : null;
     }
 
-    private Set<String> normalizePatterns( Set<String> patterns )
+    static Set<String> normalizePatterns( Set<String> patterns )
     {
         Set<String> result = new HashSet<String>();
 

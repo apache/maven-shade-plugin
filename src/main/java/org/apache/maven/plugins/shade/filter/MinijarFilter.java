@@ -73,17 +73,18 @@ public class MinijarFilter
     public MinijarFilter( MavenProject project, Log log )
         throws IOException
     {
-        this( project, log, Collections.<SimpleFilter>emptyList() );
+        this( project, log, Collections.<SimpleFilter>emptyList(), Collections.<String>emptySet() );
     }
 
     /**
      * @param project {@link MavenProject}
      * @param log {@link Log}
      * @param simpleFilters {@link SimpleFilter}
+     * @param exemptions files to be explicitly included
      * @throws IOException in case of errors.
      * @since 1.6
      */
-    public MinijarFilter( MavenProject project, Log log, List<SimpleFilter> simpleFilters )
+    public MinijarFilter( MavenProject project, Log log, List<SimpleFilter> simpleFilters, Set<String> exemptions )
         throws IOException
     {
       this.log = log;
@@ -109,9 +110,35 @@ public class MinijarFilter
             removePackages( artifactUnit );
             removable.removeAll( artifactUnit.getClazzes() );
             removable.removeAll( artifactUnit.getTransitiveDependencies() );
+            removeExemptions( cp, exemptions );
             removeSpecificallyIncludedClasses( project,
                 simpleFilters == null ? Collections.<SimpleFilter>emptyList() : simpleFilters );
         }
+    }
+
+    private void removeExemptions( final Clazzpath clazzPath, final Set<String> exemptions )
+    {
+        if ( exemptions == null )
+        {
+            return;
+        }
+
+        final Set<String> patterns = SimpleFilter.normalizePatterns( exemptions );
+        for ( final Clazz clazz : new HashSet<>( removable ) )
+        {
+            if ( SimpleFilter.matchPaths( patterns,
+              SimpleFilter.normalizePath( clazz.getName().replace( '.', '/' ) ) ) )
+            {
+                log.info( clazz.getName() + " not removed because it was explicitly exempted" );
+                removeClass( clazzPath, clazz );
+            }
+        }
+    }
+
+    private void removeClass( final Clazzpath clazzPath, final Clazz clazz )
+    {
+        removable.remove( clazz );
+        removable.removeAll( clazz.getTransitiveDependencies() );
     }
 
     private ClazzpathUnit addDependencyToClasspath( Clazzpath cp, Artifact dependency )
