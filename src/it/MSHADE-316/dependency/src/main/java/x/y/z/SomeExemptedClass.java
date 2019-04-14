@@ -21,4 +21,5 @@ package x.y.z;
 
 public class SomeExemptedClass
 {
+    public SomeDependencyOfExemptedClass essentialDependency;
 }
