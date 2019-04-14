@@ -22,14 +22,22 @@ import java.util.jar.*;
 String[] wanted =
 {
     "Main.class",
+    "META-INF/services/SomeServiceInterface",
     "SomeServiceInterface.class",
     "SomeServiceClass.class",
-    "SomeReferencedClass.class"
+    "SomeReferencedClass.class",
+    "META-INF/services/DependencyServiceInterface",
+    "DependencyServiceInterface.class",
+    "DependencyServiceClass.class",
+    "DependencyReferencedClass.class"
 };
 
 String[] unwanted =
 {
-    "SomeUnreferencedClass.class"
+    "UnusedServiceInterface.class",
+    "UnusedServiceClass.class",
+    "SomeUnreferencedClass.class",
+    "DependencyUnreferencedClass.class"
 };
 
 JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.0.jar" ) );

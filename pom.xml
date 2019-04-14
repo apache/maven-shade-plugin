@@ -208,12 +208,8 @@
               <exclude>src/it/rerun-with-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
               <exclude>src/it/rerun-without-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
               <exclude>src/it/MSHADE-182/src/main/resources/META-INF/services/relocateme.Service</exclude>
-              <exclude>src/it/MSHADE-182/target/classes/META-INF/services/relocateme.Service</exclude>
-              <exclude>src/it/MSHADE-182/build.log</exclude>
-              <exclude>src/it/MSHADE-313/service/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst</exclude>
-              <exclude>src/it/MSHADE-313/service/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst</exclude>
             </excludes>
-          </configuration>
+         </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

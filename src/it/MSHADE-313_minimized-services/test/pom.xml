@@ -29,7 +29,13 @@ under the License.
   <dependencies>
     <dependency>
       <groupId>org.apache.maven.its.shade.mj</groupId>
-      <artifactId>service</artifactId>
+      <artifactId>unused-service</artifactId>
+      <version>1.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven.its.shade.mj</groupId>
+      <artifactId>used-service</artifactId>
       <version>1.0</version>
     </dependency>
   </dependencies>
