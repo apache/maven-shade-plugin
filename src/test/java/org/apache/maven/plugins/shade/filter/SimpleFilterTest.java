@@ -19,9 +19,13 @@ package org.apache.maven.plugins.shade.filter;
  * under the License.
  */
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.util.Collections;
 
 import junit.framework.TestCase;
+import org.apache.maven.plugins.shade.mojo.ArchiveFilter;
 
 /**
  * @author Benjamin Bentmann
@@ -72,6 +76,21 @@ public class SimpleFilterTest
         assertFalse( filter.isFiltered( "Test.class" ) );
         assertTrue( filter.isFiltered( "org/Test.class" ) );
         assertTrue( filter.isFiltered( "org/apache/Test.class" ) );
+
+        // given defaults shall be excluded and a specific include is given when filtering then only specific file must be included
+        final ArchiveFilter archiveFilter = mock( ArchiveFilter.class );
+        when( archiveFilter.getIncludes() ).thenReturn( Collections.singleton( "specific include" ) );
+        when( archiveFilter.getExcludes() ).thenReturn( Collections.<String> emptySet() );
+        when( archiveFilter.getExcludeDefaults() ).thenReturn( true );
+        filter = new SimpleFilter( null, archiveFilter );
+        assertFalse( filter.isFiltered( "specific include" ) );
+        assertTrue( filter.isFiltered( "some other file matched by default include" ) );
+
+        // given defaults shall be included and a specific include is given when filtering then all files must be included
+        when( archiveFilter.getExcludeDefaults() ).thenReturn( false );
+        filter = new SimpleFilter( null, archiveFilter );
+        assertFalse( filter.isFiltered( "specific include" ) );
+        assertFalse( filter.isFiltered( "some other file matched by default include" ) );
     }
 
 }

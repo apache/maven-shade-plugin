@@ -23,7 +23,10 @@ import org.codehaus.plexus.util.SelectorUtils;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
+
+import org.apache.maven.plugins.shade.mojo.ArchiveFilter;
 
 /**
  * @author David Blevins
@@ -42,16 +45,42 @@ public class SimpleFilter
 
     private Set<String> excludes;
 
+    private boolean excludeDefaults = true;
+
+    /**
+     * @deprecated As of release 3.2.2, replaced by {@link #SimpleFilter(Set<File>, ArchiveFilter)}
+     * @param jars set of {@link File}s.
+     * @param includes set of includes.
+     * @param excludes set of excludes.
+     */
+    @Deprecated
+    public SimpleFilter( Set<File> jars, Set<String> includes, Set<String> excludes )
+    {
+        this( jars, includes, excludes, true );
+    }
+
+    /**
+     * @param jars set of {@link File}s.
+     * @param archiveFilters set of {@link ArchiveFilter}s.
+     */
+    public SimpleFilter( final Set<File> jars, final ArchiveFilter archiveFilter )
+    {
+        this( jars, archiveFilter.getIncludes(), archiveFilter.getExcludes(), archiveFilter.getExcludeDefaults() );
+    }
+
     /**
      * @param jars set of {@link File}s.
      * @param includes set of includes.
-     * @param excludes set of excludes
+     * @param excludes set of excludes.
+     * @param excludeDefaults whether to exclude default includes once includes are provided explicitly.
      */
-    public SimpleFilter( Set<File> jars, Set<String> includes, Set<String> excludes )
+    private SimpleFilter( final Set<File> jars, final Set<String> includes, final Set<String> excludes,
+      final boolean excludeDefaults )
     {
-        this.jars = ( jars != null ) ? new HashSet<>( jars ) : new HashSet<File>();
+        this.jars = ( jars != null ) ? Collections.<File>unmodifiableSet( jars ) : Collections.<File>emptySet();
         this.includes = normalizePatterns( includes );
         this.excludes = normalizePatterns( excludes );
+        this.excludeDefaults = excludeDefaults;
     }
 
     /** {@inheritDoc} */
@@ -65,7 +94,7 @@ public class SimpleFilter
     {
         String path = normalizePath( classFile );
 
-        return !( isIncluded( path ) && !isExcluded( path ) );
+        return !( ( !excludeDefaults || isIncluded( path ) ) && !isExcluded( path ) );
     }
 
     /**
