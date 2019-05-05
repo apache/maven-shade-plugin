@@ -54,6 +54,7 @@ import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
+import org.apache.maven.shared.utils.logging.MessageUtils;
 import org.codehaus.plexus.PlexusConstants;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
@@ -606,7 +607,8 @@ public class ShadeMojo
         {
             if ( !artifactSelector.isSelected( artifact ) )
             {
-                getLog().info( "Excluding " + artifact.getId() + " from the shaded jar." );
+                String exclusionMessage = "Excluding " + artifact.getId() + " from the shaded jar.";
+                getLog().info( MessageUtils.buffer().warning( exclusionMessage ).toString() );
 
                 continue;
             }
