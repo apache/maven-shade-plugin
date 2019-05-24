@@ -532,12 +532,12 @@ public class ShadeMojo
 
                             projectHelper.attachArtifact( project, "jar", "tests", shadedTests );
                         }
-
-                        if ( createDependencyReducedPom )
-                        {
-                            createDependencyReducedPom( artifactIds );
-                        }
                     }
+                }
+
+                if ( createDependencyReducedPom )
+                {
+                    createDependencyReducedPom( artifactIds );
                 }
             }
         }
