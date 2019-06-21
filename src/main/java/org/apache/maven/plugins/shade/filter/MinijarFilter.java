@@ -38,7 +38,6 @@ import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
@@ -171,7 +170,7 @@ public class MinijarFilter
                                     }
 
                                     log.debug( className + " was not removed because it is a service" );
-                                    removeClass( cp, clazz );
+                                    removeClass( clazz );
                                     repeatScan = true; // check whether the found classes use services in turn
                                 }
                             }
@@ -195,7 +194,7 @@ public class MinijarFilter
         while ( repeatScan );
     }
 
-    private void removeClass( final Clazzpath clazzPath, final Clazz clazz )
+    private void removeClass( final Clazz clazz )
     {
         removable.remove( clazz );
         removable.removeAll( clazz.getTransitiveDependencies() );
@@ -267,16 +266,13 @@ public class MinijarFilter
                     if ( depClazzpathUnit != null )
                     {
                         Set<Clazz> clazzes = depClazzpathUnit.getClazzes();
-                        Iterator<Clazz> j = removable.iterator();
-                        while ( j.hasNext() )
+                        for ( final Clazz clazz : new HashSet<>( removable ) )
                         {
-                            Clazz clazz = j.next();
-
                             if ( clazzes.contains( clazz ) //
                                 && simpleFilter.isSpecificallyIncluded( clazz.getName().replace( '.', '/' ) ) )
                             {
                                 log.debug( clazz.getName() + " not removed because it was specifically included" );
-                                j.remove();
+                                removeClass( clazz );
                             }
                         }
                     }
