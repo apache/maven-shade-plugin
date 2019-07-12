@@ -47,7 +47,13 @@ Resource Transformers
 *-----------------------------------------+------------------------------------------+
 | {{ManifestResourceTransformer}}         | Sets entries in the <<<MANIFEST>>>       |
 *-----------------------------------------+------------------------------------------+
+| {{MicroprofileConfigTransformer}}       | Merges conflicting Microprofile Config properties based on an ordinal |
+*-----------------------------------------+------------------------------------------+
+| {{OpenWebBeansPropertiesTransformer}}   | Merges Apache OpenWebBeans configuration files |
+*-----------------------------------------+------------------------------------------+
 | {{PluginXmlResourceTransformer}}        | Aggregates Mavens <<<plugin.xml>>>       |
+*-----------------------------------------+------------------------------------------+
+| {{PropertiesTransformer}}               | Merges properties files owning an ordinal to solve conflicts |
 *-----------------------------------------+------------------------------------------+
 | {{ResourceBundleAppendingTransformer}}  | Merges ResourceBundles                  | 
 *-----------------------------------------+------------------------------------------+
@@ -538,3 +544,119 @@ Transformers in <<<org.apache.maven.plugins.shade.resource>>>
  ...
 </project>
 +-----
+
+* Merging properties files with {PropertiesTransformer}
+
+  The <<<PropertiesTransformer>>> allows a set of properties files to be merged and to resolve conflicts
+  based on an ordinal giving the priority of each file.
+  An optional <<<alreadyMergedKey>>> enables to have a boolean flag in the file which, if set to true,
+  request to use the file as it as the result of the merge. If two files are considered complete in the
+  merge process then the shade will fail.
+
++-----
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.properties.PropertiesTransformer">
+                  <!-- required configuration -->
+                  <resource>configuration/application.properties</resource>
+                  <ordinalKey>ordinal</ordinalKey>
+                  <!-- optional configuration -->
+                  <alreadyMergedKey>already_merged</alreadyMergedKey>
+                  <defaultOrdinal>0</defaultOrdinal>
+                  <reverseOrder>false</reverseOrder>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
++-----
+
+* Merging Apache OpenWebBeans configuration with {OpenWebBeansPropertiesTransformer}
+
+  <<<OpenWebBeansPropertiesTransformer>>> preconfigure a <<<PropertiesTransformer>>>
+  for Apache OpenWebBeans configuration files.
+
+
++-----
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer" />
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
++-----
+
+* Merging Microprofile Config properties with {MicroprofileConfigTransformer}
+
+  <<<MicroprofileConfigTransformer>>> preconfigure a <<<PropertiesTransformer>>>
+  for Microprofile Config. The only required configuration is the ordinal.
+  The <<<alreadyMergedKey>>> is supported but is not defined by the specification.
+
+
++-----
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.properties.MicroprofileConfigTransformer">
+                  <resource>configuration/app.properties</resource>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
++-----
+
