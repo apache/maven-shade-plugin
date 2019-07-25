@@ -19,9 +19,16 @@ package org.apache.maven.plugins.shade.resource.properties;
  * under the License.
  */
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -30,6 +37,8 @@ import java.util.jar.JarOutputStream;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.apache.maven.plugins.shade.resource.properties.io.NoCloseOutputStream;
+import org.apache.maven.plugins.shade.resource.properties.io.SkipPropertiesDateLineWriter;
 
 /**
  * Enables to merge a set of properties respecting priority between them.
@@ -99,7 +108,10 @@ public class PropertiesTransformer implements ResourceTransformer
             out.remove( alreadyMergedKey );
         }
         os.putNextEntry( new JarEntry( resource ) );
-        out.store( os, "# Merged by maven-shade-plugin (" + getClass().getName() + ")" );
+        final BufferedWriter writer = new SkipPropertiesDateLineWriter(
+                new OutputStreamWriter( new NoCloseOutputStream( os ), StandardCharsets.ISO_8859_1 ) );
+        out.store( writer, " Merged by maven-shade-plugin (" + getClass().getName() + ")" );
+        writer.close();
         os.closeEntry();
     }
 
@@ -185,7 +197,34 @@ public class PropertiesTransformer implements ResourceTransformer
 
     private static Properties mergeProperties( final List<Properties> sortedProperties )
     {
-        final Properties mergedProperties = new Properties();
+        final Properties mergedProperties = new Properties()
+        {
+            @Override
+            public synchronized Enumeration<Object> keys() // ensure it is sorted to be deterministic
+            {
+                final List<String> keys = new LinkedList<>();
+                for ( Object k : super.keySet() )
+                {
+                    keys.add( (String) k );
+                }
+                Collections.sort( keys );
+                final Iterator<String> it = keys.iterator();
+                return new Enumeration<Object>()
+                {
+                    @Override
+                    public boolean hasMoreElements()
+                    {
+                        return it.hasNext();
+                    }
+
+                    @Override
+                    public Object nextElement()
+                    {
+                        return it.next();
+                    }
+                };
+            }
+        };
         for ( final Properties p : sortedProperties )
         {
             mergedProperties.putAll( p );

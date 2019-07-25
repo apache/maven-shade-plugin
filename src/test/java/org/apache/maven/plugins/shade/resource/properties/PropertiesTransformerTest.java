@@ -19,9 +19,19 @@ package org.apache.maven.plugins.shade.resource.properties;
  * under the License.
  */
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Properties;
+
+import org.apache.maven.plugins.shade.resource.properties.io.NoCloseOutputStream;
+import org.apache.maven.plugins.shade.resource.properties.io.SkipPropertiesDateLineWriter;
 import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule;
 import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule.Property;
 import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule.Resource;
@@ -34,6 +44,26 @@ public class PropertiesTransformerTest
 {
     @Rule
     public final TestRule tester = new TransformerTesterRule();
+
+    @Test
+    public void propertiesRewritingIsStable() throws IOException
+    {
+        final Properties properties = new Properties();
+        properties.setProperty("a", "1");
+        properties.setProperty("b", "2");
+
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
+        final BufferedWriter writer = new SkipPropertiesDateLineWriter(
+                new OutputStreamWriter( new NoCloseOutputStream( os ), StandardCharsets.ISO_8859_1 ) );
+        properties.store( writer, " Merged by maven-shade-plugin" );
+        writer.close();
+        os.close();
+
+        assertEquals(
+            "# Merged by maven-shade-plugin\n" +
+            "b=2\n" +
+            "a=1\n", os.toString("UTF-8"));
+    }
 
     @Test
     public void canTransform()
@@ -52,7 +82,7 @@ public class PropertiesTransformerTest
                     @Resource(path = "foo/bar/my.properties", content = "a=b"),
                     @Resource(path = "foo/bar/my.properties", content = "c=d"),
             },
-            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\n#.*\na=b\nc=d\n")
+            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=b\nc=d\n")
     )
     public void mergeWithoutOverlap()
     {
@@ -70,7 +100,7 @@ public class PropertiesTransformerTest
                     @Resource(path = "foo/bar/my.properties", content = "a=b\npriority=1"),
                     @Resource(path = "foo/bar/my.properties", content = "a=c\npriority=2"),
             },
-            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\n#.*\na=d\n")
+            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=d\n")
     )
     public void mergeWithOverlap()
     {
@@ -87,7 +117,7 @@ public class PropertiesTransformerTest
                     @Resource(path = "foo/bar/my.properties", content = "a=b\ncomplete=true"),
                     @Resource(path = "foo/bar/my.properties", content = "a=c\npriority=2"),
             },
-            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\n#.*\na=b\n")
+            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=b\n")
     )
     public void mergeWithAlreadyMerged()
     {
