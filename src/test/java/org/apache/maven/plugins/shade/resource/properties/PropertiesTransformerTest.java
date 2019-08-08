@@ -48,7 +48,7 @@ public class PropertiesTransformerTest
     @Test
     public void propertiesRewritingIsStable() throws IOException
     {
-        final Properties properties = new Properties();
+        final Properties properties = new SortedProperties();
         properties.setProperty("a", "1");
         properties.setProperty("b", "2");
 
@@ -61,8 +61,8 @@ public class PropertiesTransformerTest
 
         assertEquals(
             "# Merged by maven-shade-plugin\n" +
-            "b=2\n" +
-            "a=1\n", os.toString("UTF-8"));
+            "a=1\n" +
+            "b=2\n", os.toString("UTF-8").replace( System.lineSeparator(), "\n" ) );
     }
 
     @Test

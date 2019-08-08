@@ -25,10 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -197,34 +193,7 @@ public class PropertiesTransformer implements ResourceTransformer
 
     private static Properties mergeProperties( final List<Properties> sortedProperties )
     {
-        final Properties mergedProperties = new Properties()
-        {
-            @Override
-            public synchronized Enumeration<Object> keys() // ensure it is sorted to be deterministic
-            {
-                final List<String> keys = new LinkedList<>();
-                for ( Object k : super.keySet() )
-                {
-                    keys.add( (String) k );
-                }
-                Collections.sort( keys );
-                final Iterator<String> it = keys.iterator();
-                return new Enumeration<Object>()
-                {
-                    @Override
-                    public boolean hasMoreElements()
-                    {
-                        return it.hasNext();
-                    }
-
-                    @Override
-                    public Object nextElement()
-                    {
-                        return it.next();
-                    }
-                };
-            }
-        };
+        final Properties mergedProperties = new SortedProperties();
         for ( final Properties p : sortedProperties )
         {
             mergedProperties.putAll( p );
