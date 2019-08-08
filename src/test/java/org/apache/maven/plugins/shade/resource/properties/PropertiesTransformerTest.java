@@ -62,7 +62,7 @@ public class PropertiesTransformerTest
         assertEquals(
             "# Merged by maven-shade-plugin\n" +
             "b=2\n" +
-            "a=1\n", os.toString("UTF-8"));
+            "a=1\n", os.toString("UTF-8").replace( System.lineSeparator(), "\n" ) );
     }
 
     @Test

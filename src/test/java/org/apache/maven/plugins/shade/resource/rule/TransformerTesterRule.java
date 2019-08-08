@@ -107,7 +107,7 @@ public class TransformerTesterRule implements TestRule
             assertNotNull( expected.path(), content );
             assertTrue(
                     expected.path() + ", expected=" + expected.content() + ", actual=" + content,
-                    content.matches( expected.content() ) );
+                    content.replace( System.lineSeparator(), "\n" ) .matches( expected.content() ) );
         }
     }
 
