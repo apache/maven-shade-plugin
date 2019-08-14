@@ -65,7 +65,7 @@ public class DefaultShaderTest
             @Override
             public void debug( final String s, final Throwable throwable )
             {
-                debugMessages.add(s);
+                debugMessages.add( s.replace( '\\', '/' ).trim() );
             }
 
             @Override
@@ -77,7 +77,7 @@ public class DefaultShaderTest
             @Override
             public void warn( final String s, final Throwable throwable )
             {
-                warnMessages.add(s);
+                warnMessages.add( s.replace( '\\', '/' ).trim() );
             }
 
             @Override
@@ -101,7 +101,7 @@ public class DefaultShaderTest
 
         // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
         // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
-        final Set<File> set = new LinkedHashSet<File>();
+        final Set<File> set = new LinkedHashSet<>();
         set.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
         set.add( new File( "src/test/jars/plexus-utils-1.4.1.jar" ) );
 
@@ -115,13 +115,12 @@ public class DefaultShaderTest
 
         final String failureWarnMessage = warnMessages.toString();
         assertTrue(failureWarnMessage, warnMessages.contains(
-                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resources: "));
-        assertTrue(failureWarnMessage, warnMessages.contains("  - META-INF/MANIFEST.MF"));
+                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resources:"));
+        assertTrue(failureWarnMessage, warnMessages.contains("- META-INF/MANIFEST.MF"));
 
         final String failureDebugMessage = debugMessages.toString();
         assertTrue(failureDebugMessage, debugMessages.contains(
-                "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar"
-                        .replace('/', File.separatorChar)));
+                "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar" ));
     }
 
     public void testShaderWithDefaultShadedPattern()

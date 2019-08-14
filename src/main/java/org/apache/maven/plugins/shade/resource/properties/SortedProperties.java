@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +32,10 @@ import java.util.Properties;
 import java.util.Set;
 
 /**
- * Properties instance sorting its keys on iterations.
+ * Internal Properties instance sorting its keys on iterations for store() usages.
+ * It ensures properties persistence is deterministic.
+ *
+ * IMPORTANT: this only overrides methods used accross JVM in store() so ordering is not guaranteed for other cases.
  */
 public class SortedProperties extends Properties
 {
@@ -48,7 +51,7 @@ public class SortedProperties extends Properties
                 return String.valueOf( o1.getKey() ).compareTo( String.valueOf( o2.getKey() ) );
             }
         } );
-        return new HashSet<>( entries );
+        return new LinkedHashSet<>( entries );
     }
 
     @Override
