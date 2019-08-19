@@ -54,7 +54,6 @@ import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
-import org.apache.maven.shared.utils.logging.MessageUtils;
 import org.codehaus.plexus.PlexusConstants;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
@@ -603,19 +602,20 @@ public class ShadeMojo
     private void processArtifactSelectors( Set<File> artifacts, Set<String> artifactIds, Set<File> sourceArtifacts,
                                            ArtifactSelector artifactSelector )
     {
+        List<String> skippedArtifacts = new ArrayList<String>();
+        List<String> excludedArtifacts = new ArrayList<String>();
         for ( Artifact artifact : project.getArtifacts() )
         {
             if ( !artifactSelector.isSelected( artifact ) )
             {
-                String exclusionMessage = "Excluding " + artifact.getId() + " from the shaded jar.";
-                getLog().info( MessageUtils.buffer().warning( exclusionMessage ).toString() );
+                excludedArtifacts.add( artifact.getId() );
 
                 continue;
             }
 
             if ( "pom".equals( artifact.getType() ) )
             {
-                getLog().info( "Skipping pom dependency " + artifact.getId() + " in the shaded jar." );
+                skippedArtifacts.add( artifact.getId() );
                 continue;
             }
 
@@ -639,6 +639,15 @@ public class ShadeMojo
                     }
                 }
             }
+        }
+
+        for ( String artifactId : skippedArtifacts )
+        {
+            getLog().info( "Skipping pom dependency " + artifactId + " in the shaded jar." );
+        }
+        for ( String artifactId : excludedArtifacts )
+        {
+            getLog().info( "Excluding " + artifactId + " from the shaded jar." );
         }
     }
 
