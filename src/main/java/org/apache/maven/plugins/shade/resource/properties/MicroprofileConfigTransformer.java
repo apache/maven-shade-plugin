@@ -1,3 +1,5 @@
+package org.apache.maven.plugins.shade.resource.properties;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -16,39 +18,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
-import java.util.jar.*;
 
-String[] wanted =
+/**
+ * Enables to merge Microprofile Config configuration files properly respecting their ordinal.
+ *
+ * @since 3.2.2
+ */
+public class MicroprofileConfigTransformer extends PropertiesTransformer
 {
-    "Main.class",
-    "SomeUsedClass.class",
-    "x/y/z/SomeExemptedClass.class",
-    "x/y/z/AnotherExemptedClass.class",
-    "x/y/z/SomeDependencyOfExemptedClass.class"
-};
-
-String[] unwanted =
-{
-    "SomeUnusedClass.class"
-};
-
-JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.0.jar" ) );
-
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
+    protected MicroprofileConfigTransformer()
     {
-        throw new IllegalStateException( "wanted path is missing: " + path );
+        super( null, "config_ordinal", 1000, false );
     }
 }
-
-for ( String path : unwanted )
-{
-    if ( jarFile.getEntry( path ) != null )
-    {
-        throw new IllegalStateException( "unwanted path is present: " + path );
-    }
-}
-
-jarFile.close();
