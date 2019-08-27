@@ -76,6 +76,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
+import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomReplaceTransformers;
 
 /**
  * Mojo that performs shading delegating to the Shader component.
@@ -286,6 +287,15 @@ public class ShadeMojo
     private boolean generateUniqueDependencyReducedPom;
 
     /**
+     * Add dependency reduced POM to the JAR instead of the original one provided by the project.
+     * If {@code createDependencyReducedPom} is {@code false} this parameter will be ignored.
+     *
+     * @since 3.3.0
+     */
+    @Parameter( defaultValue = "false" )
+    private boolean useDependencyReducedPomInJar;
+
+    /**
      * When true, dependencies are kept in the pom but with scope 'provided'; when false, the dependency is removed.
      */
     @Parameter
@@ -449,6 +459,19 @@ public class ShadeMojo
 
             List<ResourceTransformer> resourceTransformers = getResourceTransformers();
 
+            if ( createDependencyReducedPom )
+            {
+                createDependencyReducedPom( artifactIds );
+
+                if ( useDependencyReducedPomInJar )
+                {
+                    // In some cases the used implementation of the resourceTransformers is immutable.
+                    resourceTransformers = new ArrayList<>( resourceTransformers );
+                    resourceTransformers.addAll(
+                            createPomReplaceTransformers( project, dependencyReducedPomLocation ) );
+                }
+            }
+
             ShadeRequest shadeRequest = shadeRequest( "jar", artifacts, outputJar, filters, relocators,
                     resourceTransformers );
 
@@ -587,11 +610,6 @@ public class ShadeMojo
                                 shadedTestSources );
                         }
                     }
-                }
-
-                if ( createDependencyReducedPom )
-                {
-                    createDependencyReducedPom( artifactIds );
                 }
             }
         }
