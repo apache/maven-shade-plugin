@@ -76,6 +76,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
+import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomXmlReplaceTransformers;
 
 /**
  * Mojo that performs shading delegating to the Shader component.
@@ -286,6 +287,14 @@ public class ShadeMojo
     private boolean generateUniqueDependencyReducedPom;
 
     /**
+     * Do we put the dependency reduced pom in the jar instead of the jar file provided by the project.
+     *
+     * @since 3.2.5
+     */
+    @Parameter( defaultValue = "false" )
+    private boolean useDependencyReducedPomInJar;
+
+    /**
      * When true, dependencies are kept in the pom but with scope 'provided'; when false, the dependency is removed.
      */
     @Parameter
@@ -449,6 +458,24 @@ public class ShadeMojo
 
             List<ResourceTransformer> resourceTransformers = getResourceTransformers();
 
+            if ( createDependencyReducedPom )
+            {
+                createDependencyReducedPom( artifactIds );
+            }
+
+            if ( useDependencyReducedPomInJar )
+            {
+                if ( !createDependencyReducedPom )
+                {
+                    throw new MojoExecutionException(
+                            "Cannot use the dependency-reduced-pom.xml if it is not created." );
+                }
+
+                // In some cases the used implementation of the resourceTransformers is immutable.
+                resourceTransformers = new ArrayList<>( resourceTransformers );
+                resourceTransformers.addAll( createPomXmlReplaceTransformers( project, dependencyReducedPomLocation ) );
+            }
+
             ShadeRequest shadeRequest = shadeRequest( "jar", artifacts, outputJar, filters, relocators,
                     resourceTransformers );
 
@@ -587,11 +614,6 @@ public class ShadeMojo
                                 shadedTestSources );
                         }
                     }
-                }
-
-                if ( createDependencyReducedPom )
-                {
-                    createDependencyReducedPom( artifactIds );
                 }
             }
         }
