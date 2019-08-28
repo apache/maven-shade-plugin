@@ -296,6 +296,15 @@ public class ShadeMojo
     private boolean useDependencyReducedPomInJar;
 
     /**
+     * Do we hide the shaded/removed dependencies from the rest of the reactor build.
+     * Requires both {@code createDependencyReducedPom} and {@code useDependencyReducedPomInJar} to be true.
+     *
+     * @since 3.3.0
+     */
+    @Parameter( defaultValue = "false" )
+    private boolean hideReducedDependenciesInReactor;
+
+    /**
      * When true, dependencies are kept in the pom but with scope 'provided'; when false, the dependency is removed.
      */
     @Parameter
@@ -469,6 +478,25 @@ public class ShadeMojo
                     resourceTransformers = new ArrayList<>( resourceTransformers );
                     resourceTransformers.addAll(
                             createPomReplaceTransformers( project, dependencyReducedPomLocation ) );
+
+                    if ( hideReducedDependenciesInReactor )
+                    {
+                        if ( !artifactIds.isEmpty() )
+                        {
+                            getLog().info( "Hiding these shaded dependencies from the rest of the reactor build:" );
+                            getLog().info( artifactIds.toString() );
+                            List<Dependency> dependencies = new ArrayList<>();
+                            for ( Dependency dependency : project.getDependencies() )
+                            {
+                                if ( !artifactIds.contains( getId( dependency ) ) )
+                                {
+                                    dependencies.add( dependency );
+                                }
+                            }
+                            project.setDependencies( dependencies );
+                        }
+                    }
+
                 }
             }
 
