@@ -18,7 +18,6 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -->
-
 <project>
   <modelVersion>4.0.0</modelVersion>
 
@@ -34,7 +33,7 @@ under the License.
   <version>1.0</version>
   <packaging>jar</packaging>
 
-  <name>MSHADE-none</name>
+  <name>MSHADE-327</name>
   <description>
     Test handling of relocations and minification.
   </description>
