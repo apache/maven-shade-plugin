@@ -84,6 +84,9 @@
     <contributor>
       <name>Markus Karg</name>
     </contributor>
+    <contributor>
+      <name>Torsten Curdt</name>
+    </contributor>
   </contributors>
 
   <dependencies>
@@ -156,7 +159,7 @@
     <dependency>
       <groupId>org.vafer</groupId>
       <artifactId>jdependency</artifactId>
-      <version>2.1.1</version>
+      <version>2.3.0</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>

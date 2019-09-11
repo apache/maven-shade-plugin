@@ -46,8 +46,6 @@ import java.util.zip.ZipException;
 
 /**
  * A filter that prevents the inclusion of classes not required in the final jar.
- *
- * @author Torsten Curdt
  */
 public class MinijarFilter
     implements Filter
