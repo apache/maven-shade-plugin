@@ -39,7 +39,7 @@ public class GroovyResourceTransformer
     implements ResourceTransformer
 {
 
-    static final String EXT_MODULE_NAME = "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule";
+    static final String EXT_MODULE_NAME = "META-INF/groovy/org.codehaus.groovy.runtime.ExtensionModule";
 
     private List<String> extensionClassesList = new ArrayList<>();
 
