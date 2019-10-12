@@ -30,9 +30,8 @@ under the License.
   </parent>
 
   <groupId>org.apache.maven.its.shade.mj</groupId>
-  <artifactId>testmini-jdk11</artifactId>
+  <artifactId>testmini</artifactId>
   <version>1.0</version>
-  <packaging>jar</packaging>
 
   <name>MSHADE-302</name>
   <description>
@@ -52,11 +51,9 @@ under the License.
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.0</version>
+        <version>3.8.1</version>
         <configuration>
-          <source>11</source>
-          <target>11</target>
-          <release>11</release>
+          <release>${java.specification.version}</release>
         </configuration>
       </plugin>
       <plugin>
