@@ -361,6 +361,9 @@ public class ShadeMojo
     @Parameter( defaultValue = "false" )
     private boolean useBaseVersion;
 
+    /**
+     * When true, creates a shaded test-jar artifact as well.
+     */
     @Parameter( defaultValue = "false" )
     private boolean shadeTestJar;
 
@@ -422,7 +425,7 @@ public class ShadeMojo
             }
         }
 
-        processArtifactSelectors( artifacts, artifactIds, sourceArtifacts, artifactSelector );
+        processArtifactSelectors( artifacts, artifactIds, sourceArtifacts, testArtifacts, artifactSelector );
 
         File outputJar = ( outputFile != null ) ? outputFile : shadedArtifactFileWithClassifier();
         File sourcesJar = shadedSourceArtifactFileWithClassifier();
@@ -451,11 +454,10 @@ public class ShadeMojo
 
             if ( shadeTestJar )
             {
+                ShadeRequest shadeTestRequest =
+                    shadeRequest( testArtifacts, testJar, filters, relocators, resourceTransformers );
 
-                ShadeRequest shadeSourcesRequest =
-                    createShadeSourcesRequest( testArtifacts, testJar, filters, relocators, resourceTransformers );
-
-                shader.shade( shadeSourcesRequest );
+                shader.shade( shadeTestRequest );
             }
 
             if ( outputFile == null )
@@ -600,7 +602,7 @@ public class ShadeMojo
     }
 
     private void processArtifactSelectors( Set<File> artifacts, Set<String> artifactIds, Set<File> sourceArtifacts,
-                                           ArtifactSelector artifactSelector )
+                                           Set<File> testArtifacts, ArtifactSelector artifactSelector )
     {
         for ( Artifact artifact : project.getArtifacts() )
         {
@@ -624,7 +626,7 @@ public class ShadeMojo
 
             if ( createSourcesJar )
             {
-                File file = resolveArtifactSources( artifact );
+                File file = resolveArtifactForClassifier( artifact, "sources" );
                 if ( file != null )
                 {
                     if ( file.length() > 0 )
@@ -634,6 +636,22 @@ public class ShadeMojo
                     else
                     {
                         getLog().warn( "Skipping empty source jar " + artifact.getId() + "." );
+                    }
+                }
+            }
+
+            if ( shadeTestJar )
+            {
+                File file = resolveArtifactForClassifier( artifact, "tests" );
+                if ( file != null )
+                {
+                    if ( file.length() > 0 )
+                    {
+                        testArtifacts.add( file );
+                    }
+                    else
+                    {
+                        getLog().warn( "Skipping empty test jar " + artifact.getId() + "." );
                     }
                 }
             }
@@ -704,14 +722,14 @@ public class ShadeMojo
         }
     }
 
-    private File resolveArtifactSources( Artifact artifact )
+    private File resolveArtifactForClassifier( Artifact artifact, String classifier )
     {
         DefaultArtifactCoordinate coordinate = new DefaultArtifactCoordinate();
         coordinate.setGroupId( artifact.getGroupId() );
         coordinate.setArtifactId( artifact.getArtifactId() );
         coordinate.setVersion( artifact.getVersion() );
         coordinate.setExtension( "jar" );
-        coordinate.setClassifier( "sources" );
+        coordinate.setClassifier( classifier );
 
         Artifact resolvedArtifact;
         try
@@ -721,7 +739,7 @@ public class ShadeMojo
         }
         catch ( ArtifactResolverException e )
         {
-            getLog().warn( "Could not get sources for " + artifact );
+            getLog().warn( "Could not get " + classifier + " for " + artifact );
             return null;
         }
 
@@ -793,7 +811,16 @@ public class ShadeMojo
 
                         if ( createSourcesJar )
                         {
-                            File file = resolveArtifactSources( artifact );
+                            File file = resolveArtifactForClassifier( artifact, "sources" );
+                            if ( file != null )
+                            {
+                                jars.add( file );
+                            }
+                        }
+
+                        if ( shadeTestJar )
+                        {
+                            File file = resolveArtifactForClassifier( artifact, "tests" );
                             if ( file != null )
                             {
                                 jars.add( file );
