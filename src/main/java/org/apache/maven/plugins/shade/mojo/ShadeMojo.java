@@ -315,6 +315,12 @@ public class ShadeMojo
     private boolean createSourcesJar;
 
     /**
+     * When true, it will attempt to create a test sources jar.
+     */
+    @Parameter
+    private boolean createTestSourcesJar;
+
+    /**
      * When true, it will attempt to shade the contents of the java source files when creating the sources jar. When
      * false, it will just relocate the java source files to the shaded paths, but will not modify the actual contents
      * of the java source files.
@@ -391,6 +397,7 @@ public class ShadeMojo
         Set<String> artifactIds = new LinkedHashSet<>();
         Set<File> sourceArtifacts = new LinkedHashSet<>();
         Set<File> testArtifacts = new LinkedHashSet<>();
+        Set<File> testSourceArtifacts = new LinkedHashSet<>();
 
         ArtifactSelector artifactSelector =
             new ArtifactSelector( project.getArtifact(), artifactSet, shadedGroupFilter );
@@ -423,13 +430,24 @@ public class ShadeMojo
                     testArtifacts.add( file );
                 }
             }
+
+            if ( createTestSourcesJar )
+            {
+                File file = shadedTestSourcesArtifactFile();
+                if ( file.isFile() )
+                {
+                    testSourceArtifacts.add( file );
+                }
+            }
         }
 
-        processArtifactSelectors( artifacts, artifactIds, sourceArtifacts, testArtifacts, artifactSelector );
+        processArtifactSelectors( artifacts, artifactIds, sourceArtifacts, testArtifacts, testSourceArtifacts,
+            artifactSelector );
 
         File outputJar = ( outputFile != null ) ? outputFile : shadedArtifactFileWithClassifier();
         File sourcesJar = shadedSourceArtifactFileWithClassifier();
         File testJar = shadedTestArtifactFileWithClassifier();
+        File testSourcesJar = shadedTestSourceArtifactFileWithClassifier();
 
         // Now add our extra resources
         try
@@ -458,6 +476,15 @@ public class ShadeMojo
                     shadeRequest( testArtifacts, testJar, filters, relocators, resourceTransformers );
 
                 shader.shade( shadeTestRequest );
+            }
+
+            if ( createTestSourcesJar )
+            {
+                ShadeRequest shadeTestSourcesRequest =
+                    createShadeSourcesRequest( testSourceArtifacts, testSourcesJar, filters, relocators,
+                        resourceTransformers );
+
+                shader.shade( shadeTestSourcesRequest );
             }
 
             if ( outputFile == null )
@@ -492,6 +519,14 @@ public class ShadeMojo
                         replaceFile( finalFile, testJar );
                         testJar = finalFile;
                     }
+
+                    if ( createTestSourcesJar )
+                    {
+                        finalFileName = finalName + "-test-sources.jar";
+                        finalFile = new File( outputDirectory, finalFileName );
+                        replaceFile( finalFile, testSourcesJar );
+                        testSourcesJar = finalFile;
+                    }
                 
                     renamed = true;
                 }
@@ -505,6 +540,12 @@ public class ShadeMojo
                     {
                         projectHelper.attachArtifact( project, "java-source", shadedClassifierName + "-sources",
                                                       sourcesJar );
+                    }
+
+                    if ( createTestSourcesJar )
+                    {
+                        projectHelper.attachArtifact( project, "java-source",
+                                shadedClassifierName + "-test-sources", testSourcesJar );
                     }
                 }
                 else if ( !renamed )
@@ -533,6 +574,18 @@ public class ShadeMojo
                             replaceFile( shadedTests, testJar );
 
                             projectHelper.attachArtifact( project, "jar", "tests", shadedTests );
+                        }
+
+                        if ( createTestSourcesJar )
+                        {
+                            getLog().info( "Replacing original test source artifact "
+                                + "with shaded test source artifact." );
+                            File shadedTestSources = shadedTestSourcesArtifactFile();
+
+                            replaceFile( shadedTestSources, testSourcesJar );
+
+                            projectHelper.attachArtifact( project, "java-source", "test-sources",
+                                shadedTestSources );
                         }
 
                         if ( createDependencyReducedPom )
@@ -602,7 +655,8 @@ public class ShadeMojo
     }
 
     private void processArtifactSelectors( Set<File> artifacts, Set<String> artifactIds, Set<File> sourceArtifacts,
-                                           Set<File> testArtifacts, ArtifactSelector artifactSelector )
+                                           Set<File> testArtifacts, Set<File> testSourceArtifacts,
+                                           ArtifactSelector artifactSelector )
     {
         for ( Artifact artifact : project.getArtifacts() )
         {
@@ -653,6 +707,19 @@ public class ShadeMojo
                     {
                         getLog().warn( "Skipping empty test jar " + artifact.getId() + "." );
                     }
+                }
+            }
+
+            if ( createTestSourcesJar )
+            {
+                File file = resolveArtifactForClassifier( artifact, "test-sources" );
+                if ( file != null )
+                {
+                    testSourceArtifacts.add( file );
+                }
+                else
+                {
+                    getLog().warn( "Skipping empty test source jar " + artifact.getId() + "." );
                 }
             }
         }
@@ -869,21 +936,38 @@ public class ShadeMojo
 
     private File shadedSourceArtifactFileWithClassifier()
     {
+        return shadedArtifactFileWithClassifier( "sources" );
+    }
+
+    private File shadedTestSourceArtifactFileWithClassifier()
+    {
+        return shadedArtifactFileWithClassifier( "test-sources" );
+    }
+
+    private File shadedArtifactFileWithClassifier( String classifier )
+    {
         Artifact artifact = project.getArtifact();
         final String shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + shadedClassifierName
-            + "-sources." + artifact.getArtifactHandler().getExtension();
+            + "-" + classifier + "." + artifact.getArtifactHandler().getExtension();
         return new File( outputDirectory, shadedName );
     }
 
     private File shadedTestArtifactFileWithClassifier()
     {
-        Artifact artifact = project.getArtifact();
-        final String shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + shadedClassifierName
-            + "-tests." + artifact.getArtifactHandler().getExtension();
-        return new File( outputDirectory, shadedName );
+        return shadedArtifactFileWithClassifier( "tests" );
     }
 
     private File shadedSourcesArtifactFile()
+    {
+        return shadedArtifactFile( "sources" );
+    }
+
+    private File shadedTestSourcesArtifactFile()
+    {
+        return shadedArtifactFile( "test-sources" );
+    }
+
+    private File shadedArtifactFile( String classifier )
     {
         Artifact artifact = project.getArtifact();
 
@@ -891,11 +975,12 @@ public class ShadeMojo
 
         if ( project.getBuild().getFinalName() != null )
         {
-            shadedName = project.getBuild().getFinalName() + "-sources." + artifact.getArtifactHandler().getExtension();
+            shadedName = project.getBuild().getFinalName() + "-" + classifier + "."
+                + artifact.getArtifactHandler().getExtension();
         }
         else
         {
-            shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-sources."
+            shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + classifier + "."
                 + artifact.getArtifactHandler().getExtension();
         }
 
@@ -904,21 +989,7 @@ public class ShadeMojo
 
     private File shadedTestArtifactFile()
     {
-        Artifact artifact = project.getArtifact();
-
-        String shadedName;
-
-        if ( project.getBuild().getFinalName() != null )
-        {
-            shadedName = project.getBuild().getFinalName() + "-tests." + artifact.getArtifactHandler().getExtension();
-        }
-        else
-        {
-            shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-tests."
-                + artifact.getArtifactHandler().getExtension();
-        }
-
-        return new File( outputDirectory, shadedName );
+        return shadedArtifactFile( "tests" );
     }
 
     // We need to find the direct dependencies that have been included in the uber JAR so that we can modify the
