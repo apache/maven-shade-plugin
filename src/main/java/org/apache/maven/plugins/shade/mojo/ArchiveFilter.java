@@ -34,6 +34,17 @@ public class ArchiveFilter
 
     private boolean excludeDefaults = true;
 
+    public ArchiveFilter()
+    {
+        // no-op
+    }
+
+    public ArchiveFilter( Set<String> includes, Set<String> excludes )
+    {
+        this.includes = includes;
+        this.excludes = excludes;
+    }
+
     public String getArtifact()
     {
         return artifact;

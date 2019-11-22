@@ -29,6 +29,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,10 +42,13 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugins.shade.ShadeRequest;
 import org.apache.maven.plugins.shade.Shader;
 import org.apache.maven.plugins.shade.filter.Filter;
+import org.apache.maven.plugins.shade.filter.SimpleFilter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ServicesResourceTransformer;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.transfer.artifact.ArtifactCoordinate;
@@ -60,6 +64,49 @@ import org.codehaus.plexus.PlexusTestCase;
 public class ShadeMojoTest
     extends PlexusTestCase
 {
+
+    public void testDefaultConfiguration() throws Exception
+    {
+        final ShadeMojo shadeMojo = new ShadeMojo();
+        setProject(shadeMojo);
+
+        // default transformers are present
+        final Method getResourceTransformers = ShadeMojo.class.getDeclaredMethod("getResourceTransformers");
+        getResourceTransformers.setAccessible(true);
+        final List<ResourceTransformer> transformers =
+                List.class.cast(getResourceTransformers.invoke(shadeMojo));
+        assertEquals(2, transformers.size());
+        assertTrue(ServicesResourceTransformer.class.isInstance(transformers.get(0)));
+        assertTrue(ManifestResourceTransformer.class.isInstance(transformers.get(1)));
+
+        // default exclusion is present
+        final Method getFilters = ShadeMojo.class.getDeclaredMethod("getFilters");
+        getFilters.setAccessible(true);
+        final List<Filter> filters =
+                List.class.cast(getFilters.invoke(shadeMojo));
+        assertEquals(1, filters.size());
+
+        final Filter filter = filters.iterator().next();
+        assertTrue(SimpleFilter.class.isInstance(filter));
+
+        final Field jars = filter.getClass().getDeclaredField("jars");
+        jars.setAccessible(true);
+        assertEquals(1, Collection.class.cast(jars.get(filter)).size());
+
+        final Field excludes = filter.getClass().getDeclaredField("excludes");
+        excludes.setAccessible(true);
+        final Collection<String> excludesValues = Collection.class.cast(excludes.get(filter));
+        assertEquals(3, excludesValues.size());
+        for ( final String exclude : Arrays.asList( "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA" ) )
+        {
+            assertTrue(exclude, excludesValues.contains(exclude) );
+        }
+
+        final Field includes = filter.getClass().getDeclaredField("includes");
+        includes.setAccessible(true);
+        assertTrue(Collection.class.cast(includes.get(filter)).isEmpty());
+    }
+
     public void testShaderWithDefaultShadedPattern()
         throws Exception
     {
@@ -124,11 +171,45 @@ public class ShadeMojoTest
         createSourcesJar.setAccessible( true );
         createSourcesJar.set( mojo, Boolean.TRUE );
 
+        // setup a project
+        setProject(mojo);
+
+        // create and configure the ArchiveFilter
+        ArchiveFilter archiveFilter = new ArchiveFilter();
+        Field archiveFilterArtifact = ArchiveFilter.class.getDeclaredField( "artifact" );
+        archiveFilterArtifact.setAccessible( true );
+        archiveFilterArtifact.set( archiveFilter, "org.apache.myfaces.core:myfaces-impl" );
+
+        // add ArchiveFilter to mojo
+        Field filtersField = ShadeMojo.class.getDeclaredField( "filters" );
+        filtersField.setAccessible( true );
+        filtersField.set( mojo, new ArchiveFilter[]{ archiveFilter } );
+
+        Field sessionField = ShadeMojo.class.getDeclaredField( "session" );
+        sessionField.setAccessible( true );
+        sessionField.set( mojo, mock( MavenSession.class ) );
+
+        // invoke getFilters()
+        Method getFilters = ShadeMojo.class.getDeclaredMethod( "getFilters", new Class[0] );
+        getFilters.setAccessible( true );
+        List<Filter> filters = (List<Filter>) getFilters.invoke( mojo);
+
+        // assertions - there must be one filter
+        assertEquals( 2, filters.size() );
+
+        // the filter must be able to filter the binary and the sources jar
+        Filter filter = filters.get( 1 ); // 0 is the built-in META-INF/*
+        assertTrue( filter.canFilter( new File( "myfaces-impl-2.0.1-SNAPSHOT.jar" ) ) ); // binary jar
+        assertTrue( filter.canFilter( new File( "myfaces-impl-2.0.1-SNAPSHOT-sources.jar" ) ) ); // sources jar
+    }
+
+    private void setProject(final ShadeMojo mojo) throws Exception
+    {
         // configure artifactResolver (mocked) for mojo
         ArtifactResolver mockArtifactResolver = new ArtifactResolver()
         {
             @Override
-            public ArtifactResult resolveArtifact( ProjectBuildingRequest req, final Artifact art )
+            public ArtifactResult resolveArtifact(ProjectBuildingRequest req, final Artifact art )
                 throws ArtifactResolverException
             {
                 return new ArtifactResult()
@@ -185,34 +266,6 @@ public class ShadeMojoTest
         Field projectField = ShadeMojo.class.getDeclaredField( "project" );
         projectField.setAccessible( true );
         projectField.set( mojo, project );
-
-        // create and configure the ArchiveFilter
-        ArchiveFilter archiveFilter = new ArchiveFilter();
-        Field archiveFilterArtifact = ArchiveFilter.class.getDeclaredField( "artifact" );
-        archiveFilterArtifact.setAccessible( true );
-        archiveFilterArtifact.set( archiveFilter, "org.apache.myfaces.core:myfaces-impl" );
-
-        // add ArchiveFilter to mojo
-        Field filtersField = ShadeMojo.class.getDeclaredField( "filters" );
-        filtersField.setAccessible( true );
-        filtersField.set( mojo, new ArchiveFilter[]{ archiveFilter } );
-
-        Field sessionField = ShadeMojo.class.getDeclaredField( "session" );
-        sessionField.setAccessible( true );
-        sessionField.set( mojo, mock( MavenSession.class ) );
-
-        // invoke getFilters()
-        Method getFilters = ShadeMojo.class.getDeclaredMethod( "getFilters" );
-        getFilters.setAccessible( true );
-        List<Filter> filters = (List<Filter>) getFilters.invoke( mojo);
-
-        // assertions - there must be one filter
-        assertEquals( 1, filters.size() );
-
-        // the filter must be able to filter the binary and the sources jar
-        Filter filter = filters.get( 0 );
-        assertTrue( filter.canFilter( new File( "myfaces-impl-2.0.1-SNAPSHOT.jar" ) ) ); // binary jar
-        assertTrue( filter.canFilter( new File( "myfaces-impl-2.0.1-SNAPSHOT-sources.jar" ) ) ); // sources jar
     }
 
     public void shaderWithPattern( String shadedPattern, File jar )

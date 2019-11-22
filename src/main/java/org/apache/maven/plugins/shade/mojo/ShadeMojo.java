@@ -40,7 +40,9 @@ import org.apache.maven.plugins.shade.filter.SimpleFilter;
 import org.apache.maven.plugins.shade.pom.PomWriter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ServicesResourceTransformer;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
@@ -76,8 +78,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 /**
@@ -490,7 +494,7 @@ public class ShadeMojo
                         replaceFile( finalFile, testJar );
                         testJar = finalFile;
                     }
-                
+
                     renamed = true;
                 }
 
@@ -752,30 +756,66 @@ public class ShadeMojo
 
     private List<ResourceTransformer> getResourceTransformers()
     {
+        final List<ResourceTransformer> resourceTransformers = new LinkedList<>( getDefaultResourceTransformers() );
         if ( transformers == null )
         {
-            return Collections.emptyList();
+            return resourceTransformers;
         }
+        resourceTransformers.addAll( Arrays.asList( transformers ) );
+        return resourceTransformers;
+    }
 
-        return Arrays.asList( transformers );
+    private List<ResourceTransformer> getDefaultResourceTransformers()
+    {
+        final List<ResourceTransformer> transformers = new LinkedList<>();
+        if ( missTransformer( ServicesResourceTransformer.class ) )
+        {
+            getLog().debug( "Adding ServicesResourceTransformer transformer" );
+            transformers.add( new ServicesResourceTransformer() );
+        }
+        if ( missTransformer( ManifestResourceTransformer.class ) )
+        {
+            getLog().debug( "Adding ManifestResourceTransformer transformer" );
+            transformers.add( new ManifestResourceTransformer() );
+        }
+        for ( final ResourceTransformer transformer : ServiceLoader.load( ResourceTransformer.class ) )
+        {
+            if ( !missTransformer( transformer.getClass() ) )
+            {
+                continue;
+            }
+            getLog().debug( "Adding " + transformer.getClass().getName() + " transformer" );
+            transformers.add( transformer );
+        }
+        return transformers;
+    }
+
+    private boolean missTransformer( final Class<?> type )
+    {
+        if ( transformers == null )
+        {
+            return true;
+        }
+        for ( final ResourceTransformer transformer : transformers )
+        {
+            if ( type.isInstance( transformer ) )
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private List<Filter> getFilters()
         throws MojoExecutionException
     {
-        List<Filter> filters = new ArrayList<>();
-        List<SimpleFilter> simpleFilters = new ArrayList<>();
+        List<Filter> filters = new LinkedList<>();
+        List<SimpleFilter> simpleFilters = new LinkedList<>();
+        Map<Artifact, ArtifactId> artifacts = null;
 
         if ( this.filters != null && this.filters.length > 0 )
         {
-            Map<Artifact, ArtifactId> artifacts = new HashMap<>();
-
-            artifacts.put( project.getArtifact(), new ArtifactId( project.getArtifact() ) );
-
-            for ( Artifact artifact : project.getArtifacts() )
-            {
-                artifacts.put( artifact, new ArtifactId( artifact ) );
-            }
+            artifacts = getArtifactIds();
 
             for ( ArchiveFilter filter : this.filters )
             {
@@ -813,6 +853,51 @@ public class ShadeMojo
             }
         }
 
+        // first check for backward compatibility this is not already configured explicitly
+        boolean addExclusion = true;
+        if ( this.filters != null )
+        {
+            for ( final ArchiveFilter filter : this.filters )
+            {
+                if ( filter.getExcludes() != null
+                        && filter.getExcludes().contains( "META-INF/*.SF" )
+                        && filter.getExcludes().contains( "META-INF/*.DSA" )
+                        && filter.getExcludes().contains( "META-INF/*.RSA" )
+                        && "*:*".equals( filter.getArtifact() ) )
+                {
+                    addExclusion = false;
+                    break;
+                }
+            }
+        }
+        if ( addExclusion )
+        {
+            getLog().debug( "Adding META-INF/*.SF, META-INF/*.DSA and META-INF/*.RSA exclusion" );
+
+            if ( artifacts == null )
+            {
+                artifacts = getArtifactIds();
+            }
+            simpleFilters.add( new SimpleFilter(
+                    getMatchingJars( artifacts , new ArtifactId( "*:*" ) ),
+                    new ArchiveFilter(
+                            Collections.<String>emptySet(),
+                            new HashSet<>( Arrays.asList( "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA" ) ) ) ) );
+        }
+
+        for ( final Filter filter : ServiceLoader.load( Filter.class ) )
+        {
+            getLog().debug( "Adding " + filter.getClass().getName() + " filter" );
+            if ( SimpleFilter.class.isInstance( filter ) )
+            {
+                simpleFilters.add( SimpleFilter.class.cast( filter ) );
+            }
+            else
+            {
+                filters.add( filter );
+            }
+        }
+
         filters.addAll( simpleFilters );
 
         if ( minimizeJar )
@@ -830,6 +915,44 @@ public class ShadeMojo
         }
 
         return filters;
+    }
+
+    private Set<File> getMatchingJars( final Map<Artifact, ArtifactId> artifacts, final ArtifactId pattern )
+    {
+        final Set<File> jars = new HashSet<File>();
+
+        for ( final Map.Entry<Artifact, ArtifactId> entry : artifacts.entrySet() )
+        {
+            if ( entry.getValue().matches( pattern ) )
+            {
+                final Artifact artifact = entry.getKey();
+
+                jars.add( artifact.getFile() );
+
+                if ( createSourcesJar )
+                {
+                    final File file = resolveArtifactSources( artifact );
+                    if ( file != null )
+                    {
+                        jars.add( file );
+                    }
+                }
+            }
+        }
+        return jars;
+    }
+
+    private Map<Artifact, ArtifactId> getArtifactIds()
+    {
+        final Map<Artifact, ArtifactId> artifacts = new HashMap<Artifact, ArtifactId>();
+
+        artifacts.put( project.getArtifact(), new ArtifactId( project.getArtifact() ) );
+
+        for ( final Artifact artifact : project.getArtifacts() )
+        {
+            artifacts.put( artifact, new ArtifactId( artifact ) );
+        }
+        return artifacts;
     }
 
     private File shadedArtifactFileWithClassifier()
