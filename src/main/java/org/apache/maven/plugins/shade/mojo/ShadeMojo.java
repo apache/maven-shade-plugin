@@ -573,7 +573,7 @@ public class ShadeMojo
 
                             replaceFile( shadedTests, testJar );
 
-                            projectHelper.attachArtifact( project, "jar", "tests", shadedTests );
+                            projectHelper.attachArtifact( project, "test-jar", shadedTests );
                         }
 
                         if ( createTestSourcesJar )
