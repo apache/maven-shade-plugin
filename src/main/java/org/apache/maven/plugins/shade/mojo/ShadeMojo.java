@@ -542,6 +542,12 @@ public class ShadeMojo
                                                       sourcesJar );
                     }
 
+                    if ( shadeTestJar )
+                    {
+                        projectHelper.attachArtifact( project, "test-jar", shadedClassifierName + "-tests",
+                                                      testJar );
+                    }
+
                     if ( createTestSourcesJar )
                     {
                         projectHelper.attachArtifact( project, "java-source",
