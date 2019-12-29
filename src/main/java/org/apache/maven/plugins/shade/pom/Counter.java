@@ -62,6 +62,7 @@ public class Counter
 
     /**
      * Method getDepth
+     * @return {@link #level}
      */
     public int getDepth()
     {

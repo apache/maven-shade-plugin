@@ -33,7 +33,7 @@ public interface Filter
     boolean canFilter( File jar );
 
     /**
-     * @param classFile
+     * @param classFile The classFile.
      * @return true if the file has been filtered false otherwise.
      */
     boolean isFiltered( String classFile );

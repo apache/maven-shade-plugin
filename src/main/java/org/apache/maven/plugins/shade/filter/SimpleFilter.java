@@ -48,7 +48,7 @@ public class SimpleFilter
     private boolean excludeDefaults = true;
 
     /**
-     * @deprecated As of release 3.2.2, replaced by {@link #SimpleFilter(Set<File>, ArchiveFilter)}
+     * @deprecated As of release 3.2.2, replaced by {@link #SimpleFilter(Set, ArchiveFilter)}}
      * @param jars set of {@link File}s.
      * @param includes set of includes.
      * @param excludes set of excludes.
@@ -61,7 +61,7 @@ public class SimpleFilter
 
     /**
      * @param jars set of {@link File}s.
-     * @param archiveFilters set of {@link ArchiveFilter}s.
+     * @param archiveFilter set of {@link ArchiveFilter}s.
      */
     public SimpleFilter( final Set<File> jars, final ArchiveFilter archiveFilter )
     {

@@ -385,7 +385,7 @@ public class ShadeMojo
     }
 
     /**
-     * @throws MojoExecutionException
+     * @throws MojoExecutionException in case of an error.
      */
     public void execute()
         throws MojoExecutionException

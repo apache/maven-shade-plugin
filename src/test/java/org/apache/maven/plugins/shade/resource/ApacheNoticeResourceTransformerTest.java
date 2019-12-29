@@ -27,7 +27,6 @@ import junit.framework.TestCase;
  * Test for {@link ApacheNoticeResourceTransformer}.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public class ApacheNoticeResourceTransformerTest
     extends TestCase

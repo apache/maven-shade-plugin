@@ -27,7 +27,6 @@ import junit.framework.TestCase;
  * Test for {@link ApacheLicenseResourceTransformer}.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public class ApacheLicenseResourceTransformerTest
     extends TestCase

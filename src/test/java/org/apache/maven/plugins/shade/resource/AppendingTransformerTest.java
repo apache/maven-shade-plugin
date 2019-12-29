@@ -27,7 +27,6 @@ import junit.framework.TestCase;
  * Test for {@link AppendingTransformer}.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public class AppendingTransformerTest
     extends TestCase

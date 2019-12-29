@@ -46,6 +46,7 @@ public class ResourceBundleAppendingTransformer implements ResourceTransformer
     
     /**
      * the base name of the resource bundle, a fully qualified class name
+     * @param basename The basename.
      */
     public void setBasename( String basename )
     {

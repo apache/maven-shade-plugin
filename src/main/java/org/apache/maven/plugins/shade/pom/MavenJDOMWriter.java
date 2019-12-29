@@ -84,7 +84,6 @@ import org.jdom2.output.XMLOutputter;
 /**
  * Class MavenJDOMWriter.
  *
- * @version $Revision$ $Date$
  */
 public class MavenJDOMWriter
 {
@@ -102,15 +101,16 @@ public class MavenJDOMWriter
     {
         factory = new DefaultJDOMFactory();
         lineSeparator = "\n";
-    } // -- org.apache.maven.model.io.jdom.MavenJDOMWriter()
+    }
 
     /**
      * Method findAndReplaceProperties
      *
-     * @param counter
-     * @param props
-     * @param name
-     * @param parent
+     * @param counter {@link Counter}
+     * @param props {@link Map}
+     * @param name The name.
+     * @param parent {@link Element}
+     * @return {@link Element}
      */
     protected Element findAndReplaceProperties( Counter counter, Element parent, String name, Map props )
     {
@@ -138,16 +138,17 @@ public class MavenJDOMWriter
             }
         }
         return element;
-    } // -- Element findAndReplaceProperties(Counter, Element, String, Map)
+    }
 
     /**
      * Method findAndReplaceSimpleElement
      *
-     * @param counter
-     * @param defaultValue
-     * @param text
-     * @param name
-     * @param parent
+     * @param counter {@link Counter}
+     * @param defaultValue The default value.
+     * @param text The text.
+     * @param name The name.
+     * @param parent The parent.
+     * @return {@link Element}
      */
     protected Element findAndReplaceSimpleElement( Counter counter, Element parent, String name, String text,
                                                    String defaultValue )
@@ -168,16 +169,17 @@ public class MavenJDOMWriter
             element.setText( text );
         }
         return element;
-    } // -- Element findAndReplaceSimpleElement(Counter, Element, String, String, String)
+    }
 
     /**
      * Method findAndReplaceSimpleLists
      *
-     * @param counter
-     * @param childName
-     * @param parentName
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childName The childName
+     * @param parentName The parentName
+     * @param list The list of elements.
+     * @param parent The parent.
+     * @return {@link Element}
      */
     protected Element findAndReplaceSimpleLists( Counter counter, Element parent, Collection<String> list,
                                                  String parentName, String childName )
@@ -221,15 +223,16 @@ public class MavenJDOMWriter
             }
         }
         return element;
-    } // -- Element findAndReplaceSimpleLists(Counter, Element, java.util.Collection, String, String)
+    }
 
     /**
      * Method findAndReplaceXpp3DOM
      *
-     * @param counter
-     * @param dom
-     * @param name
-     * @param parent
+     * @param counter {@link Counter}
+     * @param dom {@link Xpp3Dom}
+     * @param name The name.
+     * @param parent The parent.
+     * @return {@link Element}
      */
     protected Element findAndReplaceXpp3DOM( Counter counter, Element parent, String name, Xpp3Dom dom )
     {
@@ -240,14 +243,14 @@ public class MavenJDOMWriter
             replaceXpp3DOM( element, dom, new Counter( counter.getDepth() + 1 ) );
         }
         return element;
-    } // -- Element findAndReplaceXpp3DOM(Counter, Element, String, Xpp3Dom)
+    }
 
     /**
      * Method insertAtPreferredLocation
      *
-     * @param parent
-     * @param counter
-     * @param child
+     * @param parent The parent.
+     * @param counter {@link Counter}
+     * @param child {@link Element}
      */
     protected void insertAtPreferredLocation( Element parent, Element child, Counter counter )
     {
@@ -292,16 +295,16 @@ public class MavenJDOMWriter
         }
         parent.addContent( contentIndex, child );
         parent.addContent( contentIndex, lastText );
-    } // -- void insertAtPreferredLocation(Element, Element, Counter)
+    }
 
     /**
      * Method iterateContributor
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateContributor( Counter counter, Element parent, Collection<Contributor> list,
                                        String parentTag, String childTag )
@@ -344,16 +347,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateContributor(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateDependency
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateDependency( Counter counter, Element parent, Collection<Dependency> list,
                                       String parentTag, String childTag )
@@ -396,16 +399,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateDependency(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateDeveloper
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateDeveloper( Counter counter, Element parent, Collection<Developer> list,
                                      String parentTag, String childTag )
@@ -448,16 +451,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateDeveloper(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateExclusion
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateExclusion( Counter counter, Element parent, Collection<Exclusion> list,
                                      String parentTag, String childTag )
@@ -500,16 +503,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateExclusion(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateExtension
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateExtension( Counter counter, Element parent, Collection<Extension> list,
                                      String parentTag, String childTag )
@@ -552,16 +555,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateExtension(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateLicense
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateLicense( Counter counter, Element parent, Collection<License> list,
                                    String parentTag, String childTag )
@@ -604,16 +607,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateLicense(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateMailingList
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateMailingList( Counter counter, Element parent, Collection<MailingList> list,
                                        String parentTag, String childTag )
@@ -656,16 +659,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateMailingList(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateNotifier
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateNotifier( Counter counter, Element parent, Collection<Notifier> list,
                                     String parentTag, String childTag )
@@ -708,16 +711,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateNotifier(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iteratePlugin
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iteratePlugin( Counter counter, Element parent, Collection<Plugin> list,
                                   String parentTag, String childTag )
@@ -760,16 +763,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iteratePlugin(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iteratePluginExecution
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iteratePluginExecution( Counter counter, Element parent, Collection<PluginExecution> list,
                                            String parentTag, String childTag )
@@ -812,16 +815,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iteratePluginExecution(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateProfile
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateProfile( Counter counter, Element parent, Collection<Profile> list,
                                    String parentTag, String childTag )
@@ -864,16 +867,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateProfile(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateReportPlugin
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateReportPlugin( Counter counter, Element parent, Collection<ReportPlugin> list,
                                         String parentTag, String childTag )
@@ -916,16 +919,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateReportPlugin(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateReportSet
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateReportSet( Counter counter, Element parent, Collection<ReportSet> list,
                                      String parentTag, String childTag )
@@ -968,16 +971,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateReportSet(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateRepository
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateRepository( Counter counter, Element parent, Collection<Repository> list,
                                       String parentTag, String childTag )
@@ -1020,16 +1023,16 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateRepository(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method iterateResource
      *
-     * @param counter
-     * @param childTag
-     * @param parentTag
-     * @param list
-     * @param parent
+     * @param counter {@link Counter}
+     * @param childTag The childTag
+     * @param parentTag The parentTag
+     * @param list The list of elements.
+     * @param parent The parent.
      */
     protected void iterateResource( Counter counter, Element parent, Collection<Resource> list,
                                     String parentTag, String childTag )
@@ -1072,14 +1075,14 @@ public class MavenJDOMWriter
                 }
             }
         }
-    } // -- void iterateResource(Counter, Element, java.util.Collection, java.lang.String, java.lang.String)
+    }
 
     /**
      * Method replaceXpp3DOM
      *
-     * @param parent
-     * @param counter
-     * @param parentDom
+     * @param parent The parent.
+     * @param counter {@link Counter}
+     * @param parentDom {@link Element}
      */
     protected void replaceXpp3DOM( Element parent, Xpp3Dom parentDom, Counter counter )
     {
@@ -1125,15 +1128,15 @@ public class MavenJDOMWriter
         {
             parent.setText( parentDom.getValue() );
         }
-    } // -- void replaceXpp3DOM(Element, Xpp3Dom, Counter)
+    }
 
     /**
      * Method updateActivationFile
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateActivationFile( ActivationFile value, String xmlTag, Counter counter, Element element )
     {
@@ -1145,15 +1148,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "missing", value.getMissing(), null );
             findAndReplaceSimpleElement( innerCount, root, "exists", value.getExists(), null );
         }
-    } // -- void updateActivationFile(ActivationFile, String, Counter, Element)
+    }
 
     /**
      * Method updateActivationOS
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateActivationOS( ActivationOS value, String xmlTag, Counter counter, Element element )
     {
@@ -1167,15 +1170,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "arch", value.getArch(), null );
             findAndReplaceSimpleElement( innerCount, root, "version", value.getVersion(), null );
         }
-    } // -- void updateActivationOS(ActivationOS, String, Counter, Element)
+    }
 
     /**
      * Method updateActivationProperty
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateActivationProperty( ActivationProperty value, String xmlTag, Counter counter, Element element )
     {
@@ -1187,15 +1190,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "name", value.getName(), null );
             findAndReplaceSimpleElement( innerCount, root, "value", value.getValue(), null );
         }
-    } // -- void updateActivationProperty(ActivationProperty, String, Counter, Element)
+    }
 
     /**
      * Method updateBuild
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     //CHECKSTYLE_OFF: LineLength
     protected void updateBuild( Build value, String xmlTag, Counter counter, Element element )
@@ -1221,16 +1224,16 @@ public class MavenJDOMWriter
             updatePluginManagement( value.getPluginManagement(), "pluginManagement", innerCount, root );
             iteratePlugin( innerCount, root, value.getPlugins(), "plugins", "plugin" );
         }
-    } // -- void updateBuild(Build, String, Counter, Element)
+    }
     //CHECKSTYLE_ON: LineLength
 
     /**
      * Method updateBuildBase
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateBuildBase( BuildBase value, String xmlTag, Counter counter, Element element )
     {
@@ -1248,15 +1251,15 @@ public class MavenJDOMWriter
             updatePluginManagement( value.getPluginManagement(), "pluginManagement", innerCount, root );
             iteratePlugin( innerCount, root, value.getPlugins(), "plugins", "plugin" );
         }
-    } // -- void updateBuildBase(BuildBase, String, Counter, Element)
+    }
 
     /**
      * Method updateCiManagement
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateCiManagement( CiManagement value, String xmlTag, Counter counter, Element element )
     {
@@ -1269,15 +1272,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "url", value.getUrl(), null );
             iterateNotifier( innerCount, root, value.getNotifiers(), "notifiers", "notifier" );
         }
-    } // -- void updateCiManagement(CiManagement, String, Counter, Element)
+    }
 
     /**
      * Method updateConfigurationContainer
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateConfigurationContainer( ConfigurationContainer value, String xmlTag, Counter counter,
                                                  Element element )
@@ -1290,15 +1293,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "inherited", value.getInherited(), null );
             findAndReplaceXpp3DOM( innerCount, root, "configuration", (Xpp3Dom) value.getConfiguration() );
         }
-    } // -- void updateConfigurationContainer(ConfigurationContainer, String, Counter, Element)
+    }
 
     /**
      * Method updateContributor
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateContributor( Contributor value, String xmlTag, Counter counter, Element element )
     {
@@ -1312,15 +1315,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleLists( innerCount, root, value.getRoles(), "roles", "role" );
         findAndReplaceSimpleElement( innerCount, root, "timezone", value.getTimezone(), null );
         findAndReplaceProperties( innerCount, root, "properties", value.getProperties() );
-    } // -- void updateContributor(Contributor, String, Counter, Element)
+    }
 
     /**
      * Method updateDependency
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateDependency( Dependency value, String xmlTag, Counter counter, Element element )
     {
@@ -1336,15 +1339,15 @@ public class MavenJDOMWriter
         iterateExclusion( innerCount, root, value.getExclusions(), "exclusions", "exclusion" );
         findAndReplaceSimpleElement( innerCount, root, "optional",
                                      !value.isOptional() ? null : String.valueOf( value.isOptional() ), "false" );
-    } // -- void updateDependency(Dependency, String, Counter, Element)
+    }
 
     /**
      * Method updateDependencyManagement
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateDependencyManagement( DependencyManagement value, String xmlTag, Counter counter,
                                                Element element )
@@ -1356,15 +1359,15 @@ public class MavenJDOMWriter
             Counter innerCount = new Counter( counter.getDepth() + 1 );
             iterateDependency( innerCount, root, value.getDependencies(), "dependencies", "dependency" );
         }
-    } // -- void updateDependencyManagement(DependencyManagement, String, Counter, Element)
+    }
 
     /**
      * Method updateDeploymentRepository
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateDeploymentRepository( DeploymentRepository value, String xmlTag, Counter counter,
                                                Element element )
@@ -1382,15 +1385,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "url", value.getUrl(), null );
             findAndReplaceSimpleElement( innerCount, root, "layout", value.getLayout(), "default" );
         }
-    } // -- void updateDeploymentRepository(DeploymentRepository, String, Counter, Element)
+    }
 
     /**
      * Method updateDeveloper
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateDeveloper( Developer value, String xmlTag, Counter counter, Element element )
     {
@@ -1405,15 +1408,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleLists( innerCount, root, value.getRoles(), "roles", "role" );
         findAndReplaceSimpleElement( innerCount, root, "timezone", value.getTimezone(), null );
         findAndReplaceProperties( innerCount, root, "properties", value.getProperties() );
-    } // -- void updateDeveloper(Developer, String, Counter, Element)
+    }
 
     /**
      * Method updateDistributionManagement
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateDistributionManagement( DistributionManagement value, String xmlTag, Counter counter,
                                                  Element element )
@@ -1430,15 +1433,16 @@ public class MavenJDOMWriter
             updateRelocation( value.getRelocation(), "relocation", innerCount, root );
             findAndReplaceSimpleElement( innerCount, root, "status", value.getStatus(), null );
         }
-    } // -- void updateDistributionManagement(DistributionManagement, String, Counter, Element)
+    }
 
     /**
      * Method updateElement
      *
-     * @param counter
-     * @param shouldExist
-     * @param name
-     * @param parent
+     * @param counter {@link Counter}
+     * @param shouldExist should exist.
+     * @param name The name.
+     * @param parent The parent.
+     * @return {@link Element}
      */
     protected Element updateElement( Counter counter, Element parent, String name, boolean shouldExist )
     {
@@ -1471,15 +1475,15 @@ public class MavenJDOMWriter
             parent.removeContent( element );
         }
         return element;
-    } // -- Element updateElement(Counter, Element, String, boolean)
+    }
 
     /**
      * Method updateExclusion
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateExclusion( Exclusion value, String xmlTag, Counter counter, Element element )
     {
@@ -1487,15 +1491,15 @@ public class MavenJDOMWriter
         Counter innerCount = new Counter( counter.getDepth() + 1 );
         findAndReplaceSimpleElement( innerCount, root, "artifactId", value.getArtifactId(), null );
         findAndReplaceSimpleElement( innerCount, root, "groupId", value.getGroupId(), null );
-    } // -- void updateExclusion(Exclusion, String, Counter, Element)
+    }
 
     /**
      * Method updateExtension
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateExtension( Extension value, String xmlTag, Counter counter, Element element )
     {
@@ -1504,15 +1508,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleElement( innerCount, root, "groupId", value.getGroupId(), null );
         findAndReplaceSimpleElement( innerCount, root, "artifactId", value.getArtifactId(), null );
         findAndReplaceSimpleElement( innerCount, root, "version", value.getVersion(), null );
-    } // -- void updateExtension(Extension, String, Counter, Element)
+    }
 
     /**
      * Method updateFileSet
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateFileSet( FileSet value, String xmlTag, Counter counter, Element element )
     {
@@ -1525,15 +1529,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleLists( innerCount, root, value.getIncludes(), "includes", "include" );
             findAndReplaceSimpleLists( innerCount, root, value.getExcludes(), "excludes", "exclude" );
         }
-    } // -- void updateFileSet(FileSet, String, Counter, Element)
+    }
 
     /**
      * Method updateIssueManagement
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateIssueManagement( IssueManagement value, String xmlTag, Counter counter, Element element )
     {
@@ -1545,15 +1549,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "system", value.getSystem(), null );
             findAndReplaceSimpleElement( innerCount, root, "url", value.getUrl(), null );
         }
-    } // -- void updateIssueManagement(IssueManagement, String, Counter, Element)
+    }
 
     /**
      * Method updateLicense
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateLicense( License value, String xmlTag, Counter counter, Element element )
     {
@@ -1563,15 +1567,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleElement( innerCount, root, "url", value.getUrl(), null );
         findAndReplaceSimpleElement( innerCount, root, "distribution", value.getDistribution(), null );
         findAndReplaceSimpleElement( innerCount, root, "comments", value.getComments(), null );
-    } // -- void updateLicense(License, String, Counter, Element)
+    }
 
     /**
      * Method updateMailingList
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateMailingList( MailingList value, String xmlTag, Counter counter, Element element )
     {
@@ -1583,15 +1587,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleElement( innerCount, root, "post", value.getPost(), null );
         findAndReplaceSimpleElement( innerCount, root, "archive", value.getArchive(), null );
         findAndReplaceSimpleLists( innerCount, root, value.getOtherArchives(), "otherArchives", "otherArchive" );
-    } // -- void updateMailingList(MailingList, String, Counter, Element)
+    }
 
     /**
      * Method updateModel
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateModel( Model value, String xmlTag, Counter counter, Element element )
     {
@@ -1627,15 +1631,15 @@ public class MavenJDOMWriter
         updateDependencyManagement( value.getDependencyManagement(), "dependencyManagement", innerCount, root );
         updateDistributionManagement( value.getDistributionManagement(), "distributionManagement", innerCount, root );
         findAndReplaceProperties( innerCount, root, "properties", value.getProperties() );
-    } // -- void updateModel(Model, String, Counter, Element)
+    }
 
     /**
      * Method updateModelBase
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     //CHECKSTYLE_OFF: LineLength
     protected void updateModelBase( ModelBase value, String xmlTag, Counter counter, Element element )
@@ -1656,16 +1660,16 @@ public class MavenJDOMWriter
             updateDistributionManagement( value.getDistributionManagement(), "distributionManagement", innerCount, root );
             findAndReplaceProperties( innerCount, root, "properties", value.getProperties() );
         }
-    } // -- void updateModelBase(ModelBase, String, Counter, Element)
+    }
     //CHECKSTYLE_ON: LineLength
 
     /**
      * Method updateNotifier
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     //CHECKSTYLE_OFF: LineLength
     protected void updateNotifier( Notifier value, String xmlTag, Counter counter, Element element )
@@ -1683,16 +1687,16 @@ public class MavenJDOMWriter
                                      value.isSendOnWarning() ? null : String.valueOf( value.isSendOnWarning() ), "true" );
         findAndReplaceSimpleElement( innerCount, root, "address", value.getAddress(), null );
         findAndReplaceProperties( innerCount, root, "configuration", value.getConfiguration() );
-    } // -- void updateNotifier(Notifier, String, Counter, Element)
+    }
     //CHECKSTYLE_ON: LineLength
 
     /**
      * Method updateOrganization
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateOrganization( Organization value, String xmlTag, Counter counter, Element element )
     {
@@ -1704,15 +1708,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "name", value.getName(), null );
             findAndReplaceSimpleElement( innerCount, root, "url", value.getUrl(), null );
         }
-    } // -- void updateOrganization(Organization, String, Counter, Element)
+    }
 
     /**
      * Method updateParent
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateParent( Parent value, String xmlTag, Counter counter, Element element )
     {
@@ -1726,15 +1730,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "version", value.getVersion(), null );
             findAndReplaceSimpleElement( innerCount, root, "relativePath", value.getRelativePath(), "../pom.xml" );
         }
-    } // -- void updateParent(Parent, String, Counter, Element)
+    }
 
     /**
      * Method updatePatternSet
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updatePatternSet( PatternSet value, String xmlTag, Counter counter, Element element )
     {
@@ -1746,15 +1750,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleLists( innerCount, root, value.getIncludes(), "includes", "include" );
             findAndReplaceSimpleLists( innerCount, root, value.getExcludes(), "excludes", "exclude" );
         }
-    } // -- void updatePatternSet(PatternSet, String, Counter, Element)
+    }
 
     /**
      * Method updatePlugin
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updatePlugin( Plugin value, String xmlTag, Counter counter, Element element )
     {
@@ -1770,15 +1774,15 @@ public class MavenJDOMWriter
         findAndReplaceXpp3DOM( innerCount, root, "goals", (Xpp3Dom) value.getGoals() );
         findAndReplaceSimpleElement( innerCount, root, "inherited", value.getInherited(), null );
         findAndReplaceXpp3DOM( innerCount, root, "configuration", (Xpp3Dom) value.getConfiguration() );
-    } // -- void updatePlugin(Plugin, String, Counter, Element)
+    }
 
     /**
      * Method updatePluginConfiguration
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     //CHECKSTYLE_OFF: LineLength
     protected void updatePluginConfiguration( PluginConfiguration value, String xmlTag, Counter counter, Element element )
@@ -1791,16 +1795,16 @@ public class MavenJDOMWriter
             updatePluginManagement( value.getPluginManagement(), "pluginManagement", innerCount, root );
             iteratePlugin( innerCount, root, value.getPlugins(), "plugins", "plugin" );
         }
-    } // -- void updatePluginConfiguration(PluginConfiguration, String, Counter, Element)
+    }
     //CHECKSTYLE_ON: LineLength
 
     /**
      * Method updatePluginContainer
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updatePluginContainer( PluginContainer value, String xmlTag, Counter counter, Element element )
     {
@@ -1811,15 +1815,15 @@ public class MavenJDOMWriter
             Counter innerCount = new Counter( counter.getDepth() + 1 );
             iteratePlugin( innerCount, root, value.getPlugins(), "plugins", "plugin" );
         }
-    } // -- void updatePluginContainer(PluginContainer, String, Counter, Element)
+    }
 
     /**
      * Method updatePluginExecution
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updatePluginExecution( PluginExecution value, String xmlTag, Counter counter, Element element )
     {
@@ -1830,15 +1834,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleLists( innerCount, root, value.getGoals(), "goals", "goal" );
         findAndReplaceSimpleElement( innerCount, root, "inherited", value.getInherited(), null );
         findAndReplaceXpp3DOM( innerCount, root, "configuration", (Xpp3Dom) value.getConfiguration() );
-    } // -- void updatePluginExecution(PluginExecution, String, Counter, Element)
+    }
 
     /**
      * Method updatePluginManagement
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updatePluginManagement( PluginManagement value, String xmlTag, Counter counter, Element element )
     {
@@ -1849,15 +1853,15 @@ public class MavenJDOMWriter
             Counter innerCount = new Counter( counter.getDepth() + 1 );
             iteratePlugin( innerCount, root, value.getPlugins(), "plugins", "plugin" );
         }
-    } // -- void updatePluginManagement(PluginManagement, String, Counter, Element)
+    }
 
     /**
      * Method updatePrerequisites
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updatePrerequisites( Prerequisites value, String xmlTag, Counter counter, Element element )
     {
@@ -1868,15 +1872,15 @@ public class MavenJDOMWriter
             Counter innerCount = new Counter( counter.getDepth() + 1 );
             findAndReplaceSimpleElement( innerCount, root, "maven", value.getMaven(), "2.0" );
         }
-    } // -- void updatePrerequisites(Prerequisites, String, Counter, Element)
+    }
 
     /**
      * Method updateProfile
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateProfile( Profile value, String xmlTag, Counter counter, Element element )
     {
@@ -1894,15 +1898,15 @@ public class MavenJDOMWriter
         updateDependencyManagement( value.getDependencyManagement(), "dependencyManagement", innerCount, root );
         updateDistributionManagement( value.getDistributionManagement(), "distributionManagement", innerCount, root );
         findAndReplaceProperties( innerCount, root, "properties", value.getProperties() );
-    } // -- void updateProfile(Profile, String, Counter, Element)
+    }
 
     /**
      * Method updateRelocation
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateRelocation( Relocation value, String xmlTag, Counter counter, Element element )
     {
@@ -1916,15 +1920,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "version", value.getVersion(), null );
             findAndReplaceSimpleElement( innerCount, root, "message", value.getMessage(), null );
         }
-    } // -- void updateRelocation(Relocation, String, Counter, Element)
+    }
 
     /**
      * Method updateReportPlugin
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateReportPlugin( ReportPlugin value, String xmlTag, Counter counter, Element element )
     {
@@ -1936,15 +1940,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleElement( innerCount, root, "inherited", value.getInherited(), null );
         findAndReplaceXpp3DOM( innerCount, root, "configuration", (Xpp3Dom) value.getConfiguration() );
         iterateReportSet( innerCount, root, value.getReportSets(), "reportSets", "reportSet" );
-    } // -- void updateReportPlugin(ReportPlugin, String, Counter, Element)
+    }
 
     /**
      * Method updateReportSet
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateReportSet( ReportSet value, String xmlTag, Counter counter, Element element )
     {
@@ -1954,15 +1958,15 @@ public class MavenJDOMWriter
         findAndReplaceXpp3DOM( innerCount, root, "configuration", (Xpp3Dom) value.getConfiguration() );
         findAndReplaceSimpleElement( innerCount, root, "inherited", value.getInherited(), null );
         findAndReplaceSimpleLists( innerCount, root, value.getReports(), "reports", "report" );
-    } // -- void updateReportSet(ReportSet, String, Counter, Element)
+    }
 
     /**
      * Method updateReporting
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateReporting( Reporting value, String xmlTag, Counter counter, Element element )
     {
@@ -1976,15 +1980,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "outputDirectory", value.getOutputDirectory(), null );
             iterateReportPlugin( innerCount, root, value.getPlugins(), "plugins", "plugin" );
         }
-    } // -- void updateReporting(Reporting, String, Counter, Element)
+    }
 
     /**
      * Method updateRepository
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateRepository( Repository value, String xmlTag, Counter counter, Element element )
     {
@@ -1996,15 +2000,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleElement( innerCount, root, "name", value.getName(), null );
         findAndReplaceSimpleElement( innerCount, root, "url", value.getUrl(), null );
         findAndReplaceSimpleElement( innerCount, root, "layout", value.getLayout(), "default" );
-    } // -- void updateRepository(Repository, String, Counter, Element)
+    }
 
     /**
      * Method updateRepositoryBase
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateRepositoryBase( RepositoryBase value, String xmlTag, Counter counter, Element element )
     {
@@ -2018,15 +2022,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "url", value.getUrl(), null );
             findAndReplaceSimpleElement( innerCount, root, "layout", value.getLayout(), "default" );
         }
-    } // -- void updateRepositoryBase(RepositoryBase, String, Counter, Element)
+    }
 
     /**
      * Method updateRepositoryPolicy
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateRepositoryPolicy( RepositoryPolicy value, String xmlTag, Counter counter, Element element )
     {
@@ -2040,15 +2044,15 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "updatePolicy", value.getUpdatePolicy(), null );
             findAndReplaceSimpleElement( innerCount, root, "checksumPolicy", value.getChecksumPolicy(), null );
         }
-    } // -- void updateRepositoryPolicy(RepositoryPolicy, String, Counter, Element)
+    }
 
     /**
      * Method updateResource
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateResource( Resource value, String xmlTag, Counter counter, Element element )
     {
@@ -2060,15 +2064,15 @@ public class MavenJDOMWriter
         findAndReplaceSimpleElement( innerCount, root, "directory", value.getDirectory(), null );
         findAndReplaceSimpleLists( innerCount, root, value.getIncludes(), "includes", "include" );
         findAndReplaceSimpleLists( innerCount, root, value.getExcludes(), "excludes", "exclude" );
-    } // -- void updateResource(Resource, String, Counter, Element)
+    }
 
     /**
      * Method updateScm
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateScm( Scm value, String xmlTag, Counter counter, Element element )
     {
@@ -2086,15 +2090,15 @@ public class MavenJDOMWriter
 
             //CHECKSTYLE_ON: LineLength
         }
-    } // -- void updateScm(Scm, String, Counter, Element)
+    }
 
     /**
      * Method updateSite
      *
-     * @param value
-     * @param element
-     * @param counter
-     * @param xmlTag
+     * @param value The value.
+     * @param element {@link Element}
+     * @param counter {@link Counter}
+     * @param xmlTag The XMLTag.
      */
     protected void updateSite( Site value, String xmlTag, Counter counter, Element element )
     {
@@ -2107,15 +2111,16 @@ public class MavenJDOMWriter
             findAndReplaceSimpleElement( innerCount, root, "name", value.getName(), null );
             findAndReplaceSimpleElement( innerCount, root, "url", value.getUrl(), null );
         }
-    } // -- void updateSite(Site, String, Counter, Element)
+    }
 
     /**
      * Method write
      *
-     * @param project
-     * @param stream
-     * @param document
+     * @param project {@link Model}
+     * @param stream {@link OutputStream}
+     * @param document {@link Document}
      * @deprecated
+     * @throws IOException in case of an error.
      */
     public void write( Model project, Document document, OutputStream stream )
         throws IOException
@@ -2126,14 +2131,15 @@ public class MavenJDOMWriter
         format.setIndent( "    " ).setLineSeparator( System.getProperty( "line.separator" ) );
         outputter.setFormat( format );
         outputter.output( document, stream );
-    } // -- void write(Model, Document, OutputStream)
+    }
 
     /**
      * Method write
      *
-     * @param project
-     * @param writer
-     * @param document
+     * @param project {@link Model}
+     * @param writer {@link OutputStreamWriter}
+     * @param document {@link Document}
+     * @throws IOException in case of an error.
      */
     public void write( Model project, Document document, OutputStreamWriter writer )
         throws IOException
@@ -2141,15 +2147,16 @@ public class MavenJDOMWriter
         Format format = Format.getRawFormat();
         format.setEncoding( writer.getEncoding() ).setLineSeparator( System.getProperty( "line.separator" ) );
         write( project, document, writer, format );
-    } // -- void write(Model, Document, OutputStreamWriter)
+    }
 
     /**
      * Method write
      *
-     * @param project
-     * @param jdomFormat
-     * @param writer
-     * @param document
+     * @param project {@link Model}
+     * @param jdomFormat {@link Format}
+     * @param writer {@link Writer}
+     * @param document {@link Document}
+     * @throws IOException in case of an error.
      */
     public void write( Model project, Document document, Writer writer, Format jdomFormat )
         throws IOException
@@ -2158,6 +2165,6 @@ public class MavenJDOMWriter
         XMLOutputter outputter = new XMLOutputter();
         outputter.setFormat( jdomFormat );
         outputter.output( document, writer );
-    } // -- void write(Model, Document, Writer, Format)
+    }
 
 }

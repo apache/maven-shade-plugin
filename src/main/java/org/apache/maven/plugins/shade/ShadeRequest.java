@@ -54,7 +54,7 @@ public class ShadeRequest
     /**
      * Which jars to shade.
      *
-     * @param jars
+     * @param jars The jars.
      */
     public void setJars( Set<File> jars )
     {
@@ -69,7 +69,7 @@ public class ShadeRequest
     /**
      * Output jar.
      *
-     * @param uberJar
+     * @param uberJar The ueberJar file.
      */
     public void setUberJar( File uberJar )
     {
@@ -84,7 +84,7 @@ public class ShadeRequest
     /**
      * The filters.
      *
-     * @param filters
+     * @param filters The filters
      */
     public void setFilters( List<Filter> filters )
     {
@@ -99,7 +99,7 @@ public class ShadeRequest
     /**
      * The relocators.
      *
-     * @param relocators
+     * @param relocators The relocators.
      */
     public void setRelocators( List<Relocator> relocators )
     {
@@ -114,7 +114,7 @@ public class ShadeRequest
     /**
      * The transformers.
      *
-     * @param resourceTransformers
+     * @param resourceTransformers List of resourceTransformers.
      */
     public void setResourceTransformers( List<ResourceTransformer> resourceTransformers )
     {
@@ -131,7 +131,7 @@ public class ShadeRequest
      * When false, it will just relocate the java source files to the shaded paths, but will not modify the
      * actual contents of the java source files.
      *
-     * @param shadeSourcesContent
+     * @param shadeSourcesContent {@code true} or {@code false}.
      */
     public void setShadeSourcesContent( boolean shadeSourcesContent )
     {
