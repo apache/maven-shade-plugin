@@ -1255,7 +1255,11 @@ public class ShadeMojo
                         }
                     }
 
-                    if ( !found )
+                    // MSHADE-311: do not add exclusion for provided transitive dep
+                    //       note: MSHADE-31 introduced the exclusion logic for promoteTransitiveDependencies=true,
+                    //             but as of 3.2.1 promoteTransitiveDependencies has no effect for provided deps,
+                    //             which makes this fix even possible (see also MSHADE-181)
+                    if ( !found && !"provided".equals( n3.getArtifact().getScope() ) )
                     {
                         for ( Dependency dep : dependencies )
                         {
