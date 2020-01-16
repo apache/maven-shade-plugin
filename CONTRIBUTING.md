@@ -81,11 +81,11 @@ Additional Resources
 + [Apache Maven Help JIRA project page](https://issues.apache.org/jira/projects/MSHADE/)
 + [Contributor License Agreement][cla]
 + [General GitHub documentation](https://help.github.com/)
-+ [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
++ [GitHub pull request documentation](https://help.github.com/en/desktop/contributing-to-projects/creating-a-pull-request)
 + [Apache Maven Twitter Account](https://twitter.com/ASFMavenProject)
 + #Maven IRC channel on freenode.org
 
-[dev-ml-list]: https://maven.apache.org/mail-lists.html
+[dev-ml-list]: https://maven.apache.org/mailing-lists.html
 [code-style]: https://maven.apache.org/developers/conventions/code.html
 [cla]: https://www.apache.org/licenses/#clas
 [maven-wiki]: https://cwiki.apache.org/confluence/display/MAVEN/Index
