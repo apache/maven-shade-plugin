@@ -224,14 +224,14 @@ public class DefaultShader
                 String dir = mappedName.substring( 0, idx );
                 if ( !resources.contains( dir ) )
                 {
-                    addDirectory( resources, jos, dir );
+                    addDirectory( resources, jos, dir, entry.getTime() );
                 }
             }
 
             duplicates.put( name, jar );
             if ( name.endsWith( ".class" ) )
             {
-                addRemappedClass( remapper, jos, jar, name, in );
+                addRemappedClass( remapper, jos, jar, name, entry.getTime(), in );
             }
             else if ( shadeRequest.isShadeSourcesContent() && name.endsWith( ".java" ) )
             {
@@ -241,7 +241,7 @@ public class DefaultShader
                     return;
                 }
 
-                addJavaSource( resources, jos, mappedName, in, shadeRequest.getRelocators() );
+                addJavaSource( resources, jos, mappedName, entry.getTime(), in, shadeRequest.getRelocators() );
             }
             else
             {
@@ -402,7 +402,7 @@ public class DefaultShader
         return list;
     }
 
-    private void addDirectory( Set<String> resources, JarOutputStream jos, String name )
+    private void addDirectory( Set<String> resources, JarOutputStream jos, String name, long time )
         throws IOException
     {
         if ( name.lastIndexOf( '/' ) > 0 )
@@ -410,26 +410,29 @@ public class DefaultShader
             String parent = name.substring( 0, name.lastIndexOf( '/' ) );
             if ( !resources.contains( parent ) )
             {
-                addDirectory( resources, jos, parent );
+                addDirectory( resources, jos, parent, time );
             }
         }
 
         // directory entries must end in "/"
         JarEntry entry = new JarEntry( name + "/" );
+        entry.setTime( time );
         jos.putNextEntry( entry );
 
         resources.add( name );
     }
 
     private void addRemappedClass( RelocatorRemapper remapper, JarOutputStream jos, File jar, String name,
-                                   InputStream is )
+                                   long time, InputStream is )
         throws IOException, MojoExecutionException
     {
         if ( !remapper.hasRelocators() )
         {
             try
             {
-                jos.putNextEntry( new JarEntry( name ) );
+                JarEntry entry = new JarEntry( name );
+                entry.setTime( time );
+                jos.putNextEntry( entry );
                 IOUtil.copy( is, jos );
             }
             catch ( ZipException e )
@@ -486,7 +489,9 @@ public class DefaultShader
         try
         {
             // Now we put it back on so the class file is written out with the right extension.
-            jos.putNextEntry( new JarEntry( mappedName + ".class" ) );
+            JarEntry entry = new JarEntry( mappedName + ".class" );
+            entry.setTime( time );
+            jos.putNextEntry( entry );
 
             jos.write( renamedClass );
         }
@@ -531,11 +536,13 @@ public class DefaultShader
         return resourceTransformed;
     }
 
-    private void addJavaSource( Set<String> resources, JarOutputStream jos, String name, InputStream is,
+    private void addJavaSource( Set<String> resources, JarOutputStream jos, String name, long time, InputStream is,
                                 List<Relocator> relocators )
         throws IOException
     {
-        jos.putNextEntry( new JarEntry( name ) );
+        JarEntry entry = new JarEntry( name );
+        entry.setTime( time );
+        jos.putNextEntry( entry );
 
         String sourceContent = IOUtil.toString( new InputStreamReader( is, StandardCharsets.UTF_8 ) );
 
@@ -551,15 +558,15 @@ public class DefaultShader
         resources.add( name );
     }
 
-    private void addResource( Set<String> resources, JarOutputStream jos, String name, long lastModified,
+    private void addResource( Set<String> resources, JarOutputStream jos, String name, long time,
                               InputStream is )
         throws IOException
     {
-        final JarEntry jarEntry = new JarEntry( name );
+        final JarEntry entry = new JarEntry( name );
 
-        jarEntry.setTime( lastModified );
+        entry.setTime( time );
 
-        jos.putNextEntry( jarEntry );
+        jos.putNextEntry( entry );
 
         IOUtil.copy( is, jos );
 
