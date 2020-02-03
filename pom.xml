@@ -205,13 +205,15 @@
           <configuration>
             <excludes combine.children="append">
               <!-- Can't add license header otherwise the tests will fail. -->
+              <exclude>src/it/mrm/repository/services-resource-transformer/*/META-INF/services/org.apache.maven.Shade</exclude>
+              <exclude>src/it/mrm/repository/services-resource-transformer-with-reloc-includes-excludes/*/META-INF/services/org.apache.maven.shade</exclude>
               <exclude>rel-path-test-files/**</exclude>
-              <exclude>src/it/dep-reduced-pom-use-base-version/repo/org/apache/maven/its/shade/drp/a/0.1-SNAPSHOT/_maven.repositories</exclude>
-              <exclude>src/it/mshade-123/sample.txt</exclude>
-              <exclude>src/it/MSHADE-133/src/main/resources/myConfig.yml</exclude>
-              <exclude>src/it/rerun-with-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
-              <exclude>src/it/rerun-without-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
-              <exclude>src/it/MSHADE-182/src/main/resources/META-INF/services/relocateme.Service</exclude>
+              <exclude>src/it/projects/dep-reduced-pom-use-base-version/repo/org/apache/maven/its/shade/drp/a/0.1-SNAPSHOT/_maven.repositories</exclude>
+              <exclude>src/it/projects/mshade-123/sample.txt</exclude>
+              <exclude>src/it/projects/MSHADE-133/src/main/resources/myConfig.yml</exclude>
+              <exclude>src/it/projects/rerun-with-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
+              <exclude>src/it/projects/rerun-without-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
+              <exclude>src/it/projects/MSHADE-182/src/main/resources/META-INF/services/relocateme.Service</exclude>
             </excludes>
          </configuration>
         </plugin>
@@ -276,13 +278,32 @@
             <artifactId>maven-invoker-plugin</artifactId>
             <configuration>
               <goals>
-                <goal>clean</goal>
-                <goal>install</goal>
+                <goal>package</goal>
               </goals>
-              <properties>
-                <!-- e.g. ensure that Java7 picks up TLSv1.2 when connecting with Central -->
-                <https.protocols>${https.protocols}</https.protocols>
-              </properties>
+              <projectsDirectory>src/it/projects</projectsDirectory>
+              <settingsFile>src/it/mrm/settings.xml</settingsFile>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>mrm-maven-plugin</artifactId>
+            <version>1.2.0</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>start</goal>
+                  <goal>stop</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <repositories>
+                <mockRepo>
+                  <source>src/it/mrm/repository</source>
+                  <cloneTo>target/mock-repo</cloneTo> <!-- due to on the fly created jars -->
+                </mockRepo>
+                <proxyRepo/>
+              </repositories>
             </configuration>
           </plugin>
         </plugins>
