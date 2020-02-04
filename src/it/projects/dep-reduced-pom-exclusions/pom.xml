@@ -25,25 +25,11 @@ under the License.
   <groupId>org.apache.maven.its.shade.drpe</groupId>
   <artifactId>test</artifactId>
   <version>1.0</version>
-  <packaging>jar</packaging>
 
   <name>MSHADE-223</name>
   <description>
     Test that creation of the dependency reduced POM properly handles dependencies with classifiers.
   </description>
-
-  <repositories>
-    <repository>
-      <id>shade-it</id>
-      <url>file:///${basedir}/repo</url>
-      <releases>
-        <checksumPolicy>ignore</checksumPolicy>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
 
   <dependencies>
     <dependency>
@@ -68,7 +54,6 @@ under the License.
         <executions>
           <execution>
             <id>attach-shade</id>
-            <phase>package</phase>
             <goals>
               <goal>shade</goal>
             </goals>
