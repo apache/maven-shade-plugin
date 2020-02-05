@@ -73,13 +73,15 @@ public class GroovyResourceTransformerTest
     {
         File tempJar = File.createTempFile( "shade.", ".jar" );
         tempJar.deleteOnExit();
-        FileOutputStream fos = new FileOutputStream( tempJar );
-        JarOutputStream jaos = new JarOutputStream( fos );
-        transformer.modifyOutputStream( jaos );
-        jaos.close();
+
+        try ( FileOutputStream fos = new FileOutputStream( tempJar );
+              JarOutputStream jaos = new JarOutputStream( fos ) )
+        {
+            transformer.modifyOutputStream( jaos );
+        }
+        
         Properties desc = null;
-        JarFile jar = new JarFile( tempJar );
-        try
+        try ( JarFile jar = new JarFile( tempJar ) )
         {
             ZipEntry entry = jar.getEntry( GroovyResourceTransformer.EXT_MODULE_NAME );
             if ( entry != null )
@@ -87,10 +89,6 @@ public class GroovyResourceTransformerTest
                 desc = new Properties();
                 desc.load( jar.getInputStream( entry ) );
             }
-        }
-        finally
-        {
-            jar.close();
         }
         return desc;
     }
@@ -100,6 +98,7 @@ public class GroovyResourceTransformerTest
     {
         GroovyResourceTransformer transformer = new GroovyResourceTransformer();
         assertTrue( transformer.canTransformResource( GroovyResourceTransformer.EXT_MODULE_NAME ) );
+        assertTrue( transformer.canTransformResource( GroovyResourceTransformer.EXT_MODULE_NAME_LEGACY ) );
         assertFalse( transformer.canTransformResource( "somethingElse" ) );
         assertFalse( transformer.canTransformResource( JarFile.MANIFEST_NAME ) );
     }

@@ -39,7 +39,10 @@ public class GroovyResourceTransformer
     implements ResourceTransformer
 {
 
-    static final String EXT_MODULE_NAME = "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule";
+    static final String EXT_MODULE_NAME_LEGACY = "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule";
+
+    // Since Groovy 2.5.x/Java 9 META-INF/services may only be used by Service Providers
+    static final String EXT_MODULE_NAME = "META-INF/groovy/org.codehaus.groovy.runtime.ExtensionModule";
 
     private List<String> extensionClassesList = new ArrayList<>();
 
@@ -52,7 +55,7 @@ public class GroovyResourceTransformer
     @Override
     public boolean canTransformResource( String resource )
     {
-        return EXT_MODULE_NAME.equals( resource );
+        return EXT_MODULE_NAME.equals( resource ) || EXT_MODULE_NAME_LEGACY.equals( resource );
     }
 
     @Override
@@ -60,13 +63,9 @@ public class GroovyResourceTransformer
         throws IOException
     {
         Properties out = new Properties();
-        try
+        try ( InputStream props = is )
         {
-            out.load( is );
-        }
-        finally
-        {
-            is.close();
+            out.load( props );
         }
         String extensionClasses = out.getProperty( "extensionClasses", "" ).trim();
         if ( extensionClasses.length() > 0 )
