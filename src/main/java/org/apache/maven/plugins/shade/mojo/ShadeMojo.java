@@ -664,18 +664,25 @@ public class ShadeMojo
                                            Set<File> testArtifacts, Set<File> testSourceArtifacts,
                                            ArtifactSelector artifactSelector )
     {
+
+        List<String> excludedArtifacts = new ArrayList<>();
+        List<String> pomArtifacts = new ArrayList<>();
+        List<String> emptySourceArtifacts = new ArrayList<>();
+        List<String> emptyTestArtifacts = new ArrayList<>();
+        List<String> emptyTestSourceArtifacts = new ArrayList<>();
+
         for ( Artifact artifact : project.getArtifacts() )
         {
             if ( !artifactSelector.isSelected( artifact ) )
             {
-                getLog().info( "Excluding " + artifact.getId() + " from the shaded jar." );
+                excludedArtifacts.add( artifact.getId() );
 
                 continue;
             }
 
             if ( "pom".equals( artifact.getType() ) )
             {
-                getLog().info( "Skipping pom dependency " + artifact.getId() + " in the shaded jar." );
+                pomArtifacts.add( artifact.getId() );
                 continue;
             }
 
@@ -695,7 +702,7 @@ public class ShadeMojo
                     }
                     else
                     {
-                        getLog().warn( "Skipping empty source jar " + artifact.getId() + "." );
+                        emptySourceArtifacts.add( artifact.getArtifactId() );
                     }
                 }
             }
@@ -711,7 +718,7 @@ public class ShadeMojo
                     }
                     else
                     {
-                        getLog().warn( "Skipping empty test jar " + artifact.getId() + "." );
+                        emptyTestArtifacts.add( artifact.getId() );
                     }
                 }
             }
@@ -725,9 +732,30 @@ public class ShadeMojo
                 }
                 else
                 {
-                    getLog().warn( "Skipping empty test source jar " + artifact.getId() + "." );
+                    emptyTestSourceArtifacts.add( artifact.getId() );
                 }
             }
+        }
+
+        for ( String artifactId : excludedArtifacts )
+        {
+            getLog().info( "Excluding " + artifactId + " from the shaded jar." );
+        }
+        for ( String artifactId : pomArtifacts )
+        {
+            getLog().info( "Skipping pom dependency " + artifactId + " in the shaded jar." );
+        }
+        for ( String artifactId : emptySourceArtifacts )
+        {
+            getLog().warn( "Skipping empty source jar " + artifactId + "." );
+        }
+        for ( String artifactId : emptyTestArtifacts )
+        {
+            getLog().warn( "Skipping empty test jar " + artifactId + "." );
+        }
+        for ( String artifactId : emptyTestArtifacts )
+        {
+            getLog().warn( "Skipping empty test source jar " + artifactId + "." );
         }
     }
 
@@ -786,12 +814,10 @@ public class ShadeMojo
     private void copyFiles( File source, File target )
         throws IOException
     {
-        try ( InputStream in = new FileInputStream( source ) )
+        try ( InputStream in = new FileInputStream( source );
+              OutputStream out = new FileOutputStream( target ) )
         {
-            try ( OutputStream out = new FileOutputStream( target ) )
-            {
-                IOUtil.copy( in, out );
-            }
+            IOUtil.copy( in, out );
         }
     }
 
