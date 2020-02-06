@@ -46,12 +46,12 @@ public class ManifestResourceTransformer
     // Configuration
     private String mainClass;
 
+    private boolean skipRelocators;
+
     private Map<String, Object> manifestEntries;
 
     // Fields
     private boolean manifestDiscovered;
-
-    private boolean skipRelocators;
 
     private Manifest manifest;
 
