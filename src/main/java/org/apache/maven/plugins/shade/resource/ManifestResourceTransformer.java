@@ -51,6 +51,8 @@ public class ManifestResourceTransformer
     // Fields
     private boolean manifestDiscovered;
 
+    private boolean skipRelocators;
+
     private Manifest manifest;
 
     public boolean canTransformResource( String resource )
@@ -72,7 +74,37 @@ public class ManifestResourceTransformer
         if ( !manifestDiscovered )
         {
             manifest = new Manifest( is );
+
+            if ( relocators != null && !relocators.isEmpty() )
+            {
+                rewriteManifest( relocators );
+            }
+
             manifestDiscovered = true;
+        }
+    }
+
+    private void rewriteManifest( List<Relocator> relocators )
+    {
+        if ( skipRelocators )
+        {
+            return;
+        }
+        for ( final Map.Entry<Object, Object> entry : manifest.getMainAttributes().entrySet() )
+        {
+            final Object value = entry.getValue();
+            if ( value instanceof  String )
+            {
+                String relContent = String.valueOf( value );
+                for ( final Relocator relocator : relocators )
+                {
+                    relContent = relocator.applyToSourceContent( relContent );
+                }
+                if ( !relContent.equals( value ) )
+                {
+                    entry.setValue( relContent );
+                }
+            }
         }
     }
 
