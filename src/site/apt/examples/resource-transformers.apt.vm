@@ -423,6 +423,56 @@ Transformers in <<<org.apache.maven.plugins.shade.resource>>>
 +----- 
 
 
+
+* Rewriting the manifest with relocators Manifest Entries with the {ManifestResourceTransformer}
+
+  The <<<ManifestResourceTransformer>>> also allows to rewrite the manifest entries content.
+  It reuses the <<<Relocator>>> API.
+
+  There are two main ways to configure it:
+
+    * directly through the plugin relocators and enable <<<useDefaultLocators>>> setting it to <<<true>>>,
+
+    * through <<<relocators>>> option of the transformer
+
+  Both can be used at the same time, here is an example:
+
+
++-----
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <useDefaultLocators>true</useDefaultLocators>
+                  <relocators>
+                    <relocator implementation="....">
+                    <relocator implementation="....">
+                  </relocators>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
++-----
+
+
 * Licensing
 
 ** Preventing License Duplication with the {ApacheLicenseResourceTransformer}

@@ -42,9 +42,9 @@ public class ManifestResourceTransformerTest
     public void rewriteManifestEntries() throws Exception
     {
         final ManifestResourceTransformer transformer = new ManifestResourceTransformer();
-        final Field skipRelocators = ManifestResourceTransformer.class.getDeclaredField("skipRelocators");
-        skipRelocators.setAccessible(true);
-        skipRelocators.set(transformer, false);
+        final Field useDefaultLocators = ManifestResourceTransformer.class.getDeclaredField("useDefaultLocators");
+        useDefaultLocators.setAccessible(true);
+        useDefaultLocators.set(transformer, true);
 
         final Manifest manifest = new Manifest();
         final Attributes attributes = manifest.getMainAttributes();

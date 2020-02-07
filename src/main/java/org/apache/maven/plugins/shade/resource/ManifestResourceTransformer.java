@@ -46,7 +46,9 @@ public class ManifestResourceTransformer
     // Configuration
     private String mainClass;
 
-    private boolean skipRelocators;
+    private boolean useDefaultLocators;
+
+    private List<Relocator> relocators;
 
     private Map<String, Object> manifestEntries;
 
@@ -75,9 +77,13 @@ public class ManifestResourceTransformer
         {
             manifest = new Manifest( is );
 
-            if ( relocators != null && !relocators.isEmpty() )
+            if ( relocators != null && !relocators.isEmpty() && useDefaultLocators )
             {
                 rewriteManifest( relocators );
+            }
+            if ( this.relocators != null && !this.relocators.isEmpty() )
+            {
+                rewriteManifest( this.relocators );
             }
 
             manifestDiscovered = true;
@@ -86,10 +92,6 @@ public class ManifestResourceTransformer
 
     private void rewriteManifest( List<Relocator> relocators )
     {
-        if ( skipRelocators )
-        {
-            return;
-        }
         for ( final Map.Entry<Object, Object> entry : manifest.getMainAttributes().entrySet() )
         {
             final Object value = entry.getValue();
