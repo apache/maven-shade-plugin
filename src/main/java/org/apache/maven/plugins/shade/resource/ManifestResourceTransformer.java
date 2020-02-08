@@ -19,10 +19,9 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import org.apache.maven.plugins.shade.relocation.Relocator;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -30,6 +29,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+
+import org.apache.maven.plugins.shade.relocation.Relocator;
 
 /**
  * A resource processor that allows the arbitrary addition of attributes to
@@ -42,17 +43,39 @@ import java.util.jar.Manifest;
 public class ManifestResourceTransformer
     implements ResourceTransformer
 {
-
+    private final List<String> defaultAttributes = Arrays.asList( "Export-Package",
+                                                                  "Import-Package",
+                                                                  "Provide-Capability",
+                                                                  "Require-Capability" ); 
+    
     // Configuration
     private String mainClass;
 
     private Map<String, Object> manifestEntries;
 
+    private List<String> additionalAttributes;
+
     // Fields
     private boolean manifestDiscovered;
 
     private Manifest manifest;
+    
+    public void setMainClass( String mainClass )
+    {
+        this.mainClass = mainClass;
+    }
+    
+    public void setManifestEntries( Map<String, Object> manifestEntries )
+    {
+        this.manifestEntries = manifestEntries;
+    }
+    
+    public void setAdditionalAttributes( List<String> additionalAttributes )
+    {
+        this.additionalAttributes = additionalAttributes;
+    }
 
+    @Override
     public boolean canTransformResource( String resource )
     {
         if ( JarFile.MANIFEST_NAME.equalsIgnoreCase( resource ) )
@@ -63,6 +86,7 @@ public class ManifestResourceTransformer
         return false;
     }
 
+    @Override
     public void processResource( String resource, InputStream is, List<Relocator> relocators )
         throws IOException
     {
@@ -72,15 +96,46 @@ public class ManifestResourceTransformer
         if ( !manifestDiscovered )
         {
             manifest = new Manifest( is );
+
+            if ( relocators != null && !relocators.isEmpty() ) 
+            {
+                final Attributes attributes = manifest.getMainAttributes();
+
+                for ( final String attribute : defaultAttributes )
+                {
+                    final String attributeValue = attributes.getValue( attribute );
+                    if ( attributeValue != null )
+                    {
+                        String newValue = relocate( attributeValue, relocators );
+                        attributes.putValue( attribute, newValue );
+                    }
+                }
+
+                if ( additionalAttributes != null )
+                {
+                    for ( final String attribute : additionalAttributes )
+                    {
+                        final String attributeValue = attributes.getValue( attribute );
+                        if ( attributeValue != null )
+                        {
+                            String newValue = relocate( attributeValue, relocators );
+                            attributes.putValue( attribute, newValue );
+                        }
+                    }
+                }
+            }
+
             manifestDiscovered = true;
         }
     }
 
+    @Override
     public boolean hasTransformedResource()
     {
         return true;
     }
 
+    @Override
     public void modifyOutputStream( JarOutputStream jos )
         throws IOException
     {
@@ -107,5 +162,21 @@ public class ManifestResourceTransformer
 
         jos.putNextEntry( new JarEntry( JarFile.MANIFEST_NAME ) );
         manifest.write( jos );
+    }
+    
+    private String relocate( String originalValue, List<Relocator> relocators )
+    {
+        String newValue = originalValue;
+        for ( Relocator relocator : relocators )
+        {
+            String value;
+            do
+            {
+                value = newValue;
+                newValue = relocator.relocateClass( value );
+            }
+            while ( !value.equals( newValue ) );
+        }
+        return newValue;
     }
 }

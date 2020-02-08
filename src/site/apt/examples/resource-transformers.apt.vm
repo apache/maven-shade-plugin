@@ -387,6 +387,18 @@ Transformers in <<<org.apache.maven.plugins.shade.resource>>>
                             
     * the <<<X-Compile-Target-JDK>>> entry to the value of the <<<maven.compile.target>>> property.
 
+  By default the <<<ManifestResourceTransformer>>> will relocate the following attributes:
+
+    * Export-Package
+
+    * Import-Package
+
+    * Provide-Capability
+
+    * Require-Capability
+
+  With <<<additionalAttributes>>> you can specify the attributes that need to be relocated too.
+   
                             
 +-----
 <project>
