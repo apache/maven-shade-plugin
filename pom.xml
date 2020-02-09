@@ -30,7 +30,7 @@
   </parent>
 
   <artifactId>maven-shade-plugin</artifactId>
-  <version>3.2.2-SNAPSHOT</version>
+  <version>3.2.2</version>
   <packaging>maven-plugin</packaging>
 
   <name>Apache Maven Shade Plugin</name>
@@ -47,7 +47,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-shade-plugin.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven-shade-plugin.git</developerConnection>
     <url>https://github.com/apache/maven-shade-plugin/tree/${project.scm.tag}</url>
-    <tag>HEAD</tag>
+    <tag>maven-shade-plugin-3.2.2</tag>
   </scm>
   <issueManagement>
     <system>jira</system>
@@ -69,7 +69,7 @@
     <javaVersion>7</javaVersion>
     <currentVersion>${project.version}</currentVersion>
     <asmVersion>7.3.1</asmVersion>
-    <project.build.outputTimestamp>2020-02-01T19:03:59Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2020-02-09T09:12:23Z</project.build.outputTimestamp>
   </properties>
 
   <contributors>
@@ -302,7 +302,7 @@
                   <source>src/it/mrm/repository</source>
                   <cloneTo>target/mock-repo</cloneTo> <!-- due to on the fly created jars -->
                 </mockRepo>
-                <proxyRepo/>
+                <proxyRepo />
               </repositories>
             </configuration>
           </plugin>
