@@ -55,7 +55,9 @@ Resource Transformers
 *-----------------------------------------+------------------------------------------+
 | {{PropertiesTransformer}}               | Merges properties files owning an ordinal to solve conflicts |
 *-----------------------------------------+------------------------------------------+
-| {{ResourceBundleAppendingTransformer}}  | Merges ResourceBundles                  | 
+| {{RelocationTransformer}}               | Delegates the processing to other transformers but relocating the resource contents |
+*-----------------------------------------+------------------------------------------+
+| {{ResourceBundleAppendingTransformer}}  | Merges ResourceBundles                  |
 *-----------------------------------------+------------------------------------------+
 | {{ServicesResourceTransformer}}         | Relocated class names in <<<META-INF/services>>> resources and merges them. |
 *-----------------------------------------+------------------------------------------+
@@ -589,6 +591,45 @@ Transformers in <<<org.apache.maven.plugins.shade.resource>>>
                   <alreadyMergedKey>already_merged</alreadyMergedKey>
                   <defaultOrdinal>0</defaultOrdinal>
                   <reverseOrder>false</reverseOrder>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
++-----
+
+* Relocating file content with {RelocationTransformer}
+
+  The <<<RelocationTransformer>>> allows to apply relocators before delegating the processing to other transformers.
+
++-----
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.RelocationTransformer">
+                  <delegates>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.properties.PropertiesTransformer">
+                      <resource>configuration/application.properties</resource>
+                      <ordinalKey>ordinal</ordinalKey>
+                    </transformer>
+                  </delegates>
                 </transformer>
               </transformers>
             </configuration>
