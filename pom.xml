@@ -68,7 +68,7 @@
     <mavenVersion>3.0</mavenVersion>
     <javaVersion>7</javaVersion>
     <currentVersion>${project.version}</currentVersion>
-    <asmVersion>7.3.1</asmVersion>
+    <asmVersion>8.0</asmVersion>
     <project.build.outputTimestamp>2020-02-09T09:12:47Z</project.build.outputTimestamp>
   </properties>
 
