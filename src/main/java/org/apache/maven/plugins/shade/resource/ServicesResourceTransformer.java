@@ -108,6 +108,7 @@ public class ServicesResourceTransformer
     public void modifyOutputStream( JarOutputStream jos )
         throws IOException
     {
+        final Map<String, String> written = new HashMap<>( );
         for ( Map.Entry<String, ServiceStream> entry : serviceEntries.entrySet() )
         {
             String key = entry.getKey();
@@ -128,23 +129,33 @@ public class ServicesResourceTransformer
                 key = SERVICES_PATH + '/' + key;
             }
 
-            jos.putNextEntry( new JarEntry( key ) );
-
-
-            //read the content of service file for candidate classes for relocation
-            PrintWriter writer = new PrintWriter( jos );
             InputStreamReader streamReader = new InputStreamReader( data.toInputStream() );
             BufferedReader reader = new BufferedReader( streamReader );
-            String className;
+            StringBuilder contents = new StringBuilder();
+            String line;
 
-            while ( ( className = reader.readLine() ) != null )
+            while ( ( line = reader.readLine() ) != null )
             {
-                writer.println( className );
-                writer.flush();
+                if ( contents.length() > 0 )
+                {
+                    contents.append( "\n" );
+                }
+                contents.append( line );
             }
 
             reader.close();
             data.reset();
+
+            String res = contents.toString();
+            if ( written.get( key ) == null || !written.get( key ).equals( res ) )
+            {
+                written.put( key, res );
+                jos.putNextEntry( new JarEntry( key ) );
+                //read the content of service file for candidate classes for relocation
+                PrintWriter writer = new PrintWriter( jos );
+                writer.println( contents );
+                writer.flush();
+            }
         }
     }
 
