@@ -41,9 +41,20 @@ public class AppendingTransformer
 
     public boolean canTransformResource( String r )
     {
-        if ( resource != null && resource.equalsIgnoreCase( r ) )
+        if ( resource != null )
         {
-            return true;
+            if ( resource.equalsIgnoreCase( r ) )
+            {
+                return true;
+            }
+
+            if ( resource.endsWith( "*" ) && ( ( resource.length() - 1 ) <= r.length() ) )
+            {
+                String requiredPath = resource.substring( 0, resource.length() - 1 );
+                String path = r.substring( 0, requiredPath.length() );
+
+                return requiredPath.equalsIgnoreCase( path );
+            }
         }
 
         return false;

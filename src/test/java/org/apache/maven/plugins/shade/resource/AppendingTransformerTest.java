@@ -33,6 +33,7 @@ public class AppendingTransformerTest
 {
 
     private AppendingTransformer transformer;
+    private AppendingTransformer wildcardTransformer;
 
     static
     {
@@ -46,6 +47,7 @@ public class AppendingTransformerTest
     public void setUp()
     {
         this.transformer = new AppendingTransformer();
+        this.wildcardTransformer = new AppendingTransformer();
     }
 
     public void testCanTransformResource()
@@ -55,6 +57,15 @@ public class AppendingTransformerTest
         assertTrue( this.transformer.canTransformResource( "abcdefghijklmnopqrstuvwxyz" ) );
         assertTrue( this.transformer.canTransformResource( "ABCDEFGHIJKLMNOPQRSTUVWXYZ" ) );
         assertFalse( this.transformer.canTransformResource( "META-INF/MANIFEST.MF" ) );
+
+        this.wildcardTransformer.resource = "abcdefghijklmnopqrstuvwxyz/*";
+
+        assertTrue( this.wildcardTransformer.canTransformResource( "abcdefghijklmnopqrstuvwxyz/abcdefghijklmnopqrstuvwxyz" ) );
+        assertTrue( this.wildcardTransformer.canTransformResource( "ABCDEFGHIJKLMNOPQRSTUVWXYZ/ABCDEFGHIJKLMNOPQRSTUVWXYZ" ) );
+        assertTrue( this.wildcardTransformer.canTransformResource( "abcdefghijklmnopqrstuvwxyz/" ) );
+        assertFalse( this.wildcardTransformer.canTransformResource( "abcdefghijklmnopqrstuvwxyz" ) );
+        assertFalse( this.wildcardTransformer.canTransformResource( "ABCDEFGHIJKLMNOPQRSTUVWXYZ" ) );
+        assertFalse( this.wildcardTransformer.canTransformResource( "META-INF/MANIFEST.MF" ) );
     }
 
 }
