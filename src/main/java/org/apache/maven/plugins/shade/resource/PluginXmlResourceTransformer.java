@@ -48,6 +48,8 @@ public class PluginXmlResourceTransformer
 {
     private List<Xpp3Dom> mojos = new ArrayList<>();
 
+    private long time = Long.MIN_VALUE;
+
     public static final String PLUGIN_XML_PATH = "META-INF/maven/plugin.xml";
 
     public boolean canTransformResource( String resource )
@@ -55,7 +57,7 @@ public class PluginXmlResourceTransformer
         return PLUGIN_XML_PATH.equals( resource );
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
         Xpp3Dom newDom;
@@ -84,6 +86,11 @@ public class PluginXmlResourceTransformer
         if ( newDom.getChild( "mojos" ) == null )
         {
             return;
+        }
+
+        if ( time > this.time )
+        {
+            this.time = time;        
         }
 
         for ( Xpp3Dom mojo : newDom.getChild( "mojos" ).getChildren( "mojo" ) )
@@ -134,7 +141,9 @@ public class PluginXmlResourceTransformer
     {
         byte[] data = getTransformedResource();
 
-        jos.putNextEntry( new JarEntry( PLUGIN_XML_PATH ) );
+        JarEntry jarEntry = new JarEntry( PLUGIN_XML_PATH );
+        jarEntry.setTime( time );
+        jos.putNextEntry( jarEntry );
 
         jos.write( data );
 

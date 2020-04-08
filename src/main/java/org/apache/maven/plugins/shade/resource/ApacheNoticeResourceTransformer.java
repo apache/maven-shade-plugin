@@ -76,6 +76,8 @@ public class ApacheNoticeResourceTransformer
      */
     String encoding;
 
+    private long time = Long.MIN_VALUE;
+
     private static final String NOTICE_PATH = "META-INF/NOTICE";
 
     private static final String NOTICE_TXT_PATH = "META-INF/NOTICE.txt";
@@ -86,7 +88,7 @@ public class ApacheNoticeResourceTransformer
 
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
         if ( entries.isEmpty() )
@@ -191,6 +193,10 @@ public class ApacheNoticeResourceTransformer
                 currentOrg.add( sb.toString() );
             }
         }
+        if ( time > this.time )
+        {
+            this.time = time;        
+        }
     }
 
     public boolean hasTransformedResource()
@@ -201,7 +207,9 @@ public class ApacheNoticeResourceTransformer
     public void modifyOutputStream( JarOutputStream jos )
         throws IOException
     {
-        jos.putNextEntry( new JarEntry( NOTICE_PATH ) );
+        JarEntry jarEntry = new JarEntry( NOTICE_PATH );
+        jarEntry.setTime( time );
+        jos.putNextEntry( jarEntry );
 
         Writer pow;
         if ( StringUtils.isNotEmpty( encoding ) )

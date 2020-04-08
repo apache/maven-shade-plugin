@@ -59,7 +59,9 @@ public class ManifestResourceTransformer
     private boolean manifestDiscovered;
 
     private Manifest manifest;
-    
+
+    private long time = Long.MIN_VALUE;
+
     public void setMainClass( String mainClass )
     {
         this.mainClass = mainClass;
@@ -87,7 +89,7 @@ public class ManifestResourceTransformer
     }
 
     @Override
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
         // We just want to take the first manifest we come across as that's our project's manifest. This is the behavior
@@ -126,6 +128,11 @@ public class ManifestResourceTransformer
             }
 
             manifestDiscovered = true;
+
+            if ( time > this.time )
+            {
+                this.time = time;        
+            }
         }
     }
 
@@ -160,7 +167,9 @@ public class ManifestResourceTransformer
             }
         }
 
-        jos.putNextEntry( new JarEntry( JarFile.MANIFEST_NAME ) );
+        JarEntry jarEntry = new JarEntry( JarFile.MANIFEST_NAME );
+        jarEntry.setTime( time );
+        jos.putNextEntry( jarEntry );
         manifest.write( jos );
     }
     

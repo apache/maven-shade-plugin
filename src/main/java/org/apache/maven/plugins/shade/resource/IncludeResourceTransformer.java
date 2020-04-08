@@ -41,15 +41,20 @@ public class IncludeResourceTransformer
 
     String resource;
 
+    private long time = Long.MIN_VALUE;
+
     public boolean canTransformResource( String r )
     {
         return false;
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
-        // no op
+        if ( time > this.time )
+        {
+            this.time = time;        
+        }
     }
 
     public boolean hasTransformedResource()
@@ -60,9 +65,12 @@ public class IncludeResourceTransformer
     public void modifyOutputStream( JarOutputStream jos )
         throws IOException
     {
+        JarEntry jarEntry = new JarEntry( resource );
+        jarEntry.setTime( time );
+
         try ( InputStream in = new FileInputStream( file ) )
         {
-            jos.putNextEntry( new JarEntry( resource ) );
+            jos.putNextEntry( jarEntry );
             IOUtil.copy( in, jos );
         }
     }

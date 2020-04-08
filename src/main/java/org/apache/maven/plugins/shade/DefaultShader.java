@@ -245,7 +245,8 @@ public class DefaultShader
             }
             else
             {
-                if ( !resourceTransformed( transformers, mappedName, in, shadeRequest.getRelocators() ) )
+                if ( !resourceTransformed( transformers, mappedName, in, shadeRequest.getRelocators(),
+                                           entry.getTime() ) )
                 {
                     // Avoid duplicates that aren't accounted for by the resource transformers
                     if ( resources.contains( mappedName ) )
@@ -261,11 +262,11 @@ public class DefaultShader
     }
 
     private void goThroughAllJarEntriesForManifestTransformer( ShadeRequest shadeRequest, Set<String> resources,
-                                                               ResourceTransformer manifestTransformer,
+                                                               ResourceTransformer resourceTransformer,
                                                                JarOutputStream jos )
         throws IOException
     {
-        if ( manifestTransformer != null )
+        if ( resourceTransformer != null )
         {
             for ( File jar : shadeRequest.getJars() )
             {
@@ -275,22 +276,22 @@ public class DefaultShader
                     {
                         JarEntry entry = en.nextElement();
                         String resource = entry.getName();
-                        if ( manifestTransformer.canTransformResource( resource ) )
+                        if ( resourceTransformer.canTransformResource( resource ) )
                         {
                             resources.add( resource );
                             try ( InputStream inputStream = jarFile.getInputStream( entry ) )
                             {
-                                manifestTransformer.processResource( resource, inputStream,
-                                        shadeRequest.getRelocators() );
+                                resourceTransformer.processResource( resource, inputStream,
+                                        shadeRequest.getRelocators(), entry.getTime() );
                             }
                             break;
                         }
                     }
                 }
             }
-            if ( manifestTransformer.hasTransformedResource() )
+            if ( resourceTransformer.hasTransformedResource() )
             {
-                manifestTransformer.modifyOutputStream( jos );
+                resourceTransformer.modifyOutputStream( jos );
             }
         }
     }
@@ -515,7 +516,7 @@ public class DefaultShader
     }
 
     private boolean resourceTransformed( List<ResourceTransformer> resourceTransformers, String name, InputStream is,
-                                         List<Relocator> relocators )
+                                         List<Relocator> relocators, long time )
         throws IOException
     {
         boolean resourceTransformed = false;
@@ -526,7 +527,7 @@ public class DefaultShader
             {
                 getLogger().debug( "Transforming " + name + " using " + transformer.getClass().getName() );
 
-                transformer.processResource( name, is, relocators );
+                transformer.processResource( name, is, relocators, time );
 
                 resourceTransformed = true;
 

@@ -39,6 +39,8 @@ public class AppendingTransformer
 
     ByteArrayOutputStream data = new ByteArrayOutputStream();
 
+    private long time = Long.MIN_VALUE;
+
     public boolean canTransformResource( String r )
     {
         if ( resource != null && resource.equalsIgnoreCase( r ) )
@@ -49,11 +51,15 @@ public class AppendingTransformer
         return false;
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
         IOUtil.copy( is, data );
         data.write( '\n' );
+        if ( time > this.time )
+        {
+            this.time = time;        
+        }
     }
 
     public boolean hasTransformedResource()
@@ -64,7 +70,9 @@ public class AppendingTransformer
     public void modifyOutputStream( JarOutputStream jos )
         throws IOException
     {
-        jos.putNextEntry( new JarEntry( resource ) );
+        JarEntry jarEntry = new JarEntry( resource );
+        jarEntry.setTime( time );
+        jos.putNextEntry( jarEntry );
 
         jos.write( data.toByteArray() );
         data.reset();

@@ -32,7 +32,6 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 public class ApacheLicenseResourceTransformer
     implements ResourceTransformer
 {
-
     private static final String LICENSE_PATH = "META-INF/LICENSE";
 
     private static final String LICENSE_TXT_PATH = "META-INF/LICENSE.txt";
@@ -43,7 +42,7 @@ public class ApacheLicenseResourceTransformer
             || LICENSE_TXT_PATH.regionMatches( true, 0, resource, 0, LICENSE_TXT_PATH.length() );
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
         // no op

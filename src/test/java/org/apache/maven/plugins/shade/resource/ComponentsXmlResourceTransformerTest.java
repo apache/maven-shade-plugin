@@ -54,11 +54,11 @@ public class ComponentsXmlResourceTransformerTest
 
         InputStream resourceAsStream = getClass().getResourceAsStream( "/components-1.xml" );
         transformer.processResource( "components-1.xml", resourceAsStream,
-                                     Collections.<Relocator> emptyList() );
+                                     Collections.<Relocator> emptyList(), 0 );
         resourceAsStream.close();
         InputStream resourceAsStream1 = getClass().getResourceAsStream( "/components-2.xml" );
         transformer.processResource( "components-1.xml", resourceAsStream1,
-                                     Collections.<Relocator> emptyList() );
+                                     Collections.<Relocator> emptyList(), 0 );
         resourceAsStream1.close();
         final InputStream resourceAsStream2 = getClass().getResourceAsStream( "/components-expected.xml" );
         Diff diff = XMLUnit.compareXML(

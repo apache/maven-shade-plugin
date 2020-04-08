@@ -59,7 +59,7 @@ public class ServiceResourceTransformerTest {
         String contentResourceShaded = "META-INF/services/borg.foo.something.another";
 
         ServicesResourceTransformer xformer = new ServicesResourceTransformer();
-        xformer.processResource( contentResource, contentStream, relocators );
+        xformer.processResource( contentResource, contentStream, relocators, 0 );
         contentStream.close();
 
         File tempJar = File.createTempFile("shade.", ".jar");
@@ -103,7 +103,7 @@ public class ServiceResourceTransformerTest {
         String contentResource = "META-INF/services/org.osgi.framework.launch.FrameworkFactory";
 
         ServicesResourceTransformer xformer = new ServicesResourceTransformer();
-        xformer.processResource( contentResource, contentStream, relocators );
+        xformer.processResource( contentResource, contentStream, relocators, 0 );
         contentStream.close();
 
         File tempJar = File.createTempFile("shade.", ".jar");
@@ -146,7 +146,7 @@ public class ServiceResourceTransformerTest {
         String contentResource = "META-INF/services/org.something.another";
 
         ServicesResourceTransformer xformer = new ServicesResourceTransformer();
-        xformer.processResource( contentResource, contentStream, relocators );
+        xformer.processResource( contentResource, contentStream, relocators, 0 );
         contentStream.close();
 
         content = "org.blah.Service\n";
@@ -154,7 +154,7 @@ public class ServiceResourceTransformerTest {
         contentStream = new ByteArrayInputStream( contentBytes );
         contentResource = "META-INF/services/org.something.another";
 
-        xformer.processResource( contentResource, contentStream, relocators );
+        xformer.processResource( contentResource, contentStream, relocators, 0 );
         contentStream.close();
 
         File tempJar = File.createTempFile("shade.", ".jar");

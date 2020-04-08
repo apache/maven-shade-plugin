@@ -140,7 +140,7 @@ public class TransformerTesterRule implements TestRule
                 transformer.processResource(
                         resource.path(),
                         new ByteArrayInputStream( resource.content().getBytes(StandardCharsets.UTF_8) ),
-                        Collections.<Relocator>emptyList() );
+                        Collections.<Relocator>emptyList(), 0 );
             }
         }
     }

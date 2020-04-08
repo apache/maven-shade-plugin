@@ -52,6 +52,8 @@ public class GroovyResourceTransformer
 
     private String extModuleVersion = "1.0";
 
+    private long time = Long.MIN_VALUE;
+
     @Override
     public boolean canTransformResource( String resource )
     {
@@ -59,7 +61,7 @@ public class GroovyResourceTransformer
     }
 
     @Override
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
         Properties out = new Properties();
@@ -76,6 +78,10 @@ public class GroovyResourceTransformer
         if ( staticExtensionClasses.length() > 0 )
         {
             append( staticExtensionClasses, staticExtensionClassesList );
+        }
+        if ( time > this.time )
+        {
+            this.time = time;        
         }
     }
 
@@ -99,7 +105,10 @@ public class GroovyResourceTransformer
     {
         if ( hasTransformedResource() )
         {
-            os.putNextEntry( new JarEntry( EXT_MODULE_NAME ) );
+            JarEntry jarEntry = new JarEntry( EXT_MODULE_NAME );
+            jarEntry.setTime( time );
+            os.putNextEntry( jarEntry );
+
             Properties desc = new Properties();
             desc.put( "moduleName", extModuleName );
             desc.put( "moduleVersion", extModuleVersion );

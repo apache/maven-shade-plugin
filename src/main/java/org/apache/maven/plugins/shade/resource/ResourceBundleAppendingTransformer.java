@@ -38,12 +38,15 @@ import org.codehaus.plexus.util.IOUtil;
  * @author Robert Scholte
  * @since 3.0.0
  */
-public class ResourceBundleAppendingTransformer implements ResourceTransformer
+public class ResourceBundleAppendingTransformer
+    implements ResourceTransformer
 {
     private Map<String, ByteArrayOutputStream>  dataMap = new HashMap<>();
     
     private Pattern resourceBundlePattern;
-    
+
+    private long time = Long.MIN_VALUE;
+
     /**
      * the base name of the resource bundle, a fully qualified class name
      * @param basename The basename.
@@ -63,7 +66,7 @@ public class ResourceBundleAppendingTransformer implements ResourceTransformer
         return false;
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
         ByteArrayOutputStream data = dataMap.get( resource );
@@ -75,6 +78,11 @@ public class ResourceBundleAppendingTransformer implements ResourceTransformer
         
         IOUtil.copy( is, data );
         data.write( '\n' );
+
+        if ( time > this.time )
+        {
+            this.time = time;        
+        }
     }
 
     public boolean hasTransformedResource()
@@ -87,7 +95,9 @@ public class ResourceBundleAppendingTransformer implements ResourceTransformer
     {
         for ( Map.Entry<String, ByteArrayOutputStream> dataEntry : dataMap.entrySet() )
         {
-            jos.putNextEntry( new JarEntry( dataEntry.getKey() ) );
+            JarEntry jarEntry = new JarEntry( dataEntry.getKey() );
+            jarEntry.setTime( time );
+            jos.putNextEntry( jarEntry );
 
             jos.write( dataEntry.getValue().toByteArray() );
             dataEntry.getValue().reset();

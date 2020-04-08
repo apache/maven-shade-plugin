@@ -56,17 +56,14 @@ public class ServicesResourceTransformer
 
     private List<Relocator> relocators;
 
+    private long time = Long.MIN_VALUE;
+
     public boolean canTransformResource( String resource )
     {
-        if ( resource.startsWith( SERVICES_PATH ) )
-        {
-            return true;
-        }
-
-        return false;
+        return resource.startsWith( SERVICES_PATH );
     }
 
-    public void processResource( String resource, InputStream is, final List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, final List<Relocator> relocators, long time )
         throws IOException
     {
         ServiceStream out = serviceEntries.get( resource );
@@ -99,7 +96,13 @@ public class ServicesResourceTransformer
         {
             this.relocators = relocators;
         }
+
+        if ( time > this.time )
+        {
+            this.time = time;        
+        }
     }
+
     public boolean hasTransformedResource()
     {
         return serviceEntries.size() > 0;
@@ -128,7 +131,9 @@ public class ServicesResourceTransformer
                 key = SERVICES_PATH + '/' + key;
             }
 
-            jos.putNextEntry( new JarEntry( key ) );
+            JarEntry jarEntry = new JarEntry( key );
+            jarEntry.setTime( time );
+            jos.putNextEntry( jarEntry );
 
 
             //read the content of service file for candidate classes for relocation

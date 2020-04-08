@@ -41,13 +41,15 @@ import org.apache.maven.plugins.shade.resource.properties.io.SkipPropertiesDateL
  *
  * @since 3.2.2
  */
-public class PropertiesTransformer implements ResourceTransformer
+public class PropertiesTransformer
+    implements ResourceTransformer
 {
     private String resource;
     private String alreadyMergedKey;
     private String ordinalKey;
     private int defaultOrdinal;
     private boolean reverseOrder;
+    private long time = Long.MIN_VALUE;
 
     private final List<Properties> properties = new ArrayList<>();
 
@@ -72,12 +74,17 @@ public class PropertiesTransformer implements ResourceTransformer
     }
 
     @Override
-    public void processResource( final String resource, final InputStream is, final List<Relocator> relocators )
+    public void processResource( final String resource, final InputStream is, final List<Relocator> relocators,
+                                 long time )
             throws IOException
     {
         final Properties p = new Properties();
         p.load( is );
         properties.add( p );
+        if ( time > this.time )
+        {
+            this.time = time;        
+        }
     }
 
     @Override
@@ -87,7 +94,8 @@ public class PropertiesTransformer implements ResourceTransformer
     }
 
     @Override
-    public void modifyOutputStream( final JarOutputStream os ) throws IOException
+    public void modifyOutputStream( JarOutputStream os )
+        throws IOException
     {
         if ( properties.isEmpty() )
         {
@@ -103,7 +111,9 @@ public class PropertiesTransformer implements ResourceTransformer
         {
             out.remove( alreadyMergedKey );
         }
-        os.putNextEntry( new JarEntry( resource ) );
+        JarEntry jarEntry = new JarEntry( resource );
+        jarEntry.setTime( time );
+        os.putNextEntry( jarEntry );
         final BufferedWriter writer = new SkipPropertiesDateLineWriter(
                 new OutputStreamWriter( new NoCloseOutputStream( os ), StandardCharsets.ISO_8859_1 ) );
         out.store( writer, " Merged by maven-shade-plugin (" + getClass().getName() + ")" );

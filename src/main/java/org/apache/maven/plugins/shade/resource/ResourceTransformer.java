@@ -36,9 +36,10 @@ public interface ResourceTransformer
      * @param resource The resource name
      * @param is An input stream for the resource, the implementation should *not* close this stream
      * @param relocators  A list of relocators
+     * @param time the time of the resource to process
      * @throws IOException When the IO blows up
      */
-    void processResource( String resource, InputStream is, List<Relocator> relocators )
+    void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException;
 
     boolean hasTransformedResource();

@@ -158,7 +158,7 @@ public class ManifestResourceTransformerTest
             manifest.write( mos );
         }
         transformer.processResource( JarFile.MANIFEST_NAME, new ByteArrayInputStream( mboas.toByteArray() ),
-                                     relocators );
+                                     relocators, 0 );
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try ( final JarOutputStream jarOutputStream = new JarOutputStream( out ) )

@@ -46,6 +46,8 @@ public class ComponentsXmlResourceTransformer
 {
     private Map<String, Xpp3Dom> components = new LinkedHashMap<>();
 
+    private long time = Long.MIN_VALUE;
+
     public static final String COMPONENTS_XML_PATH = "META-INF/plexus/components.xml";
 
     public boolean canTransformResource( String resource )
@@ -53,7 +55,7 @@ public class ComponentsXmlResourceTransformer
         return COMPONENTS_XML_PATH.equals( resource );
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators )
+    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
         Xpp3Dom newDom;
@@ -126,14 +128,22 @@ public class ComponentsXmlResourceTransformer
 
             components.put( key, component );
         }
+
+        if ( time > this.time )
+        {
+            this.time = time;        
+        }
     }
 
     public void modifyOutputStream( JarOutputStream jos )
         throws IOException
     {
+        JarEntry jarEntry = new JarEntry( COMPONENTS_XML_PATH );
+        jarEntry.setTime( time );
+
         byte[] data = getTransformedResource();
 
-        jos.putNextEntry( new JarEntry( COMPONENTS_XML_PATH ) );
+        jos.putNextEntry( jarEntry );
 
         jos.write( data );
 

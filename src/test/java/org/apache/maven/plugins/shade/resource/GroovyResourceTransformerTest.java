@@ -119,7 +119,7 @@ public class GroovyResourceTransformerTest
         transformer.setExtModuleVersion( "2.0" );
         transformer.processResource( GroovyResourceTransformer.EXT_MODULE_NAME,
                                      module( "mod1", "1.0", "some.ext", "some.staticExt" ),
-                                     Collections.<Relocator>emptyList() );
+                                     Collections.<Relocator>emptyList(), 0 );
         Properties desc = transform( transformer );
         assertEquals( "the-module-name", desc.getProperty( "moduleName" ) );
         assertEquals( "2.0", desc.getProperty( "moduleVersion" ) );
@@ -132,15 +132,17 @@ public class GroovyResourceTransformerTest
     {
         GroovyResourceTransformer transformer = new GroovyResourceTransformer();
         transformer.processResource( GroovyResourceTransformer.EXT_MODULE_NAME,
-                                     module( "mod1", "1.0", "some.ext1", null ), Collections.<Relocator>emptyList() );
+                                     module( "mod1", "1.0", "some.ext1", null ),
+                                     Collections.<Relocator>emptyList(), 0 );
         transformer.processResource( GroovyResourceTransformer.EXT_MODULE_NAME,
                                      module( "mod2", "1.0", null, "some.staticExt1" ),
-                                     Collections.<Relocator>emptyList() );
-        transformer.processResource( GroovyResourceTransformer.EXT_MODULE_NAME, module( "mod3", "1.0", "", "" ),
-                                     Collections.<Relocator>emptyList() );
+                                     Collections.<Relocator>emptyList(), 0 );
+        transformer.processResource( GroovyResourceTransformer.EXT_MODULE_NAME,
+                                     module( "mod3", "1.0", "", "" ),
+                                     Collections.<Relocator>emptyList(), 0 );
         transformer.processResource( GroovyResourceTransformer.EXT_MODULE_NAME,
                                      module( "mod4", "1.0", "some.ext2", "some.staticExt2" ),
-                                     Collections.<Relocator>emptyList() );
+                                     Collections.<Relocator>emptyList(), 0 );
         Properties desc = transform( transformer );
         assertEquals( "no-module-name", desc.getProperty( "moduleName" ) );
         assertEquals( "1.0", desc.getProperty( "moduleVersion" ) );
