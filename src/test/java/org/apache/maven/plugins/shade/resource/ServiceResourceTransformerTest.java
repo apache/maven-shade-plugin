@@ -65,28 +65,21 @@ public class ServiceResourceTransformerTest {
         File tempJar = File.createTempFile("shade.", ".jar");
         tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream( tempJar );
-        JarOutputStream jos = new JarOutputStream( fos );
-        try {
+        try ( JarOutputStream jos = new JarOutputStream( fos ) ) {
             xformer.modifyOutputStream( jos );
             jos.close();
-            jos = null;
+            
             JarFile jarFile = new JarFile( tempJar );
             JarEntry jarEntry = jarFile.getJarEntry( contentResourceShaded );
             assertNotNull( jarEntry );
-            InputStream entryStream = jarFile.getInputStream( jarEntry );
-            try {
+            try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
                 String xformedContent = IOUtils.toString( entryStream, "utf-8" );
                 assertEquals( "borg.foo.Service" + System.getProperty( "line.separator" )
                     + "org.foo.exclude.OtherService" + System.getProperty( "line.separator" ), xformedContent );
             } finally {
-                IOUtils.closeQuietly( entryStream );
                 jarFile.close();
             }
         } finally {
-            if (jos != null)
-            {
-                IOUtils.closeQuietly( jos );
-            }
             tempJar.delete();
         }
     }
@@ -109,28 +102,20 @@ public class ServiceResourceTransformerTest {
         File tempJar = File.createTempFile("shade.", ".jar");
         tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream( tempJar );
-        JarOutputStream jos = new JarOutputStream( fos );
-        try {
+        try ( JarOutputStream jos = new JarOutputStream( fos ) ) {
             xformer.modifyOutputStream( jos );
             jos.close();
-            jos = null;
+            
             JarFile jarFile = new JarFile( tempJar );
             JarEntry jarEntry = jarFile.getJarEntry( contentResource );
             assertNotNull( jarEntry );
-            InputStream entryStream = jarFile.getInputStream( jarEntry );
-            try {
+            try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
                 String xformedContent = IOUtils.toString(entryStream, "utf-8");
                 assertEquals( "org.eclipse1234.osgi.launch.EquinoxFactory" + System.getProperty( "line.separator" ), xformedContent );
-                
             } finally {
-                IOUtils.closeQuietly( entryStream );
                 jarFile.close();
             }
         } finally {
-            if (jos != null)
-            {
-                IOUtils.closeQuietly( jos );
-            }
             tempJar.delete();
         }
     }
@@ -160,16 +145,14 @@ public class ServiceResourceTransformerTest {
         File tempJar = File.createTempFile("shade.", ".jar");
         tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream( tempJar );
-        JarOutputStream jos = new JarOutputStream( fos );
-        try {
+        try ( JarOutputStream jos = new JarOutputStream( fos ) ) {
             xformer.modifyOutputStream( jos );
             jos.close();
-            jos = null;
+
             JarFile jarFile = new JarFile( tempJar );
             JarEntry jarEntry = jarFile.getJarEntry( contentResource );
             assertNotNull( jarEntry );
-            InputStream entryStream = jarFile.getInputStream( jarEntry );
-            try {
+            try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
                 String xformedContent = IOUtils.toString(entryStream, "utf-8");
                 // must be two lines, with our two classes.
                 String[] classes = xformedContent.split("\r?\n");
@@ -188,14 +171,9 @@ public class ServiceResourceTransformerTest {
                 }
                 assertTrue( h1 && h2 );
             } finally {
-                IOUtils.closeQuietly( entryStream );
                 jarFile.close();
             }
         } finally {
-            if (jos != null)
-            {
-                IOUtils.closeQuietly( jos );
-            }
             tempJar.delete();
         }
     }

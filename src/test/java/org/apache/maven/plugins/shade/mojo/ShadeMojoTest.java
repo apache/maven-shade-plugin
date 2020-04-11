@@ -99,14 +99,15 @@ public class ShadeMojoTest
 
         s.shade( shadeRequest );
 
-        ClassLoader cl = new URLClassLoader( new URL[]{ jarFile.toURI().toURL() } );
-        Class<?> c = cl.loadClass( "org.apache.maven.plugins.shade.Lib" );
-
-        Field field = c.getDeclaredField( "CLASS_REALM_PACKAGE_IMPORT" );
-        assertEquals( "org.codehaus.plexus.util.xml.pull", field.get( null ) );
-
-        Method method = c.getDeclaredMethod( "getClassRealmPackageImport" );
-        assertEquals( "org.codehaus.plexus.util.xml.pull", method.invoke( null ) );
+        try ( URLClassLoader cl = new URLClassLoader( new URL[]{ jarFile.toURI().toURL() } ) ) {
+            Class<?> c = cl.loadClass( "org.apache.maven.plugins.shade.Lib" );
+    
+            Field field = c.getDeclaredField( "CLASS_REALM_PACKAGE_IMPORT" );
+            assertEquals( "org.codehaus.plexus.util.xml.pull", field.get( null ) );
+    
+            Method method = c.getDeclaredMethod( "getClassRealmPackageImport" );
+            assertEquals( "org.codehaus.plexus.util.xml.pull", method.invoke( null ) );
+        }
     }
 
     /**

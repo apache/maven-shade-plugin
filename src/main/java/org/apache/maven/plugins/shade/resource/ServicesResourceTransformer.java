@@ -73,8 +73,6 @@ public class ServicesResourceTransformer
             serviceEntries.put( resource, out );
         }
 
-        final ServiceStream fout = out;
-
         final String content = IOUtils.toString( is );
         StringReader reader = new StringReader( content );
         LineReader lineReader = new LineReader( reader );
@@ -89,7 +87,7 @@ public class ServicesResourceTransformer
                     relContent = relocator.applyToSourceContent( relContent );
                 }
             }
-            fout.append( relContent + "\n" );
+            out.append( relContent + "\n" );
         }
 
         if ( this.relocators == null )
