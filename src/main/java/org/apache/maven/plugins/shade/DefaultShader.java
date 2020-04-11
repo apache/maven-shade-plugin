@@ -44,6 +44,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
@@ -58,8 +59,6 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 
-
-import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -351,8 +350,8 @@ public class DefaultShader
             all.addAll( resources );
 
             getLogger().warn(
-                Joiner.on( ", " ).join( jarzS ) + " define " + all.size()
-                + " overlapping " + Joiner.on( " and " ).join( overlaps ) + ": " );
+                StringUtils.join( jarzS, ", " ) + " define " + all.size()
+                + " overlapping " + StringUtils.join( overlaps, " and " ) + ": " );
             //CHECKSTYLE_ON: LineLength
 
             Collections.sort( all );
