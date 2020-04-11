@@ -25,8 +25,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -136,15 +137,17 @@ public class ServicesResourceTransformer
             jos.putNextEntry( jarEntry );
 
 
-            //read the content of service file for candidate classes for relocation
-            PrintWriter writer = new PrintWriter( jos );
+            // read the content of service file for candidate classes for relocation.
+            // Specification requires that this file is encoded in UTF-8.
+            Writer writer = new OutputStreamWriter( jos, StandardCharsets.UTF_8 );
             InputStreamReader streamReader = new InputStreamReader( data.toInputStream() );
             BufferedReader reader = new BufferedReader( streamReader );
             String className;
 
             while ( ( className = reader.readLine() ) != null )
             {
-                writer.println( className );
+                writer.write( className );
+                writer.write( System.getProperty( "line.separator" ) );
                 writer.flush();
             }
 
