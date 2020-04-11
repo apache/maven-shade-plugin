@@ -35,7 +35,7 @@ import java.util.Set;
  * Internal Properties instance sorting its keys on iterations for store() usages.
  * It ensures properties persistence is deterministic.
  *
- * IMPORTANT: this only overrides methods used accross JVM in store() so ordering is not guaranteed for other cases.
+ * IMPORTANT: this only overrides methods used across JVM in store() so ordering is not guaranteed for other cases.
  */
 public class SortedProperties extends Properties
 {
