@@ -26,7 +26,7 @@ package org.apache.maven.plugins.shade.resource.properties;
  */
 public class MicroprofileConfigTransformer extends PropertiesTransformer
 {
-    protected MicroprofileConfigTransformer()
+    public MicroprofileConfigTransformer()
     {
         super( null, "config_ordinal", 1000, false );
     }
