@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -211,16 +210,15 @@ public class ApacheNoticeResourceTransformer
         jarEntry.setTime( time );
         jos.putNextEntry( jarEntry );
 
-        Writer pow;
+        Writer writer;
         if ( StringUtils.isNotEmpty( encoding ) )
         {
-            pow = new OutputStreamWriter( jos, encoding );
+            writer = new OutputStreamWriter( jos, encoding );
         }
         else
         {
-            pow = new OutputStreamWriter( jos );
+            writer = new OutputStreamWriter( jos );
         }
-        PrintWriter writer = new PrintWriter( pow );
 
         int count = 0;
         for ( String line : entries )
@@ -233,26 +231,26 @@ public class ApacheNoticeResourceTransformer
 
             if ( count == 2 && copyright != null )
             {
-                writer.print( copyright );
-                writer.print( '\n' );
+                writer.write( copyright );
+                writer.write( '\n' );
             }
             else
             {
-                writer.print( line );
-                writer.print( '\n' );
+                writer.write( line );
+                writer.write( '\n' );
             }
             if ( count == 3 )
             {
                 //do org stuff
                 for ( Map.Entry<String, Set<String>> entry : organizationEntries.entrySet() )
                 {
-                    writer.print( entry.getKey() );
-                    writer.print( '\n' );
+                    writer.write( entry.getKey() );
+                    writer.write( '\n' );
                     for ( String l : entry.getValue() )
                     {
-                        writer.print( l );
+                        writer.write( l );
                     }
-                    writer.print( '\n' );
+                    writer.write( '\n' );
                 }
             }
         }
