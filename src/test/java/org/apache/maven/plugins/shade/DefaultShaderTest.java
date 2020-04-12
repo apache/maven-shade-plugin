@@ -157,10 +157,11 @@ public class DefaultShaderTest
 
         s.shade( shadeRequest );
 
-        URLClassLoader cl = new URLClassLoader( new URL[] { file.toURI().toURL() } );
-        Class<?> c = cl.loadClass( "hidden.org.apache.maven.plugins.shade.Lib" );
-        Object o = c.newInstance();
-        assertEquals( "foo.bar/baz", c.getDeclaredField( "CONSTANT" ).get( o ) );
+        try ( URLClassLoader cl = new URLClassLoader( new URL[] { file.toURI().toURL() } ) ) {
+          Class<?> c = cl.loadClass( "hidden.org.apache.maven.plugins.shade.Lib" );
+          Object o = c.newInstance();
+          assertEquals( "foo.bar/baz", c.getDeclaredField( "CONSTANT" ).get( o ) );
+        }
     }
 
     public void testShaderWithCustomShadedPattern()
@@ -211,25 +212,26 @@ public class DefaultShaderTest
 
         s.shade( shadeRequest );
 
-        URLClassLoader cl = new URLClassLoader( new URL[] { file.toURI().toURL() } );
-        Class<?> c = cl.loadClass( "_plexus.util.__StringUtils" );
-        // first, ensure it works:
-        Object o = c.newInstance();
-        assertEquals( "", c.getMethod( "clean", String.class ).invoke( o, (String) null ) );
+        try ( URLClassLoader cl = new URLClassLoader( new URL[] { file.toURI().toURL() } ) ) {
+          Class<?> c = cl.loadClass( "_plexus.util.__StringUtils" );
+          // first, ensure it works:
+          Object o = c.newInstance();
+          assertEquals( "", c.getMethod( "clean", String.class ).invoke( o, (String) null ) );
 
-        // now, check that its source file was rewritten:
-        final String[] source = { null };
-        final ClassReader classReader = new ClassReader( cl.getResourceAsStream( "_plexus/util/__StringUtils.class" ) );
-        classReader.accept( new ClassVisitor( Opcodes.ASM4 )
-        {
+          // now, check that its source file was rewritten:
+          final String[] source = { null };
+          final ClassReader classReader = new ClassReader( cl.getResourceAsStream( "_plexus/util/__StringUtils.class" ) );
+          classReader.accept( new ClassVisitor( Opcodes.ASM4 )
+          {
             @Override
             public void visitSource( String arg0, String arg1 )
             {
                 super.visitSource( arg0, arg1 );
                 source[0] = arg0;
             }
-        }, ClassReader.SKIP_CODE );
-        assertEquals( "__StringUtils.java", source[0] );
+          }, ClassReader.SKIP_CODE );
+          assertEquals( "__StringUtils.java", source[0] );
+        }
     }
 
     private void shaderWithPattern( String shadedPattern, File jar, String[] excludes )
