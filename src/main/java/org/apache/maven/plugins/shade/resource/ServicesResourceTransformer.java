@@ -71,7 +71,7 @@ public class ServicesResourceTransformer
             serviceEntries.put( resource, out );
         }
 
-        final String content = IOUtils.toString( is );
+        final String content = IOUtils.toString( is, StandardCharsets.UTF_8 );
         StringReader reader = new StringReader( content );
         BufferedReader lineReader = new BufferedReader( reader );
         String line;
