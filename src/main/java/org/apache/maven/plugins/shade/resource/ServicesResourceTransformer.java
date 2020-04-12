@@ -143,7 +143,7 @@ public class ServicesResourceTransformer
             while ( ( className = reader.readLine() ) != null )
             {
                 writer.write( className );
-                writer.write( System.getProperty( "line.separator" ) );
+                writer.write( System.lineSeparator() );
                 writer.flush();
             }
 
