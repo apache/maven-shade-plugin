@@ -37,8 +37,6 @@ import java.util.jar.JarOutputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 
-import com.google.common.io.LineReader;
-
 /**
  * Resources transformer that relocates classes in META-INF/services and appends entries in META-INF/services resources
  * into a single resource. For example, if there are several META-INF/services/org.apache.maven.project.ProjectBuilder
@@ -77,7 +75,7 @@ public class ServicesResourceTransformer
 
         final String content = IOUtils.toString( is );
         StringReader reader = new StringReader( content );
-        LineReader lineReader = new LineReader( reader );
+        BufferedReader lineReader = new BufferedReader( reader );
         String line;
         while ( ( line = lineReader.readLine() ) != null )
         {
