@@ -41,7 +41,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  * @since 1.2
  */
 public class ManifestResourceTransformer
-    implements ResourceTransformer
+    extends BaseRelocatingTransformer
 {
     private final List<String> defaultAttributes = Arrays.asList( "Export-Package",
                                                                   "Import-Package",
@@ -171,21 +171,5 @@ public class ManifestResourceTransformer
         jarEntry.setTime( time );
         jos.putNextEntry( jarEntry );
         manifest.write( jos );
-    }
-    
-    private String relocate( String originalValue, List<Relocator> relocators )
-    {
-        String newValue = originalValue;
-        for ( Relocator relocator : relocators )
-        {
-            String value;
-            do
-            {
-                value = newValue;
-                newValue = relocator.relocateClass( value );
-            }
-            while ( !value.equals( newValue ) );
-        }
-        return newValue;
     }
 }
