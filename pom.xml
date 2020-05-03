@@ -288,6 +288,9 @@
               </goals>
               <projectsDirectory>src/it/projects</projectsDirectory>
               <settingsFile>src/it/mrm/settings.xml</settingsFile>
+              <extraArtifacts>
+                <extraArtifact>org.apache.maven.plugins:maven-shade-plugin:${project.version}:test-jar</extraArtifact>
+              </extraArtifacts>
             </configuration>
           </plugin>
           <plugin>
