@@ -41,7 +41,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  * @since 1.2
  */
 public class ManifestResourceTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     private final List<String> defaultAttributes = Arrays.asList( "Export-Package",
                                                                   "Import-Package",

@@ -19,43 +19,21 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
+import org.apache.maven.plugins.shade.relocation.Relocator;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.jar.JarOutputStream;
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
 
 /**
- * Prevents duplicate copies of the license
+ * An abstract class to implement once the old non-reproducible ResourceTransformer API.
  */
-public class ApacheLicenseResourceTransformer
-    extends AbstractCompatibilityTransformer
+abstract class AbstractCompatibilityTransformer
+    implements ReproducibleResourceTransformer
 {
-    private static final String LICENSE_PATH = "META-INF/LICENSE";
-
-    private static final String LICENSE_TXT_PATH = "META-INF/LICENSE.txt";
-
-    public boolean canTransformResource( String resource )
-    {
-        return LICENSE_PATH.equalsIgnoreCase( resource )
-            || LICENSE_TXT_PATH.regionMatches( true, 0, resource, 0, LICENSE_TXT_PATH.length() );
-    }
-
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
+    public final void processResource( String resource, InputStream is, List<Relocator> relocators )
         throws IOException
     {
-        // no op
-    }
-
-    public boolean hasTransformedResource()
-    {
-        return false;
-    }
-
-    public void modifyOutputStream( JarOutputStream os )
-        throws IOException
-    {
-        // no op
+        processResource( resource, is, relocators, 0 );
     }
 }

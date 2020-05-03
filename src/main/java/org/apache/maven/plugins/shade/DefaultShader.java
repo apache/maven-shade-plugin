@@ -49,6 +49,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ReproducibleResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.logging.AbstractLogEnabled;
@@ -76,7 +77,7 @@ public class DefaultShader
     {
         Set<String> resources = new HashSet<>();
 
-        ResourceTransformer manifestTransformer = null;
+        ManifestResourceTransformer manifestTransformer = null;
         List<ResourceTransformer> transformers =
             new ArrayList<>( shadeRequest.getResourceTransformers() );
         for ( Iterator<ResourceTransformer> it = transformers.iterator(); it.hasNext(); )
@@ -84,7 +85,7 @@ public class DefaultShader
             ResourceTransformer transformer = it.next();
             if ( transformer instanceof ManifestResourceTransformer )
             {
-                manifestTransformer = transformer;
+                manifestTransformer = (ManifestResourceTransformer) transformer;
                 it.remove();
             }
         }
@@ -265,11 +266,11 @@ public class DefaultShader
     }
 
     private void goThroughAllJarEntriesForManifestTransformer( ShadeRequest shadeRequest, Set<String> resources,
-                                                               ResourceTransformer resourceTransformer,
+                                                               ManifestResourceTransformer manifestTransformer,
                                                                JarOutputStream jos )
         throws IOException
     {
-        if ( resourceTransformer != null )
+        if ( manifestTransformer != null )
         {
             for ( File jar : shadeRequest.getJars() )
             {
@@ -279,22 +280,22 @@ public class DefaultShader
                     {
                         JarEntry entry = en.nextElement();
                         String resource = entry.getName();
-                        if ( resourceTransformer.canTransformResource( resource ) )
+                        if ( manifestTransformer.canTransformResource( resource ) )
                         {
                             resources.add( resource );
                             try ( InputStream inputStream = jarFile.getInputStream( entry ) )
                             {
-                                resourceTransformer.processResource( resource, inputStream,
-                                        shadeRequest.getRelocators(), entry.getTime() );
+                                manifestTransformer.processResource( resource, inputStream,
+                                                                     shadeRequest.getRelocators(), entry.getTime() );
                             }
                             break;
                         }
                     }
                 }
             }
-            if ( resourceTransformer.hasTransformedResource() )
+            if ( manifestTransformer.hasTransformedResource() )
             {
-                resourceTransformer.modifyOutputStream( jos );
+                manifestTransformer.modifyOutputStream( jos );
             }
         }
     }
@@ -544,7 +545,14 @@ public class DefaultShader
             {
                 getLogger().debug( "Transforming " + name + " using " + transformer.getClass().getName() );
 
-                transformer.processResource( name, is, relocators, time );
+                if ( transformer instanceof ReproducibleResourceTransformer )
+                {
+                    ( (ReproducibleResourceTransformer) transformer ).processResource( name, is, relocators, time );
+                }
+                else
+                {
+                    transformer.processResource( name, is, relocators );
+                }
 
                 resourceTransformed = true;
 

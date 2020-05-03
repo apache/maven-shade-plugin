@@ -36,7 +36,7 @@ import java.util.jar.JarOutputStream;
  * Aggregate Apache Groovy extension modules descriptors
  */
 public class GroovyResourceTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
 
     static final String EXT_MODULE_NAME_LEGACY = "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule";

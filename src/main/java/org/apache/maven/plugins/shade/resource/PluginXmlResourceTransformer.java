@@ -44,7 +44,7 @@ import org.codehaus.plexus.util.xml.Xpp3DomWriter;
  * @since 3.0
  */
 public class PluginXmlResourceTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     private List<Xpp3Dom> mojos = new ArrayList<>();
 

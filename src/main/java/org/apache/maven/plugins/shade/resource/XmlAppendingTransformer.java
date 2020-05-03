@@ -44,7 +44,7 @@ import org.xml.sax.SAXException;
  * Appends multiple occurrences of some XML file.
  */
 public class XmlAppendingTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     public static final String XSI_NS = "http://www.w3.org/2001/XMLSchema-instance";
 

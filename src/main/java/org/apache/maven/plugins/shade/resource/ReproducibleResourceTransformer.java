@@ -24,26 +24,26 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.jar.JarOutputStream;
 
-/** @author Jason van Zyl */
-public interface ResourceTransformer
+/**
+ * Transform resource ensuring reproducible output: that requires to get the timestamp of
+ * the initial resources to define in a reproducible way the timestamp of the transformed
+ * resource.
+ *
+ * @author Hervé Boutemy
+ * @since 3.2.4
+ */
+public interface ReproducibleResourceTransformer
+    extends ResourceTransformer
 {
-    boolean canTransformResource( String resource );
-
     /**
      * Transform an individual resource
      * @param resource The resource name
      * @param is An input stream for the resource, the implementation should *not* close this stream
      * @param relocators  A list of relocators
+     * @param time the time of the resource to process
      * @throws IOException When the IO blows up
-     * @deprecated prefer ReproducibleResourceTransformer
      */
-    void processResource( String resource, InputStream is, List<Relocator> relocators )
-        throws IOException;
-
-    boolean hasTransformedResource();
-
-    void modifyOutputStream( JarOutputStream os )
+    void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException;
 }

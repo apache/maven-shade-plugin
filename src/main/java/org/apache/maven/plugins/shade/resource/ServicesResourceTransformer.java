@@ -46,7 +46,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  * shading process.
  */
 public class ServicesResourceTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
 
     private static final String SERVICES_PATH = "META-INF/services";

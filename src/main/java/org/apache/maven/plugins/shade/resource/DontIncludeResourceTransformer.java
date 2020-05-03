@@ -32,7 +32,7 @@ import java.util.jar.JarOutputStream;
  * resource into the shaded JAR.
  */
 public class DontIncludeResourceTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     String resource;
     

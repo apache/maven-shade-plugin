@@ -39,7 +39,7 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ReproducibleResourceTransformer;
 import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
 import org.codehaus.plexus.component.configurator.converters.ConfigurationConverter;
 import org.codehaus.plexus.component.configurator.converters.lookup.ConverterLookup;
@@ -51,7 +51,8 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-public class TransformerTesterRule implements TestRule
+public class TransformerTesterRule
+    implements TestRule
 {
     @Override
     public Statement apply( final Statement base, final Description description )
@@ -71,9 +72,9 @@ public class TransformerTesterRule implements TestRule
                 final Map<String, String> jar;
                 try
                 {
-                    final ResourceTransformer transformer = createTransformer(spec);
-                    visit(spec, transformer);
-                    jar = captureOutput(transformer);
+                    final ReproducibleResourceTransformer transformer = createTransformer( spec );
+                    visit( spec, transformer );
+                    jar = captureOutput( transformer );
                 }
                 catch ( final Exception ex )
                 {
@@ -110,7 +111,8 @@ public class TransformerTesterRule implements TestRule
         }
     }
 
-    private Map<String, String> captureOutput(final ResourceTransformer transformer ) throws IOException
+    private Map<String, String> captureOutput( final ReproducibleResourceTransformer transformer )
+        throws IOException
     {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try ( final JarOutputStream jar = new JarOutputStream( out ) )
@@ -130,11 +132,12 @@ public class TransformerTesterRule implements TestRule
         return created;
     }
 
-    private void visit( final TransformerTest spec, final ResourceTransformer transformer ) throws IOException
+    private void visit( final TransformerTest spec, final ReproducibleResourceTransformer transformer )
+        throws IOException
     {
         for ( final Resource resource : spec.visited() )
         {
-            if ( transformer.canTransformResource( resource.path() ))
+            if ( transformer.canTransformResource( resource.path() ) )
             {
                 transformer.processResource(
                         resource.path(),
@@ -156,7 +159,7 @@ public class TransformerTesterRule implements TestRule
         return builder.toString();
     }
 
-    private ResourceTransformer createTransformer(final TransformerTest spec)
+    private ReproducibleResourceTransformer createTransformer(final TransformerTest spec)
     {
         final ConverterLookup lookup = new DefaultConverterLookup();
         try
@@ -167,7 +170,7 @@ public class TransformerTesterRule implements TestRule
             {
                 configuration.addChild( property.name(), property.value() );
             }
-            return ResourceTransformer.class.cast(
+            return ReproducibleResourceTransformer.class.cast(
                     converter.fromConfiguration( lookup, configuration,  spec.transformer(), spec.transformer(),
                         Thread.currentThread().getContextClassLoader(),
                         new DefaultExpressionEvaluator() ) );

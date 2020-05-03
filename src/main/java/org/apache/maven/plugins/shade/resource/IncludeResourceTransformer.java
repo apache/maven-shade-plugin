@@ -35,7 +35,7 @@ import java.util.jar.JarOutputStream;
  * content into the shaded JAR.
  */
 public class IncludeResourceTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     File file;
 

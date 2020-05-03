@@ -42,7 +42,7 @@ import java.util.jar.JarOutputStream;
  * A resource processor that aggregates plexus <code>components.xml</code> files.
  */
 public class ComponentsXmlResourceTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     private Map<String, Xpp3Dom> components = new LinkedHashMap<>();
 

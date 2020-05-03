@@ -39,7 +39,7 @@ import org.codehaus.plexus.util.IOUtil;
  * @since 3.0.0
  */
 public class ResourceBundleAppendingTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     private Map<String, ByteArrayOutputStream>  dataMap = new HashMap<>();
     

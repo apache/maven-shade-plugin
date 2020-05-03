@@ -43,7 +43,7 @@ import java.util.jar.JarOutputStream;
  * Merges <code>META-INF/NOTICE.TXT</code> files.
  */
 public class ApacheNoticeResourceTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     Set<String> entries = new LinkedHashSet<>();
 

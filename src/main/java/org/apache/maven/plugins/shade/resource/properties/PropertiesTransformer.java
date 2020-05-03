@@ -32,7 +32,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ReproducibleResourceTransformer;
 import org.apache.maven.plugins.shade.resource.properties.io.NoCloseOutputStream;
 import org.apache.maven.plugins.shade.resource.properties.io.SkipPropertiesDateLineWriter;
 
@@ -42,7 +42,7 @@ import org.apache.maven.plugins.shade.resource.properties.io.SkipPropertiesDateL
  * @since 3.2.2
  */
 public class PropertiesTransformer
-    implements ResourceTransformer
+    implements ReproducibleResourceTransformer
 {
     private String resource;
     private String alreadyMergedKey;
@@ -71,6 +71,13 @@ public class PropertiesTransformer
     public boolean canTransformResource( final String resource )
     {
         return Objects.equals( resource, this.resource );
+    }
+
+    @Override
+    public final void processResource( String resource, InputStream is, List<Relocator> relocators )
+        throws IOException
+    {
+        processResource( resource, is, relocators, 0 );
     }
 
     @Override

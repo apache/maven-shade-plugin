@@ -33,7 +33,7 @@ import java.util.jar.JarOutputStream;
  * A resource processor that appends content for a resource, separated by a newline.
  */
 public class AppendingTransformer
-    implements ResourceTransformer
+    extends AbstractCompatibilityTransformer
 {
     String resource;
 
