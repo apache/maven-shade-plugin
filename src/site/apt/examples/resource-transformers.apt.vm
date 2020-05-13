@@ -47,13 +47,7 @@ Resource Transformers
 *-----------------------------------------+------------------------------------------+
 | {{ManifestResourceTransformer}}         | Sets entries in the <<<MANIFEST>>>       |
 *-----------------------------------------+------------------------------------------+
-| {{MicroprofileConfigTransformer}}       | Merges conflicting Microprofile Config properties based on an ordinal |
-*-----------------------------------------+------------------------------------------+
-| {{OpenWebBeansPropertiesTransformer}}   | Merges Apache OpenWebBeans configuration files |
-*-----------------------------------------+------------------------------------------+
 | {{PluginXmlResourceTransformer}}        | Aggregates Mavens <<<plugin.xml>>>       |
-*-----------------------------------------+------------------------------------------+
-| {{PropertiesTransformer}}               | Merges properties files owning an ordinal to solve conflicts |
 *-----------------------------------------+------------------------------------------+
 | {{ResourceBundleAppendingTransformer}}  | Merges ResourceBundles                  | 
 *-----------------------------------------+------------------------------------------+
@@ -62,6 +56,15 @@ Resource Transformers
 | {{XmlAppendingTransformer}}             | Adds XML content to an XML resource      | 
 *-----------------------------------------+------------------------------------------+
 Transformers in <<<org.apache.maven.plugins.shade.resource>>>
+
+*-----------------------------------------+------------------------------------------+
+| {{PropertiesTransformer}}               | Merges properties files owning an ordinal to solve conflicts |
+*-----------------------------------------+------------------------------------------+
+| {{OpenWebBeansPropertiesTransformer}}   | Merges Apache OpenWebBeans configuration files |
+*-----------------------------------------+------------------------------------------+
+| {{MicroprofileConfigTransformer}}       | Merges conflicting Microprofile Config properties based on an ordinal |
+*-----------------------------------------+------------------------------------------+
+Transformers in <<<org.apache.maven.plugins.shade.resource.properties>>> (available since 3.2.2)
   
 * Merging Plexus Component Descriptors with the {ComponentsXmlResourceTransformer}
 
