@@ -20,15 +20,20 @@ package org.apache.maven.plugins.shade;
  */
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import junit.framework.TestCase;
 
@@ -36,11 +41,15 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.apache.maven.plugins.shade.resource.AppendingTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.codehaus.plexus.logging.AbstractLogger;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
@@ -57,47 +66,8 @@ public class DefaultShaderTest
 
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
         final DefaultShader shader = new DefaultShader();
-        final List<String> debugMessages = new ArrayList<>();
-        final List<String> warnMessages = new ArrayList<>();
-        shader.enableLogging( new AbstractLogger(
-                Logger.LEVEL_INFO, "TEST_DefaultShaderTest_testOverlappingResourcesAreLogged" )
-        {
-            @Override
-            public void debug( final String s, final Throwable throwable )
-            {
-                debugMessages.add( s.replace( '\\', '/' ).trim() );
-            }
-
-            @Override
-            public void info( final String s, final Throwable throwable )
-            {
-                // no-op
-            }
-
-            @Override
-            public void warn( final String s, final Throwable throwable )
-            {
-                warnMessages.add( s.replace( '\\', '/' ).trim() );
-            }
-
-            @Override
-            public void error( final String s, final Throwable throwable )
-            {
-                // no-op
-            }
-
-            @Override
-            public void fatalError( final String s, final Throwable throwable )
-            {
-                // no-op
-            }
-
-            @Override
-            public Logger getChildLogger( final String s )
-            {
-                return this;
-            }
-        });
+        final MockLogger logs = new MockLogger();
+        shader.enableLogging(logs);
 
         // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
         // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
@@ -113,14 +83,65 @@ public class DefaultShaderTest
         shadeRequest.setUberJar( new File( "target/foo-custom_testOverlappingResourcesAreLogged.jar" ) );
         shader.shade( shadeRequest );
 
-        final String failureWarnMessage = warnMessages.toString();
-        assertTrue(failureWarnMessage, warnMessages.contains(
-                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resources:"));
-        assertTrue(failureWarnMessage, warnMessages.contains("- META-INF/MANIFEST.MF"));
+        final String failureWarnMessage = logs.warnMessages.toString();
+        assertTrue(failureWarnMessage, logs.warnMessages.contains(
+                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:"));
+        assertTrue(failureWarnMessage, logs.warnMessages.contains("- META-INF/MANIFEST.MF"));
 
-        final String failureDebugMessage = debugMessages.toString();
-        assertTrue(failureDebugMessage, debugMessages.contains(
+        final String failureDebugMessage = logs.debugMessages.toString();
+        assertTrue(failureDebugMessage, logs.debugMessages.contains(
                 "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar" ));
+    }
+
+    public void testOverlappingResourcesAreLoggedExceptATransformerHandlesIt() throws Exception {
+        TemporaryFolder temporaryFolder = new TemporaryFolder();
+        Set<File> set = new LinkedHashSet<>();
+        temporaryFolder.create();
+        File j1 = temporaryFolder.newFile("j1.jar");
+        try ( JarOutputStream jos = new JarOutputStream(new FileOutputStream( j1 ) ) )
+        {
+            jos.putNextEntry(new JarEntry( "foo.txt" ));
+            jos.write("c1".getBytes(StandardCharsets.UTF_8));
+            jos.closeEntry();
+        }
+        File j2 = temporaryFolder.newFile("j2.jar");
+        try ( JarOutputStream jos = new JarOutputStream(new FileOutputStream( j2 ) ) )
+        {
+            jos.putNextEntry(new JarEntry( "foo.txt" ));
+            jos.write("c2".getBytes(StandardCharsets.UTF_8));
+            jos.closeEntry();
+        }
+        set.add( j1 );
+        set.add( j2 );
+
+        AppendingTransformer transformer = new AppendingTransformer();
+        Field resource = AppendingTransformer.class.getDeclaredField( "resource" );
+        resource.setAccessible( true );
+        resource.set( transformer, "foo.txt" );
+
+        ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars( set );
+        shadeRequest.setRelocators( Collections.<Relocator>emptyList() );
+        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>singletonList( transformer) );
+        shadeRequest.setFilters( Collections.<Filter>emptyList() );
+        shadeRequest.setUberJar( new File( "target/foo-custom_testOverlappingResourcesAreLogged.jar" ) );
+
+        DefaultShader shaderWithTransformer = new DefaultShader();
+        final MockLogger logWithTransformer = new MockLogger();
+        shaderWithTransformer.enableLogging( logWithTransformer );
+        shaderWithTransformer.shade( shadeRequest );
+
+        DefaultShader shaderWithoutTransformer = new DefaultShader();
+        MockLogger logWithoutTransformer = new MockLogger();
+        shaderWithoutTransformer.enableLogging( logWithoutTransformer );
+        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>emptyList() );
+        shaderWithoutTransformer.shade( shadeRequest );
+
+        temporaryFolder.delete();
+
+        assertTrue(logWithTransformer.warnMessages.toString(), logWithTransformer.warnMessages.isEmpty());
+        assertTrue(logWithoutTransformer.warnMessages.toString(), logWithoutTransformer.warnMessages.containsAll(
+               Arrays.<String>asList( "j1.jar, j2.jar define 1 overlapping resource:", "- foo.txt" ) ) );
     }
 
     public void testShaderWithDefaultShadedPattern()
@@ -274,4 +295,50 @@ public class DefaultShaderTest
         return s;
     }
 
+    private static class MockLogger extends AbstractLogger
+    {
+        private final List<String> debugMessages = new ArrayList<>();
+        private final List<String> warnMessages = new ArrayList<>();
+
+        private MockLogger()
+        {
+            super( Logger.LEVEL_INFO, "test" );
+        }
+
+        @Override
+        public void debug( String s, Throwable throwable )
+        {
+            debugMessages.add( s.replace( '\\', '/' ).trim() );
+        }
+
+        @Override
+        public void info( String s, Throwable throwable )
+        {
+            // no-op
+        }
+
+        @Override
+        public void warn( String s, Throwable throwable )
+        {
+            warnMessages.add( s.replace( '\\', '/' ).trim() );
+        }
+
+        @Override
+        public void error( String s, Throwable throwable )
+        {
+            // no-op
+        }
+
+        @Override
+        public void fatalError( String s, Throwable throwable )
+        {
+            // no-op
+        }
+
+        @Override
+        public Logger getChildLogger( String s )
+        {
+            return this;
+        }
+    }
 }

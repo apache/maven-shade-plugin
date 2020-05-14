@@ -256,6 +256,10 @@ public class DefaultShader
 
                     addResource( resources, jos, mappedName, entry.getTime(), in );
                 }
+                else
+                {
+                    duplicates.remove( name, jar );
+                }
             }
         }
     }
@@ -338,11 +342,25 @@ public class DefaultShader
             final Collection<String> overlaps = new ArrayList<>();
             if ( !classes.isEmpty() )
             {
-                overlaps.add( "classes" );
+                if ( resources.size() == 1 )
+                {
+                    overlaps.add( "class" );
+                }
+                else
+                {
+                    overlaps.add( "classes" );
+                }
             }
             if ( !resources.isEmpty() )
             {
-                overlaps.add( "resources" );
+                if ( resources.size() == 1 )
+                {
+                    overlaps.add( "resource" );
+                }
+                else
+                {
+                    overlaps.add( "resources" );
+                }
             }
 
             final List<String> all = new ArrayList<>( classes.size() + resources.size() );
