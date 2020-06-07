@@ -80,10 +80,12 @@ public class ApacheNoticeResourceTransformer
     private static final String NOTICE_PATH = "META-INF/NOTICE";
 
     private static final String NOTICE_TXT_PATH = "META-INF/NOTICE.txt";
+    
+    private static final String NOTICE_MD_PATH = "META-INF/NOTICE.md";
 
     public boolean canTransformResource( String resource )
     {
-        return NOTICE_PATH.equalsIgnoreCase( resource ) || NOTICE_TXT_PATH.equalsIgnoreCase( resource );
+        return NOTICE_PATH.equalsIgnoreCase( resource ) || NOTICE_TXT_PATH.equalsIgnoreCase( resource ) || NOTICE_MD_PATH.equalsIgnoreCase( resource );
 
     }
 
