@@ -85,7 +85,9 @@ public class ApacheNoticeResourceTransformer
 
     public boolean canTransformResource( String resource )
     {
-        return NOTICE_PATH.equalsIgnoreCase( resource ) || NOTICE_TXT_PATH.equalsIgnoreCase( resource ) || NOTICE_MD_PATH.equalsIgnoreCase( resource );
+        return NOTICE_PATH.equalsIgnoreCase( resource ) 
+            || NOTICE_TXT_PATH.equalsIgnoreCase( resource ) 
+            || NOTICE_MD_PATH.equalsIgnoreCase( resource );
 
     }
 
