@@ -26,11 +26,4 @@ under the License.
   <artifactId>a</artifactId>
   <version>0.1</version>
   <packaging>jar</packaging>
-
-  <distributionManagement>
-    <repository>
-      <id>maven-core-it</id>
-      <url>file:///${basedir}/repo</url>
-    </repository>
-  </distributionManagement>
 </project>
