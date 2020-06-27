@@ -19,26 +19,22 @@ package org.apache.maven.plugins.shade.relocation;
  * under the License.
  */
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.util.Collections;
 
+import static org.junit.Assert.fail;
+
 public class SimpleRelocatorParameterTest
-    extends TestCase
 {
 
-
-    protected void setUp()
-        throws Exception
-    {
-        super.setUp();
-    }
-
+    @Test
     public void testThatNullPatternInConstructorShouldNotThrowNullPointerException()
     {
         constructThenFailOnNullPointerException( null, "" );
     }
 
+    @Test
     public void testThatNullShadedPatternInConstructorShouldNotThrowNullPointerException()
     {
         constructThenFailOnNullPointerException( "", null );

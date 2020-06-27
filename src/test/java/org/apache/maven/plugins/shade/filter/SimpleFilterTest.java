@@ -19,21 +19,23 @@ package org.apache.maven.plugins.shade.filter;
  * under the License.
  */
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 
-import junit.framework.TestCase;
 import org.apache.maven.plugins.shade.mojo.ArchiveFilter;
+import org.junit.Test;
 
 /**
  * @author Benjamin Bentmann
  */
 public class SimpleFilterTest
-    extends TestCase
 {
 
+    @Test
     public void testIsFiltered()
     {
         SimpleFilter filter;

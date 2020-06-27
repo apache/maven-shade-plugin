@@ -19,8 +19,8 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import junit.framework.TestCase;
 import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,12 +33,16 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Test for {@link GroovyResourceTransformer}.
  *
  */
 public class GroovyResourceTransformerTest
-    extends TestCase
 {
 
     private static InputStream stream( Properties props )
@@ -93,8 +97,8 @@ public class GroovyResourceTransformerTest
         return desc;
     }
 
+    @Test
     public void testFilter()
-        throws Exception
     {
         GroovyResourceTransformer transformer = new GroovyResourceTransformer();
         assertTrue( transformer.canTransformResource( GroovyResourceTransformer.EXT_MODULE_NAME ) );
@@ -103,6 +107,7 @@ public class GroovyResourceTransformerTest
         assertFalse( transformer.canTransformResource( JarFile.MANIFEST_NAME ) );
     }
 
+    @Test
     public void testEmpty()
         throws Exception
     {
@@ -111,6 +116,7 @@ public class GroovyResourceTransformerTest
         assertNull( transform( transformer ) );
     }
 
+    @Test
     public void testSpecifyModuleName()
         throws Exception
     {
@@ -127,6 +133,7 @@ public class GroovyResourceTransformerTest
         assertEquals( "some.staticExt", desc.getProperty( "staticExtensionClasses" ) );
     }
 
+    @Test
     public void testConcatenation()
         throws Exception
     {

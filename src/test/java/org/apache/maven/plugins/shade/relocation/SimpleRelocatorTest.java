@@ -20,10 +20,14 @@ package org.apache.maven.plugins.shade.relocation;
  */
 
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test for {@link SimpleRelocator}.
@@ -32,9 +36,9 @@ import java.util.Collections;
  *
  */
 public class SimpleRelocatorTest
-    extends TestCase
 {
 
+    @Test
     public void testCanRelocatePath()
     {
         SimpleRelocator relocator;
@@ -68,6 +72,7 @@ public class SimpleRelocatorTest
         assertFalse( relocator.canRelocatePath( "org/foo/PublicUtilStuff.class" ) );
     }
 
+    @Test
     public void testCanRelocateClass()
     {
         SimpleRelocator relocator;
@@ -91,6 +96,7 @@ public class SimpleRelocatorTest
         assertFalse( relocator.canRelocateClass( "org.foo.PublicUtilStuff" ) );
     }
 
+    @Test
     public void testCanRelocateRawString()
     {
         SimpleRelocator relocator;
@@ -103,12 +109,14 @@ public class SimpleRelocatorTest
     }
 
     //MSHADE-119, make sure that the easy part of this works.
-    public void testCanRelocateAbsClassPath() 
+    @Test
+    public void testCanRelocateAbsClassPath()
     {
         SimpleRelocator relocator = new SimpleRelocator( "org.apache.velocity", "org.apache.momentum", null, null );
         assertEquals("/org/apache/momentum/mass.properties", relocator.relocatePath( "/org/apache/velocity/mass.properties" ) );
     }
 
+    @Test
     public void testCanRelocateAbsClassPathWithExcludes()
     {
         SimpleRelocator relocator = new SimpleRelocator( "org/apache/velocity", "org/apache/momentum", null,
@@ -119,6 +127,7 @@ public class SimpleRelocatorTest
         assertFalse( relocator.canRelocatePath( "org/apache/velocity/excluded/mass.properties" ) );
     }
 
+    @Test
     public void testCanRelocateAbsClassPathWithIncludes()
     {
         SimpleRelocator relocator = new SimpleRelocator( "org/apache/velocity", "org/apache/momentum",
@@ -129,6 +138,7 @@ public class SimpleRelocatorTest
         assertTrue( relocator.canRelocatePath( "org/apache/velocity/included/mass.properties" ) );
     }
 
+    @Test
     public void testRelocatePath()
     {
         SimpleRelocator relocator;
@@ -140,6 +150,7 @@ public class SimpleRelocatorTest
         assertEquals( "private/stuff/bar/Class.class", relocator.relocatePath( "org/foo/bar/Class.class" ) );
     }
 
+    @Test
     public void testRelocateClass()
     {
         SimpleRelocator relocator;
@@ -151,6 +162,7 @@ public class SimpleRelocatorTest
         assertEquals( "private.stuff.bar.Class", relocator.relocateClass( "org.foo.bar.Class" ) );
     }
 
+    @Test
     public void testRelocateRawString()
     {
         SimpleRelocator relocator;
@@ -162,6 +174,7 @@ public class SimpleRelocatorTest
         assertEquals( "META-INF/hidden.org.foo.xml", relocator.relocatePath( "META-INF/org.foo.xml" ) );
     }
     
+    @Test
     public void testRelocateMavenFiles()
     {
         SimpleRelocator relocator =

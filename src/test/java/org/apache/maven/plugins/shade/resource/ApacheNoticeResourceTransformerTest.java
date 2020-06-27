@@ -21,7 +21,11 @@ package org.apache.maven.plugins.shade.resource;
 
 import java.util.Locale;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test for {@link ApacheNoticeResourceTransformer}.
@@ -29,7 +33,6 @@ import junit.framework.TestCase;
  * @author Benjamin Bentmann
  */
 public class ApacheNoticeResourceTransformerTest
-    extends TestCase
 {
 
     private ApacheNoticeResourceTransformer transformer;
@@ -43,18 +46,20 @@ public class ApacheNoticeResourceTransformerTest
         Locale.setDefault( new Locale( "tr" ) );
     }
 
+    @Before
     public void setUp()
     {
-        this.transformer = new ApacheNoticeResourceTransformer();
+        transformer = new ApacheNoticeResourceTransformer();
     }
 
+    @Test
     public void testCanTransformResource()
     {
-        assertTrue( this.transformer.canTransformResource( "META-INF/NOTICE" ) );
-        assertTrue( this.transformer.canTransformResource( "META-INF/NOTICE.TXT" ) );
-        assertTrue( this.transformer.canTransformResource( "META-INF/NOTICE.md" ) );
-        assertTrue( this.transformer.canTransformResource( "META-INF/Notice.txt" ) );
-        assertFalse( this.transformer.canTransformResource( "META-INF/MANIFEST.MF" ) );
+        assertTrue( transformer.canTransformResource( "META-INF/NOTICE" ) );
+        assertTrue( transformer.canTransformResource( "META-INF/NOTICE.TXT" ) );
+        assertTrue( transformer.canTransformResource( "META-INF/NOTICE.md" ) );
+        assertTrue( transformer.canTransformResource( "META-INF/Notice.txt" ) );
+        assertFalse( transformer.canTransformResource( "META-INF/MANIFEST.MF" ) );
     }
 
 }

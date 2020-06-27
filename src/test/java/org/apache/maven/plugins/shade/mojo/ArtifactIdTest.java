@@ -19,15 +19,19 @@ package org.apache.maven.plugins.shade.mojo;
  * under the License.
  */
 
-import junit.framework.TestCase;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Benjamin Bentmann
  */
 public class ArtifactIdTest
-    extends TestCase
 {
 
+    @Test
     public void testIdParsing()
     {
         ArtifactId id;
@@ -117,6 +121,7 @@ public class ArtifactIdTest
         assertEquals( "*", id.getClassifier() );
     }
 
+    @Test
     public void testMatches()
     {
         assertTrue( new ArtifactId( "gid", "aid", "type", "cls" ).matches( new ArtifactId( "gid:aid:type:cls" ) ) );

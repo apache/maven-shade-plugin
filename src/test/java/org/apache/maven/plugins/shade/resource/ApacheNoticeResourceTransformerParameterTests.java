@@ -7,7 +7,10 @@ import java.util.List;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.fail;
 
 
 /*
@@ -33,55 +36,60 @@ import junit.framework.TestCase;
  * Tests {@link ApacheLicenseResourceTransformer} parameters.
  */
 public class ApacheNoticeResourceTransformerParameterTests
-    extends TestCase
 {
 	
 	private static final String NOTICE_RESOURCE = "META-INF/NOTICE";
 	private ApacheNoticeResourceTransformer subject;
 
-    protected void setUp()
-        throws Exception
+    @Before
+    public void setUp()
     {
-        super.setUp();
         subject = new ApacheNoticeResourceTransformer();
     }
 	
+    @Test
     public void testNoParametersShouldNotThrowNullPointerWhenNoInput()
         throws IOException
     {
         processAndFailOnNullPointer( "" );
     }
 
+    @Test
     public void testNoParametersShouldNotThrowNullPointerWhenNoLinesOfInput()
         throws IOException
     {
         processAndFailOnNullPointer( "Some notice text" );
     }
 
+    @Test
     public void testNoParametersShouldNotThrowNullPointerWhenOneLineOfInput()
         throws IOException
     {
         processAndFailOnNullPointer( "Some notice text\n" );
     }
 
+    @Test
     public void testNoParametersShouldNotThrowNullPointerWhenTwoLinesOfInput()
         throws IOException
     {
         processAndFailOnNullPointer( "Some notice text\nSome notice text\n" );
     }
 
+    @Test
     public void testNoParametersShouldNotThrowNullPointerWhenLineStartsWithSlashSlash()
         throws IOException
     {
         processAndFailOnNullPointer( "Some notice text\n//Some notice text\n" );
     }
 
+    @Test
     public void testNoParametersShouldNotThrowNullPointerWhenLineIsSlashSlash()
         throws IOException
     {
         processAndFailOnNullPointer( "//\n" );
     }
 
+    @Test
     public void testNoParametersShouldNotThrowNullPointerWhenLineIsEmpty()
         throws IOException
     {

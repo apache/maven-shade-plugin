@@ -130,7 +130,6 @@ public class ShadeMojoTest
         {
             @Override
             public ArtifactResult resolveArtifact( ProjectBuildingRequest req, final Artifact art )
-                throws ArtifactResolverException
             {
                 return new ArtifactResult()
                 {
@@ -149,7 +148,6 @@ public class ShadeMojoTest
 
             @Override
             public ArtifactResult resolveArtifact( ProjectBuildingRequest req, final ArtifactCoordinate coordinate )
-                throws ArtifactResolverException
             {
                 return new ArtifactResult()
                 {

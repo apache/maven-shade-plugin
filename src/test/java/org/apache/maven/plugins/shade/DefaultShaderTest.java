@@ -35,35 +35,35 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
-import junit.framework.TestCase;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.AppendingTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
-import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.codehaus.plexus.logging.AbstractLogger;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
-import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Jason van Zyl
  * @author Mauro Talevi
  */
 public class DefaultShaderTest
-    extends TestCase
 {
     private static final String[] EXCLUDES = new String[] { "org/codehaus/plexus/util/xml/Xpp3Dom",
         "org/codehaus/plexus/util/xml/pull.*" };
 
+    @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
         final DefaultShader shader = new DefaultShader();
         final MockLogger logs = new MockLogger();
@@ -84,15 +84,16 @@ public class DefaultShaderTest
         shader.shade( shadeRequest );
 
         final String failureWarnMessage = logs.warnMessages.toString();
-        assertTrue(failureWarnMessage, logs.warnMessages.contains(
-                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:"));
-        assertTrue(failureWarnMessage, logs.warnMessages.contains("- META-INF/MANIFEST.MF"));
+        assertTrue( failureWarnMessage, logs.warnMessages.contains(
+                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:") );
+        assertTrue( failureWarnMessage, logs.warnMessages.contains("- META-INF/MANIFEST.MF") );
 
         final String failureDebugMessage = logs.debugMessages.toString();
-        assertTrue(failureDebugMessage, logs.debugMessages.contains(
-                "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar" ));
+        assertTrue( failureDebugMessage, logs.debugMessages.contains(
+                "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar" ) );
     }
 
+    @Test
     public void testOverlappingResourcesAreLoggedExceptATransformerHandlesIt() throws Exception {
         TemporaryFolder temporaryFolder = new TemporaryFolder();
         Set<File> set = new LinkedHashSet<>();
@@ -139,17 +140,20 @@ public class DefaultShaderTest
 
         temporaryFolder.delete();
 
-        assertTrue(logWithTransformer.warnMessages.toString(), logWithTransformer.warnMessages.isEmpty());
-        assertTrue(logWithoutTransformer.warnMessages.toString(), logWithoutTransformer.warnMessages.containsAll(
-               Arrays.<String>asList( "j1.jar, j2.jar define 1 overlapping resource:", "- foo.txt" ) ) );
+        assertTrue( logWithTransformer.warnMessages.toString(), logWithTransformer.warnMessages.isEmpty() );
+        assertTrue( logWithoutTransformer.warnMessages.toString(),
+                logWithoutTransformer.warnMessages.containsAll(
+                        Arrays.asList( "j1.jar, j2.jar define 1 overlapping resource:", "- foo.txt" ) ) );
     }
 
+    @Test
     public void testShaderWithDefaultShadedPattern()
         throws Exception
     {
         shaderWithPattern( null, new File( "target/foo-default.jar" ), EXCLUDES );
     }
 
+    @Test
     public void testShaderWithStaticInitializedClass()
         throws Exception
     {
@@ -185,12 +189,14 @@ public class DefaultShaderTest
         }
     }
 
+    @Test
     public void testShaderWithCustomShadedPattern()
         throws Exception
     {
         shaderWithPattern( "org/shaded/plexus/util", new File( "target/foo-custom.jar" ), EXCLUDES );
     }
 
+    @Test
     public void testShaderWithoutExcludesShouldRemoveReferencesOfOriginalPattern()
         throws Exception
     {
@@ -200,6 +206,7 @@ public class DefaultShaderTest
                            new String[] {} );
     }
 
+    @Test
     public void testShaderWithRelocatedClassname()
         throws Exception
     {
@@ -214,7 +221,7 @@ public class DefaultShaderTest
         List<Relocator> relocators = new ArrayList<>();
 
         relocators.add( new SimpleRelocator( "org/codehaus/plexus/util/", "_plexus/util/__", null,
-                                             Arrays.<String> asList() ) );
+                Collections.<String>emptyList() ) );
 
         List<ResourceTransformer> resourceTransformers = new ArrayList<>();
 

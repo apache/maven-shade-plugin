@@ -22,13 +22,15 @@ package org.apache.maven.plugins.shade.mojo;
 import java.util.Collection;
 import java.util.Collections;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Benjamin Bentmann
  */
 public class ArtifactSelectorTest
-    extends TestCase
 {
 
     private ArtifactSelector newSelector( Collection<String> includes, Collection<String> excludes, String groupPrefix )
@@ -36,6 +38,7 @@ public class ArtifactSelectorTest
         return new ArtifactSelector( includes, excludes, groupPrefix );
     }
 
+    @Test
     public void testIsSelected()
     {
         ArtifactSelector selector;
