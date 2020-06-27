@@ -443,9 +443,9 @@ Transformers in <<<org.apache.maven.plugins.shade.resource.properties>>> (availa
 ** Preventing License Duplication with the {ApacheLicenseResourceTransformer}
 
   Some open source producers 
-  (including the {{{http://www.apache.org} Apache Software Foundation}}) 
+  (including the {{{https://www.apache.org} Apache Software Foundation}})
   include a copy of their license in the META-INF directory. These are conventionally named
-  either <<<LICENSE>>> or <<<LICENSE.txt>>>. When merging these dependencies, adding these
+  either <<<LICENSE>>>,<<<LICENSE.txt>>> or <<<LICENSE.md>>>. When merging these dependencies, adding these
   resources may cause confusion.
   The <<<ApacheLicenseResourceTransformer>>> ensures that duplicate licenses (named according
   to this convention) are not merged. 
@@ -485,7 +485,7 @@ Transformers in <<<org.apache.maven.plugins.shade.resource.properties>>> (availa
 ** Aggregating Notices with the {ApacheNoticeResourceTransformer}
 
   Some licenses 
-  (including the {{{http://www.apache.org/licenses/LICENSE-2.0.html} Apache License, Version 2}})
+  (including the {{{https://www.apache.org/licenses/LICENSE-2.0.html} Apache License, Version 2}})
   require that notices are preserved by downstream distributors. <<<ApacheNoticeResourceTransformer>>>
   automates the assembly of an appropriate <<<NOTICE>>>.
 
