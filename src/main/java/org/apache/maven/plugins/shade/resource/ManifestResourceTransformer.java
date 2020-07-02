@@ -62,6 +62,8 @@ public class ManifestResourceTransformer
 
     private long time = Long.MIN_VALUE;
 
+    private String shade;
+
     public void setMainClass( String mainClass )
     {
         this.mainClass = mainClass;
@@ -187,5 +189,20 @@ public class ManifestResourceTransformer
             while ( !value.equals( newValue ) );
         }
         return newValue;
+    }
+
+    /**
+     * The shades to apply this transformer to or no shades if no filter is applied.
+     *
+     * @param shade {@code null}, {@code jar}, {@code test-jar}, {@code sources-jar} or {@code test-sources-jar}.
+     */
+    public void setForShade( String shade )
+    {
+        this.shade = shade;
+    }
+
+    public boolean isForShade( String shade )
+    {
+        return this.shade == null || this.shade.isEmpty() || this.shade.equalsIgnoreCase( shade );
     }
 }

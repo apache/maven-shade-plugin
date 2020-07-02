@@ -40,6 +40,7 @@ import org.apache.maven.plugins.shade.filter.SimpleFilter;
 import org.apache.maven.plugins.shade.pom.PomWriter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
@@ -458,14 +459,16 @@ public class ShadeMojo
 
             List<ResourceTransformer> resourceTransformers = getResourceTransformers();
 
-            ShadeRequest shadeRequest = shadeRequest( artifacts, outputJar, filters, relocators, resourceTransformers );
+            ShadeRequest shadeRequest = shadeRequest( "jar", artifacts, outputJar, filters, relocators,
+                    resourceTransformers );
 
             shader.shade( shadeRequest );
 
             if ( createSourcesJar )
             {
                 ShadeRequest shadeSourcesRequest =
-                    createShadeSourcesRequest( sourceArtifacts, sourcesJar, filters, relocators, resourceTransformers );
+                    createShadeSourcesRequest( "sources-jar", sourceArtifacts, sourcesJar, filters, relocators,
+                            resourceTransformers );
 
                 shader.shade( shadeSourcesRequest );
             }
@@ -473,7 +476,7 @@ public class ShadeMojo
             if ( shadeTestJar )
             {
                 ShadeRequest shadeTestRequest =
-                    shadeRequest( testArtifacts, testJar, filters, relocators, resourceTransformers );
+                    shadeRequest( "test-jar", testArtifacts, testJar, filters, relocators, resourceTransformers );
 
                 shader.shade( shadeTestRequest );
             }
@@ -481,8 +484,8 @@ public class ShadeMojo
             if ( createTestSourcesJar )
             {
                 ShadeRequest shadeTestSourcesRequest =
-                    createShadeSourcesRequest( testSourceArtifacts, testSourcesJar, filters, relocators,
-                        resourceTransformers );
+                    createShadeSourcesRequest( "test-sources-jar", testSourceArtifacts, testSourcesJar, filters,
+                        relocators, resourceTransformers );
 
                 shader.shade( shadeTestSourcesRequest );
             }
@@ -621,7 +624,7 @@ public class ShadeMojo
         getLog().error( "- You removed the configuration of the maven-jar-plugin that produces the main artifact." );
     }
 
-    private ShadeRequest shadeRequest( Set<File> artifacts, File outputJar, List<Filter> filters,
+    private ShadeRequest shadeRequest( String shade, Set<File> artifacts, File outputJar, List<Filter> filters,
                                        List<Relocator> relocators, List<ResourceTransformer> resourceTransformers )
     {
         ShadeRequest shadeRequest = new ShadeRequest();
@@ -629,16 +632,16 @@ public class ShadeMojo
         shadeRequest.setUberJar( outputJar );
         shadeRequest.setFilters( filters );
         shadeRequest.setRelocators( relocators );
-        shadeRequest.setResourceTransformers( resourceTransformers );
+        shadeRequest.setResourceTransformers( toResourceTransformers( shade, resourceTransformers ) );
         return shadeRequest;
     }
 
-    private ShadeRequest createShadeSourcesRequest( Set<File> testArtifacts, File testJar, List<Filter> filters,
-                                                    List<Relocator> relocators,
+    private ShadeRequest createShadeSourcesRequest( String shade, Set<File> testArtifacts, File testJar,
+                                                    List<Filter> filters, List<Relocator> relocators,
                                                     List<ResourceTransformer> resourceTransformers )
     {
         ShadeRequest shadeSourcesRequest =
-            shadeRequest( testArtifacts, testJar, filters, relocators, resourceTransformers );
+            shadeRequest( shade, testArtifacts, testJar, filters, relocators, resourceTransformers );
         shadeSourcesRequest.setShadeSourcesContent( shadeSourcesContent );
         return shadeSourcesRequest;
     }
@@ -1313,5 +1316,20 @@ public class ShadeMojo
             // restore it
             session.getProjectBuildingRequest().setProject( original );
         }
+    }
+
+    private List<ResourceTransformer> toResourceTransformers(
+            String shade, List<ResourceTransformer> resourceTransformers )
+    {
+         List<ResourceTransformer> forShade = new ArrayList<ResourceTransformer>();
+         for ( ResourceTransformer transformer : resourceTransformers )
+         {
+             if ( !( transformer instanceof ManifestResourceTransformer )
+                     || ( ( ManifestResourceTransformer ) transformer ) .isForShade( shade ) )
+             {
+                 forShade.add( transformer );
+             }
+         }
+         return forShade;
     }
 }
