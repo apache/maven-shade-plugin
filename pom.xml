@@ -286,6 +286,7 @@
               <goals>
                 <goal>package</goal>
               </goals>
+              <showErrors>true</showErrors>
               <projectsDirectory>src/it/projects</projectsDirectory>
               <settingsFile>src/it/mrm/settings.xml</settingsFile>
               <extraArtifacts>

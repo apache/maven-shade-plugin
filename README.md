@@ -78,6 +78,22 @@ For changes of a trivial nature to comments and documentation, it is not always
 necessary to create a new ticket in JIRA.  In this case, it is appropriate to
 start the first line of a commit with '(doc)' instead of a ticket number.
 
+Developer Tips
+--------------
+
+If you machine is big enough and you want to parallelise the IT execution to validate the build
+before a PR you can set the concurrency in MAVEN_OPTS:
+
+````
+MAVEN_OPTS=-Dinvoker.parallelThreads=2 mvn verify -Prun-its
+````
+
+You can also run a single IT test using:
+
+````
+mvn verify -Prun-its -Dinvoker.test=myitproject
+````
+
 Additional Resources
 --------------------
 

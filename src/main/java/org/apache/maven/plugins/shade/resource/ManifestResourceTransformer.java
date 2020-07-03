@@ -165,7 +165,14 @@ public class ManifestResourceTransformer
         {
             for ( Map.Entry<String, Object> entry : manifestEntries.entrySet() )
             {
-                attributes.put( new Attributes.Name( entry.getKey() ), entry.getValue() );
+                if ( entry.getValue() == null )
+                {
+                    attributes.remove( new Attributes.Name( entry.getKey() ) );
+                }
+                else
+                {
+                    attributes.put( new Attributes.Name( entry.getKey() ), entry.getValue() );
+                }
             }
         }
 
@@ -203,6 +210,11 @@ public class ManifestResourceTransformer
 
     public boolean isForShade( String shade )
     {
-        return this.shade == null || this.shade.isEmpty() || this.shade.equalsIgnoreCase( shade );
+        return isUsedForDefaultShading() || this.shade.equalsIgnoreCase( shade );
+    }
+
+    public boolean isUsedForDefaultShading()
+    {
+        return this.shade == null || this.shade.isEmpty();
     }
 }

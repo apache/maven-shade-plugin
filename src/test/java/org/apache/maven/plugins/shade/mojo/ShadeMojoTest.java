@@ -19,6 +19,8 @@ package org.apache.maven.plugins.shade.mojo;
  * under the License.
  */
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -44,12 +46,12 @@ import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.transfer.artifact.ArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
-import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResult;
 import org.codehaus.plexus.PlexusTestCase;
 
@@ -60,6 +62,53 @@ import org.codehaus.plexus.PlexusTestCase;
 public class ShadeMojoTest
     extends PlexusTestCase
 {
+    public void testManifestTransformerSelection() throws Exception
+    {
+        final ShadeMojo mojo = new ShadeMojo();
+        final Method m = ShadeMojo.class.getDeclaredMethod("toResourceTransformers", String.class, List.class);
+        m.setAccessible(true);
+
+        final ManifestResourceTransformer defaultTfr = new ManifestResourceTransformer()
+        {
+            @Override
+            public String toString() // when test fails junit does a toString so easier to read errors this way
+            {
+                return "default";
+            }
+        };
+        final ManifestResourceTransformer testsTfr1 = new ManifestResourceTransformer()
+        {
+            @Override
+            public String toString()
+            {
+                return "t1";
+            }
+        };
+        testsTfr1.setForShade("tests");
+        final ManifestResourceTransformer testsTfr2 = new ManifestResourceTransformer()
+        {
+            @Override
+            public String toString()
+            {
+                return "t2";
+            }
+        };
+        testsTfr2.setForShade("tests");
+
+        assertEquals(
+                singletonList( defaultTfr ),
+                m.invoke( mojo, "jar", asList( defaultTfr, testsTfr1, testsTfr2 ) ));
+        assertEquals(
+                asList( testsTfr1, testsTfr2 ),
+                m.invoke( mojo, "tests", asList( defaultTfr, testsTfr1, testsTfr2 ) ));
+        assertEquals(
+                asList( testsTfr1, testsTfr2 ),
+                m.invoke( mojo, "tests", asList( testsTfr1, defaultTfr, testsTfr2 ) ));
+        assertEquals(
+                asList( testsTfr1, testsTfr2 ),
+                m.invoke( mojo, "tests", asList( testsTfr1, testsTfr2, defaultTfr ) ));
+    }
+
     public void testShaderWithDefaultShadedPattern()
         throws Exception
     {

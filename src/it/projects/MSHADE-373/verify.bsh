@@ -20,26 +20,43 @@ import java.io.*;
 import java.util.jar.*;
 
 // NOTE: We deliberately use JarInputStream and not JarFile here!
-JarInputStream jarStream = new JarInputStream( new FileInputStream( new File( basedir, "target/test-1.0.jar" ) ) );
-Manifest mf = jarStream.getManifest();
-jarStream.close();
-
-if ( mf == null )
-{
-    throw new IllegalStateException( "META-INF/MANIFEST.MF is missing" );
+Manifest extractManifest(name) {
+    file = new File( basedir, "target/" + name );
+    if ( !file.exists() )
+    {
+        throw new IllegalStateException( "No file '" + file + "'" );
+    }
+    JarInputStream jarStream = new JarInputStream( new FileInputStream( file ) );
+    Manifest mf = jarStream.getManifest();
+    jarStream.close();
+    return mf;
 }
 
-if ( !"PASSED".equals( mf.getMainAttributes().getValue( "Test-Entry" ) ) )
-{
-    throw new IllegalStateException( "Test-Entry should not have been changed" );
+void assertsEntries( name, expectedTestEntry, expectedOriginalEntry, expectedCustomEntry, shouldHaveArchiverVersion ) {
+    attributes = extractManifest( name ).getMainAttributes();
+
+    if ( !Objects.equals( expectedTestEntry, attributes.getValue( "Test-Entry" ) ) )
+    {
+        throw new IllegalStateException( "Test-Entry should have been '" + expectedTestEntry + "' in " + name + ": " + attributes.entrySet() );
+    }
+
+    if ( !Objects.equals( expectedOriginalEntry, attributes.getValue( "Original-Entry" ) ) )
+    {
+        throw new IllegalStateException( "Original-Entry should have been '" + expectedOriginalEntry + "' in " + name + ": " + attributes.entrySet() );
+    }
+
+    if ( !Objects.equals( expectedCustomEntry, attributes.getValue( "Custom-Entry" ) ) )
+    {
+        throw new IllegalStateException( "Custom-Entry should have been '" + expectedCustomEntry + "' in " + name + ": " + attributes.entrySet() );
+    }
+
+    if ( shouldHaveArchiverVersion && attributes.getValue( "Archiver-Version" ) == null ||
+        !shouldHaveArchiverVersion && attributes.getValue( "Archiver-Version" ) != null )
+    {
+        throw new IllegalStateException( "META-INF/MANIFEST.mf Archiver-Version entry is invalid in " + name + ": " + attributes.entrySet() );
+    }
 }
 
-if ( !"PASSED".equals( mf.getMainAttributes().getValue( "Original-Entry" ) ) )
-{
-    throw new IllegalStateException( "META-INF/MANIFEST.MF is incomplete" );
-}
-
-if ( "null".equals( mf.getMainAttributes().getValue( "Implementation-Build" ) ) )
-{
-    throw new IllegalStateException( "META-INF/MANIFEST.MF Implementation-Build content is null" );
-}
+assertsEntries( "test-1.0.jar", "PASSED", "PASSED", "SET", true );
+assertsEntries( "test-1.0-sources.jar", "FAILED", null, null, false ); // specific config
+assertsEntries( "test-1.0-tests.jar", "PASSED", "PASSED", "SET", true ); // inherits from the default transformer
