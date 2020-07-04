@@ -43,7 +43,7 @@ if ( !"org.apache.maven.Shade".equals( mf.getMainAttributes().getValue( "Main-Cl
 {
     throw new IllegalStateException( "META-INF/MANIFEST.MF is incomplete" );
 }
-if ( !"null".equals( mf.getMainAttributes().getValue( "Implementation-Build" ) ) )
+if ( null != mf.getMainAttributes().getValue( "Implementation-Build" ) )
 {
-    throw new IllegalStateException( "META-INF/MANIFEST.MF Implementation-Build content is not null as expected." );
+    throw new IllegalStateException( "META-INF/MANIFEST.MF Implementation-Build content is not null as expected. (" + mf.getMainAttributes().entrySet() + ")" );
 }
