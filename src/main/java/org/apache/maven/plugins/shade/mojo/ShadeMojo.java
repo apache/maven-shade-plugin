@@ -1322,11 +1322,33 @@ public class ShadeMojo
             String shade, List<ResourceTransformer> resourceTransformers )
     {
          List<ResourceTransformer> forShade = new ArrayList<ResourceTransformer>();
+         ManifestResourceTransformer lastMt = null;
          for ( ResourceTransformer transformer : resourceTransformers )
          {
-             if ( !( transformer instanceof ManifestResourceTransformer )
-                     || ( ( ManifestResourceTransformer ) transformer ) .isForShade( shade ) )
+             if ( !( transformer instanceof ManifestResourceTransformer )  )
              {
+                 forShade.add( transformer );
+             }
+             else if ( ( ( ManifestResourceTransformer ) transformer ) .isForShade( shade ) )
+             {
+                 final ManifestResourceTransformer mt = (ManifestResourceTransformer) transformer;
+                 if ( mt.isUsedForDefaultShading() && lastMt != null && !lastMt.isUsedForDefaultShading() )
+                 {
+                     continue; // skip, we already have a specific transformer
+                 }
+                 if ( !mt.isUsedForDefaultShading() && lastMt != null && lastMt.isUsedForDefaultShading() )
+                 {
+                     forShade.remove( lastMt );
+                 }
+                 else if ( !mt.isUsedForDefaultShading() && lastMt != null )
+                 {
+                     getLog().warn( "Ambiguous manifest transformer definition for '" + shade + "': "
+                             + mt + " / " + lastMt );
+                 }
+                 if ( lastMt == null || !mt.isUsedForDefaultShading() )
+                 {
+                     lastMt = mt;
+                 }
                  forShade.add( transformer );
              }
          }
