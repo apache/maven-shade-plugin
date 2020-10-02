@@ -20,8 +20,11 @@ package org.apache.maven.plugins.shade;
  */
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,6 +32,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -42,6 +46,8 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -71,6 +77,7 @@ public class DefaultShader
     extends AbstractLogEnabled
     implements Shader
 {
+    private static final int BUFFER_SIZE = 32 * 1024;
 
     public void shade( ShadeRequest shadeRequest )
         throws IOException, MojoExecutionException
@@ -147,6 +154,106 @@ public class DefaultShader
         for ( Filter filter : shadeRequest.getFilters() )
         {
             filter.finished();
+        }
+    }
+
+    /**
+     * {@link InputStream} that can peek ahead at zip header bytes.
+     */
+    private static class ZipHeaderPeekInputStream extends FilterInputStream
+    {
+
+        private static final byte[] ZIP_HEADER = new byte[] {0x50, 0x4b, 0x03, 0x04};
+
+        private final byte[] header;
+
+        private ByteArrayInputStream headerStream;
+
+        protected ZipHeaderPeekInputStream( InputStream in ) throws IOException
+        {
+            super( in );
+            this.header = new byte[4];
+            int len = in.read( this.header );
+            this.headerStream = new ByteArrayInputStream( this.header, 0, len );
+        }
+
+        @Override
+        public int read() throws IOException
+        {
+            int read = ( this.headerStream == null ? -1 : this.headerStream.read() );
+            if ( read != -1 )
+            {
+                this.headerStream = null;
+                return read;
+            }
+            return super.read();
+        }
+
+        @Override
+        public int read( byte[] b ) throws IOException
+        {
+            return read( b, 0, b.length );
+        }
+
+        @Override
+        public int read( byte[] b, int off, int len ) throws IOException
+        {
+            int read = ( this.headerStream == null ? -1 : this.headerStream.read( b, off, len ) );
+            if ( read != -1 )
+            {
+                this.headerStream = null;
+                return read;
+            }
+            return super.read( b, off, len );
+        }
+
+        public boolean hasZipHeader()
+        {
+            return Arrays.equals( this.header, ZIP_HEADER );
+        }
+
+    }
+
+    /**
+     * Data holder for CRC and Size.
+     */
+    private static class CrcAndSize
+    {
+
+        private final CRC32 crc = new CRC32();
+
+        private long size;
+
+        CrcAndSize( File file ) throws IOException
+        {
+            try ( FileInputStream inputStream = new FileInputStream( file ) )
+            {
+                load( inputStream );
+            }
+        }
+
+        CrcAndSize( InputStream inputStream ) throws IOException
+        {
+            load( inputStream );
+        }
+
+        private void load( InputStream inputStream ) throws IOException
+        {
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int bytesRead;
+            while ( ( bytesRead = inputStream.read( buffer ) ) != -1 )
+            {
+                this.crc.update( buffer, 0, bytesRead );
+                this.size += bytesRead;
+            }
+        }
+
+        public void setupStoredEntry( JarEntry entry )
+        {
+            entry.setSize( this.size );
+            entry.setCompressedSize( this.size );
+            entry.setCrc( this.crc.getValue() );
+            entry.setMethod( ZipEntry.STORED );
         }
     }
 
@@ -255,7 +362,7 @@ public class DefaultShader
                         return;
                     }
 
-                    addResource( resources, jos, mappedName, entry.getTime(), in );
+                    addResource( resources, jos, mappedName, entry, jarFile );
                 }
                 else
                 {
@@ -584,19 +691,35 @@ public class DefaultShader
         resources.add( name );
     }
 
-    private void addResource( Set<String> resources, JarOutputStream jos, String name, long time,
-                              InputStream is )
-        throws IOException
+    private void addResource( Set<String> resources, JarOutputStream jos, String name, JarEntry originalEntry,
+                              JarFile jarFile ) throws IOException
     {
-        final JarEntry entry = new JarEntry( name );
+        ZipHeaderPeekInputStream inputStream = new ZipHeaderPeekInputStream( jarFile.getInputStream( originalEntry ) );
+        try
+        {
+            final JarEntry entry = new JarEntry( name );
 
-        entry.setTime( time );
+            // Uncompressed entries should not be changed their compressed level, otherwise JVM can't load these nested jar
+            if ( inputStream.hasZipHeader() && originalEntry.getMethod() == ZipEntry.STORED )
+            {
+                new CrcAndSize( inputStream ).setupStoredEntry( entry );
+                inputStream.close();
+                inputStream = new ZipHeaderPeekInputStream( jarFile.getInputStream( originalEntry ) );
+            }
 
-        jos.putNextEntry( entry );
 
-        IOUtil.copy( is, jos );
+            entry.setTime( originalEntry.getTime() );
 
-        resources.add( name );
+            jos.putNextEntry( entry );
+
+            IOUtil.copy( inputStream, jos );
+
+            resources.add( name );
+        }
+        finally
+        {
+            inputStream.close();
+        }
     }
 
     static class RelocatorRemapper
