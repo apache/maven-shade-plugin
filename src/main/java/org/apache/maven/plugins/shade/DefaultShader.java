@@ -20,15 +20,14 @@ package org.apache.maven.plugins.shade;
  */
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PushbackInputStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -160,58 +159,25 @@ public class DefaultShader
     /**
      * {@link InputStream} that can peek ahead at zip header bytes.
      */
-    private static class ZipHeaderPeekInputStream extends FilterInputStream
+    private static class ZipHeaderPeekInputStream extends PushbackInputStream
     {
 
         private static final byte[] ZIP_HEADER = new byte[] {0x50, 0x4b, 0x03, 0x04};
 
-        private final byte[] header;
+        private static final int HEADER_LEN = 4;
 
-        private ByteArrayInputStream headerStream;
-
-        protected ZipHeaderPeekInputStream( InputStream in ) throws IOException
+        protected ZipHeaderPeekInputStream( InputStream in )
         {
-            super( in );
-            this.header = new byte[4];
-            int len = in.read( this.header );
-            this.headerStream = new ByteArrayInputStream( this.header, 0, len );
+            super( in, HEADER_LEN );
         }
 
-        @Override
-        public int read() throws IOException
+        public boolean hasZipHeader() throws IOException
         {
-            int read = ( this.headerStream == null ? -1 : this.headerStream.read() );
-            if ( read != -1 )
-            {
-                this.headerStream = null;
-                return read;
-            }
-            return super.read();
+            final byte[] header = new byte[HEADER_LEN];
+            super.read( header, 0, HEADER_LEN );
+            super.unread( header );
+            return Arrays.equals( header, ZIP_HEADER );
         }
-
-        @Override
-        public int read( byte[] b ) throws IOException
-        {
-            return read( b, 0, b.length );
-        }
-
-        @Override
-        public int read( byte[] b, int off, int len ) throws IOException
-        {
-            int read = ( this.headerStream == null ? -1 : this.headerStream.read( b, off, len ) );
-            if ( read != -1 )
-            {
-                this.headerStream = null;
-                return read;
-            }
-            return super.read( b, off, len );
-        }
-
-        public boolean hasZipHeader()
-        {
-            return Arrays.equals( this.header, ZIP_HEADER );
-        }
-
     }
 
     /**
@@ -699,7 +665,7 @@ public class DefaultShader
         {
             final JarEntry entry = new JarEntry( name );
 
-            // Uncompressed entries should not be changed their compressed level, otherwise JVM can't load these nested jar
+            // We should not change compressed level of uncompressed entries, otherwise JVM can't load these nested jars
             if ( inputStream.hasZipHeader() && originalEntry.getMethod() == ZipEntry.STORED )
             {
                 new CrcAndSize( inputStream ).setupStoredEntry( entry );

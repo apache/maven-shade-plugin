@@ -20,6 +20,7 @@ package org.apache.maven.plugins.shade;
  */
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -33,7 +34,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
@@ -45,6 +49,8 @@ import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.codehaus.plexus.logging.AbstractLogger;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
+import org.codehaus.plexus.util.IOUtil;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.objectweb.asm.ClassReader;
@@ -260,6 +266,67 @@ public class DefaultShaderTest
           }, ClassReader.SKIP_CODE );
           assertEquals( "__StringUtils.java", source[0] );
         }
+    }
+
+    @Test
+    public void testShaderWithNestedJar() throws Exception
+    {
+        TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+        final String innerJarFileName = "inner.jar";
+
+        temporaryFolder.create();
+        File innerJar = temporaryFolder.newFile( innerJarFileName );
+        try ( JarOutputStream jos = new JarOutputStream( new FileOutputStream( innerJar ) ) )
+        {
+            jos.putNextEntry( new JarEntry( "foo.txt" ) );
+            jos.write( "c1".getBytes( StandardCharsets.UTF_8 ) );
+            jos.closeEntry();
+        }
+
+        File outerJar = temporaryFolder.newFile( "outer.jar" );
+        try ( JarOutputStream jos = new JarOutputStream( new FileOutputStream( outerJar ) ) )
+        {
+            FileInputStream innerStream = new FileInputStream( innerJar );
+            byte[] bytes = IOUtil.toByteArray( innerStream, 32 * 1024 );
+            innerStream.close();
+            writeEntryWithoutCompression( innerJarFileName, bytes, jos );
+        }
+
+
+        ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars( new LinkedHashSet<>( Collections.singleton( outerJar ) ) );
+        shadeRequest.setFilters( new ArrayList<Filter>() );
+        shadeRequest.setRelocators( new ArrayList<Relocator>() );
+        shadeRequest.setResourceTransformers( new ArrayList<ResourceTransformer>() );
+        File shadedFile = temporaryFolder.newFile( "shaded.jar" );
+        shadeRequest.setUberJar( shadedFile );
+
+        DefaultShader shader = newShader();
+        shader.shade( shadeRequest );
+
+        JarFile shadedJarFile = new JarFile( shadedFile );
+        JarEntry entry = shadedJarFile.getJarEntry( innerJarFileName );
+
+        //After shading, entry compression method should not be changed.
+        Assert.assertEquals( entry.getMethod(), ZipEntry.STORED );
+
+        temporaryFolder.delete();
+    }
+
+    private void writeEntryWithoutCompression( String entryName, byte[] entryBytes, JarOutputStream jos ) throws IOException
+    {
+        final JarEntry entry = new JarEntry( entryName );
+        final int size = entryBytes.length;
+        final CRC32 crc = new CRC32();
+        crc.update( entryBytes, 0, size );
+        entry.setSize( size );
+        entry.setCompressedSize( size );
+        entry.setMethod( ZipEntry.STORED );
+        entry.setCrc( crc.getValue() );
+        jos.putNextEntry( entry );
+        jos.write( entryBytes );
+        jos.closeEntry();
     }
 
     private void shaderWithPattern( String shadedPattern, File jar, String[] excludes )
