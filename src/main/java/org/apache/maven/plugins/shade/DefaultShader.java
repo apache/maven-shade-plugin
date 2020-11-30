@@ -21,7 +21,6 @@ package org.apache.maven.plugins.shade;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -189,14 +188,6 @@ public class DefaultShader
         private final CRC32 crc = new CRC32();
 
         private long size;
-
-        CrcAndSize( File file ) throws IOException
-        {
-            try ( FileInputStream inputStream = new FileInputStream( file ) )
-            {
-                load( inputStream );
-            }
-        }
 
         CrcAndSize( InputStream inputStream ) throws IOException
         {
