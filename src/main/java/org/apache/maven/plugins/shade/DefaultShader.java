@@ -101,10 +101,9 @@ public class DefaultShader
         // noinspection ResultOfMethodCallIgnored
         shadeRequest.getUberJar().getParentFile().mkdirs();
 
-        JarOutputStream out = null;
-        try
-        {
-            out = new JarOutputStream( new BufferedOutputStream( new FileOutputStream( shadeRequest.getUberJar() ) ) );
+        
+        try ( JarOutputStream out = new JarOutputStream( new BufferedOutputStream( new FileOutputStream( shadeRequest.getUberJar() ) ) ) )
+        {               
             goThroughAllJarEntriesForManifestTransformer( shadeRequest, resources, manifestTransformer, out );
 
             // CHECKSTYLE_OFF: MagicNumber
