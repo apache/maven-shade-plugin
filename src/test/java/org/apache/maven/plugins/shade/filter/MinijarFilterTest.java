@@ -35,7 +35,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.shared.utils.io.Java7Support;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -57,14 +56,13 @@ public class MinijarFilterTest
     }
 
     /**
-     * This test will fail on JDK 7 cause the used jdependency needs at least 
-     * JDK 8.
+     * This test will fail on JDK 7 because jdependency needs at least JDK 8.
      */
     @Test
     public void testWithMockProject()
         throws IOException
     {
-        assumeFalse( "Expected to run under JDK8+", Java7Support.isJava7() );
+        assumeFalse( "Expected to run under JDK8+", System.getProperty("java.version").startsWith("1.7") );
 
         ArgumentCaptor<CharSequence> logCaptor = ArgumentCaptor.forClass( CharSequence.class );
 
