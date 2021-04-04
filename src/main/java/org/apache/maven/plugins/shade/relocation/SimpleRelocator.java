@@ -114,15 +114,13 @@ public class SimpleRelocator
         if ( patterns != null && !patterns.isEmpty() )
         {
             normalized = new LinkedHashSet<>();
-
             for ( String pattern : patterns )
             {
-
                 String classPattern = pattern.replace( '.', '/' );
-
                 normalized.add( classPattern );
-
-                if ( classPattern.endsWith( "/*" ) )
+                // Actually, class patterns should just use 'foo.bar.*' ending with a single asterisk, but some users
+                // mistake them for path patterns like 'my/path/**', so let us be a bit more lenient here.
+                if ( classPattern.endsWith( "/*" ) || classPattern.endsWith( "/**" ) )
                 {
                     String packagePattern = classPattern.substring( 0, classPattern.lastIndexOf( '/' ) );
                     normalized.add( packagePattern );
