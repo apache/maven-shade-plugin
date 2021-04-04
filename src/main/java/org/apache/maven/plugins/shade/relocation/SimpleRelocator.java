@@ -47,6 +47,10 @@ public class SimpleRelocator
 
     private final Set<String> excludes;
 
+    private final Set<String> sourcePackageExcludes = new LinkedHashSet<>();
+
+    private final Set<String> sourcePathExcludes = new LinkedHashSet<>();
+
     private final boolean rawString;
 
     public SimpleRelocator( String patt, String shadedPattern, List<String> includes, List<String> excludes )
@@ -104,6 +108,24 @@ public class SimpleRelocator
         if ( excludes != null && !excludes.isEmpty() )
         {
             this.excludes.addAll( excludes );
+        }
+
+        if ( !rawString && this.excludes != null )
+        {
+            // Create exclude pattern sets for sources
+            for ( String exclude : this.excludes )
+            {
+                // Excludes should be subpackages of the global pattern
+                if ( exclude.startsWith( pattern ) )
+                {
+                    sourcePackageExcludes.add( exclude.substring( pattern.length() ).replaceFirst( "[.][*]$", "" ) );
+                }
+                // Excludes should be subpackages of the global pattern
+                else if ( exclude.startsWith( pathPattern ) )
+                {
+                    sourcePathExcludes.add( exclude.substring( pathPattern.length() ).replaceFirst( "[/][*]$", "" ) );
+                }
+            }
         }
     }
 
@@ -214,7 +236,39 @@ public class SimpleRelocator
         }
         else
         {
-            return sourceContent.replaceAll( "\\b" + pattern, shadedPattern );
+            sourceContent = shadeSourceWithExcludes( sourceContent, pattern, shadedPattern, sourcePackageExcludes );
+            return shadeSourceWithExcludes( sourceContent, pathPattern, shadedPathPattern, sourcePathExcludes );
         }
+    }
+
+    private String shadeSourceWithExcludes( String sourceContent, String patternFrom, String patternTo,
+                                            Set<String> excludedPatterns )
+    {
+        // Usually shading makes package names a bit longer, so make buffer 10% bigger than original source
+        StringBuilder shadedSourceContent = new StringBuilder( sourceContent.length() * 11 / 10 );
+        boolean isFirstSnippet = true;
+        // Make sure that search pattern starts at word boundary and we look for literal ".", not regex jokers
+        for ( String snippet : sourceContent.split( "\\b" + patternFrom.replace( ".", "[.]" ) ) )
+        {
+            boolean doExclude = false;
+            for ( String excludedPattern : excludedPatterns )
+            {
+                if ( snippet.startsWith( excludedPattern ) )
+                {
+                    doExclude = true;
+                    break;
+                }
+            }
+            if ( isFirstSnippet )
+            {
+                shadedSourceContent.append( snippet );
+                isFirstSnippet = false;
+        }
+            else
+            {
+                shadedSourceContent.append( doExclude ? patternFrom : patternTo ).append( snippet );
+            }
+        }
+        return shadedSourceContent.toString();
     }
 }

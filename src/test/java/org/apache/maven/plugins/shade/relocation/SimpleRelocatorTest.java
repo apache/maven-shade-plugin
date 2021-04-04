@@ -188,4 +188,71 @@ public class SimpleRelocatorTest
         assertTrue( relocator.canRelocatePath( "META-INF/maven/com-foo-bar/artifactId/pom.xml" ) );
 
     }
+
+    private static final String sourceFile =
+            "package org.apache.maven.hello;\n" +
+            "\n" +
+            "import foo.bar.Bar;\n" +
+            "import zot.baz.Baz;\n" +
+            "import org.apache.maven.exclude1.Ex1;\n" +
+            "import org.apache.maven.exclude1.a.b.Ex1AB;\n" +
+            "import org.apache.maven.sub.exclude2.Ex2;\n" +
+            "import org.apache.maven.sub.exclude2.c.d.Ex2CD;\n" +
+            "import org.apache.maven.In;\n" +
+            "import org.apache.maven.e.InE;\n" +
+            "import org.apache.maven.f.g.InFG;\n" +
+            "\n" +
+            "public class MyClass {\n" +
+            "  private org.apache.maven.exclude1.x.X myX;\n" +
+            "  private org.apache.maven.h.H;\n" +
+            "\n" +
+            "  public void doSomething() {\n" +
+            "    String noRelocation = \"NoWordBoundaryXXXorg.apache.maven.In\";\n" +
+            "    String relocationPackage = \"org.apache.maven.In\";\n" +
+            "    String relocationPath = \"org/apache/maven/In\";\n" +
+            "  }\n" +
+            "}\n";
+
+    private static final String relocatedFile =
+            "package com.acme.maven.hello;\n" +
+            "\n" +
+            "import foo.bar.Bar;\n" +
+            "import zot.baz.Baz;\n" +
+            "import org.apache.maven.exclude1.Ex1;\n" +
+            "import org.apache.maven.exclude1.a.b.Ex1AB;\n" +
+            "import org.apache.maven.sub.exclude2.Ex2;\n" +
+            "import org.apache.maven.sub.exclude2.c.d.Ex2CD;\n" +
+            "import com.acme.maven.In;\n" +
+            "import com.acme.maven.e.InE;\n" +
+            "import com.acme.maven.f.g.InFG;\n" +
+            "\n" +
+            "public class MyClass {\n" +
+            "  private org.apache.maven.exclude1.x.X myX;\n" +
+            "  private com.acme.maven.h.H;\n" +
+            "\n" +
+            "  public void doSomething() {\n" +
+            "    String noRelocation = \"NoWordBoundaryXXXorg.apache.maven.In\";\n" +
+            "    String relocationPackage = \"com.acme.maven.In\";\n" +
+            "    String relocationPath = \"com/acme/maven/In\";\n" +
+            "  }\n" +
+            "}\n";
+
+    @Test
+    public void testRelocateSourceWithExcludesRaw()
+    {
+        SimpleRelocator relocator = new SimpleRelocator( "org.apache.maven", "com.acme.maven",
+                Arrays.asList( "foo.bar", "zot.baz" ),
+                Arrays.asList( "irrelevant.exclude", "org.apache.maven.exclude1", "org.apache.maven.sub.exclude2" ),
+                true );
+        assertEquals( sourceFile,  relocator.applyToSourceContent( sourceFile ) );
+    }
+
+    @Test
+    public void testRelocateSourceWithExcludes()
+    {
+        SimpleRelocator relocator = new SimpleRelocator( "org.apache.maven", "com.acme.maven",
+                Arrays.asList( "foo.bar", "zot.baz" ),
+                Arrays.asList( "irrelevant.exclude", "org.apache.maven.exclude1", "org.apache.maven.sub.exclude2" ) );
+        assertEquals( relocatedFile,  relocator.applyToSourceContent( sourceFile ) );
+    }
 }
