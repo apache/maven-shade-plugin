@@ -54,9 +54,7 @@ public final class RelativizePath
         List<String> relativeToDirectories = RelativizePath.parentDirs( relativeTo );
     
         //Get the shortest of the two paths
-        int length =
-            thingDirectories.size() < relativeToDirectories.size() ? thingDirectories.size()
-                            : relativeToDirectories.size();
+        int length = Math.min( thingDirectories.size(), relativeToDirectories.size() );
     
         int lastCommonRoot = -1; // index of the lowest directory down from the root that the two have in common.
         int index;

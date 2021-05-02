@@ -100,10 +100,9 @@ public class DefaultShader
         // noinspection ResultOfMethodCallIgnored
         shadeRequest.getUberJar().getParentFile().mkdirs();
 
-        JarOutputStream out = null;
-        try
+        try ( JarOutputStream out  =
+                  new JarOutputStream( new BufferedOutputStream( new FileOutputStream( shadeRequest.getUberJar() ) ) ) )
         {
-            out = new JarOutputStream( new BufferedOutputStream( new FileOutputStream( shadeRequest.getUberJar() ) ) );
             goThroughAllJarEntriesForManifestTransformer( shadeRequest, resources, manifestTransformer, out );
 
             // CHECKSTYLE_OFF: MagicNumber
@@ -140,13 +139,6 @@ public class DefaultShader
                     transformer.modifyOutputStream( out );
                 }
             }
-
-            out.close();
-            out = null;
-        }
-        finally
-        {
-            IOUtil.close( out );
         }
 
         for ( Filter filter : shadeRequest.getFilters() )

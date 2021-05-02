@@ -1321,7 +1321,7 @@ public class ShadeMojo
     private List<ResourceTransformer> toResourceTransformers(
             String shade, List<ResourceTransformer> resourceTransformers )
     {
-         List<ResourceTransformer> forShade = new ArrayList<ResourceTransformer>();
+         List<ResourceTransformer> forShade = new ArrayList<>();
          ManifestResourceTransformer lastMt = null;
          for ( ResourceTransformer transformer : resourceTransformers )
          {

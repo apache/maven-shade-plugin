@@ -58,12 +58,7 @@ public class ResourceBundleAppendingTransformer
 
     public boolean canTransformResource( String r )
     {
-        if ( resourceBundlePattern != null && resourceBundlePattern.matcher( r ).matches() )
-        {
-            return true;
-        }
-
-        return false;
+        return resourceBundlePattern != null && resourceBundlePattern.matcher( r ).matches();
     }
 
     public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )

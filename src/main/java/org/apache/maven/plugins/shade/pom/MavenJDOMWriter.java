@@ -1092,9 +1092,8 @@ public class MavenJDOMWriter
             Collection<Xpp3Dom> domChilds = new ArrayList<>();
             Collections.addAll( domChilds, childs );
             // int domIndex = 0;
-            for ( Object o : parent.getChildren() )
+            for ( Element elem : parent.getChildren() )
             {
-                Element elem = (Element) o;
                 Xpp3Dom corrDom = null;
                 for ( Xpp3Dom dm : domChilds )
                 {
@@ -1115,9 +1114,8 @@ public class MavenJDOMWriter
                     parent.removeContent( elem );
                 }
             }
-            for ( Object domChild : domChilds )
+            for ( Xpp3Dom dm : domChilds )
             {
-                Xpp3Dom dm = (Xpp3Dom) domChild;
                 Element elem = factory.element( dm.getName(), parent.getNamespace() );
                 insertAtPreferredLocation( parent, elem, counter );
                 counter.increaseCount();

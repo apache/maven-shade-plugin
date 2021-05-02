@@ -106,12 +106,7 @@ class ArtifactId
         {
             return false;
         }
-        if ( !match( getClassifier(), pattern.getClassifier() ) )
-        {
-            return false;
-        }
-
-        return true;
+        return match( getClassifier(), pattern.getClassifier() );
     }
 
     private boolean match( String str, String pattern )

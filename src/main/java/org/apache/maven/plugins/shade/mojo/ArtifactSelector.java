@@ -73,7 +73,7 @@ class ArtifactSelector
 
     public boolean isSelected( Artifact artifact )
     {
-        return ( artifact != null ) ? isSelected( new ArtifactId( artifact ) ) : false;
+        return artifact != null && isSelected( new ArtifactId( artifact ) );
     }
 
     boolean isSelected( ArtifactId id )

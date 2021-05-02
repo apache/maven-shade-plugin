@@ -82,12 +82,7 @@ public class ManifestResourceTransformer
     @Override
     public boolean canTransformResource( String resource )
     {
-        if ( JarFile.MANIFEST_NAME.equalsIgnoreCase( resource ) )
-        {
-            return true;
-        }
-
-        return false;
+        return JarFile.MANIFEST_NAME.equalsIgnoreCase( resource );
     }
 
     @Override

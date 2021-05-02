@@ -43,12 +43,7 @@ public class AppendingTransformer
 
     public boolean canTransformResource( String r )
     {
-        if ( resource != null && resource.equalsIgnoreCase( r ) )
-        {
-            return true;
-        }
-
-        return false;
+        return resource != null && resource.equalsIgnoreCase( r );
     }
 
     public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
