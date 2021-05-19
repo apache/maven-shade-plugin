@@ -19,14 +19,13 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Scanner;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -48,8 +47,6 @@ public class SisuIndexResourceTransformer
 
     private ServiceStream serviceStream;
 
-    private List<Relocator> relocators;
-
     private long time = Long.MIN_VALUE;
 
     @Override
@@ -70,12 +67,10 @@ public class SisuIndexResourceTransformer
         }
 
         final String content = IOUtils.toString( is, StandardCharsets.UTF_8 );
-        StringReader reader = new StringReader( content );
-        BufferedReader lineReader = new BufferedReader( reader );
-        String line;
-        while ( ( line = lineReader.readLine() ) != null )
+        Scanner scanner = new Scanner( content );
+        while ( scanner.hasNextLine() )
         {
-            String relContent = line;
+            String relContent = scanner.nextLine();
             for ( Relocator relocator : relocators )
             {
                 if ( relocator.canRelocateClass( relContent ) )
@@ -83,12 +78,8 @@ public class SisuIndexResourceTransformer
                     relContent = relocator.applyToSourceContent( relContent );
                 }
             }
-            serviceStream.append( relContent + NEWLINE );
-        }
-
-        if ( this.relocators == null )
-        {
-            this.relocators = relocators;
+            serviceStream.append( relContent );
+            serviceStream.append( NEWLINE );
         }
 
         if ( time > this.time )
@@ -129,7 +120,6 @@ public class SisuIndexResourceTransformer
         {
             byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
             this.write( contentBytes );
-            this.write( NEWLINE.getBytes( StandardCharsets.UTF_8 ) );
         }
 
         public InputStream toInputStream()
