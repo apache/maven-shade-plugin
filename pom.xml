@@ -220,6 +220,7 @@
               <exclude>src/it/projects/rerun-with-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
               <exclude>src/it/projects/rerun-without-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
               <exclude>src/it/projects/MSHADE-182/src/main/resources/META-INF/services/relocateme.Service</exclude>
+              <exclude>src/it/projects/MSHADE-390-sisu-index/**</exclude>
             </excludes>
          </configuration>
         </plugin>
