@@ -53,6 +53,8 @@ import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.transfer.artifact.ArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResult;
+import org.codehaus.plexus.ContainerConfiguration;
+import org.codehaus.plexus.PlexusConstants;
 import org.codehaus.plexus.PlexusTestCase;
 
 /**
@@ -62,6 +64,11 @@ import org.codehaus.plexus.PlexusTestCase;
 public class ShadeMojoTest
     extends PlexusTestCase
 {
+    @Override
+    protected void customizeContainerConfiguration(final ContainerConfiguration configuration) {
+        configuration.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
+    }
+
     public void testManifestTransformerSelection() throws Exception
     {
         final ShadeMojo mojo = new ShadeMojo();
@@ -126,7 +133,7 @@ public class ShadeMojoTest
     {
         File jarFile = new File( getBasedir(), "target/unit/foo-bar.jar" );
 
-        Shader s = (Shader) lookup( Shader.ROLE, "default" );
+        Shader s = lookup( Shader.class );
 
         Set<File> set = new LinkedHashSet<>();
         set.add( new File( getBasedir(), "src/test/jars/test-artifact-1.0-SNAPSHOT.jar" ) );
@@ -224,7 +231,7 @@ public class ShadeMojoTest
 
         // create and configure MavenProject
         MavenProject project = new MavenProject();
-        ArtifactHandler artifactHandler = (ArtifactHandler) lookup( ArtifactHandler.ROLE );
+        ArtifactHandler artifactHandler = lookup( ArtifactHandler.class );
         Artifact artifact = new DefaultArtifact( "org.apache.myfaces.core", "myfaces-impl",
                                                  VersionRange.createFromVersion( "2.0.1-SNAPSHOT" ), "compile", "jar",
                                                  null, artifactHandler );
@@ -266,7 +273,7 @@ public class ShadeMojoTest
     public void shaderWithPattern( String shadedPattern, File jar )
         throws Exception
     {
-        Shader s = (Shader) lookup( Shader.ROLE );
+        Shader s = lookup( Shader.class );
 
         Set<File> set = new LinkedHashSet<>();
 

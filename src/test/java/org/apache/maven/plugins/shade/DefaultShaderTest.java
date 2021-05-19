@@ -46,9 +46,6 @@ import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.AppendingTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
-import org.codehaus.plexus.logging.AbstractLogger;
-import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,6 +53,7 @@ import org.junit.rules.TemporaryFolder;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.helpers.MarkerIgnoringBase;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -71,9 +69,8 @@ public class DefaultShaderTest
 
     @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
-        final DefaultShader shader = new DefaultShader();
         final MockLogger logs = new MockLogger();
-        shader.enableLogging(logs);
+        final DefaultShader shader = new DefaultShader( logs );
 
         // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
         // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
@@ -133,14 +130,12 @@ public class DefaultShaderTest
         shadeRequest.setFilters( Collections.<Filter>emptyList() );
         shadeRequest.setUberJar( new File( "target/foo-custom_testOverlappingResourcesAreLogged.jar" ) );
 
-        DefaultShader shaderWithTransformer = new DefaultShader();
         final MockLogger logWithTransformer = new MockLogger();
-        shaderWithTransformer.enableLogging( logWithTransformer );
+        DefaultShader shaderWithTransformer = new DefaultShader( logWithTransformer );
         shaderWithTransformer.shade( shadeRequest );
 
-        DefaultShader shaderWithoutTransformer = new DefaultShader();
         MockLogger logWithoutTransformer = new MockLogger();
-        shaderWithoutTransformer.enableLogging( logWithoutTransformer );
+        DefaultShader shaderWithoutTransformer = new DefaultShader( logWithoutTransformer );
         shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>emptyList() );
         shaderWithoutTransformer.shade( shadeRequest );
 
@@ -364,55 +359,162 @@ public class DefaultShaderTest
     {
         DefaultShader s = new DefaultShader();
 
-        s.enableLogging( new ConsoleLogger( Logger.LEVEL_INFO, "TEST" ) );
-
         return s;
     }
 
-    private static class MockLogger extends AbstractLogger
+    private static class MockLogger extends MarkerIgnoringBase
     {
         private final List<String> debugMessages = new ArrayList<>();
         private final List<String> warnMessages = new ArrayList<>();
 
-        private MockLogger()
-        {
-            super( Logger.LEVEL_INFO, "test" );
+        @Override
+        public void debug(String s, Throwable throwable) {
+            throw new IllegalStateException("should not be called");
         }
 
         @Override
-        public void debug( String s, Throwable throwable )
-        {
-            debugMessages.add( s.replace( '\\', '/' ).trim() );
+        public void warn(String s, Throwable throwable) {
+            throw new IllegalStateException("should not be called");
         }
 
         @Override
-        public void info( String s, Throwable throwable )
-        {
-            // no-op
+        public boolean isTraceEnabled() {
+            return false;
         }
 
         @Override
-        public void warn( String s, Throwable throwable )
-        {
-            warnMessages.add( s.replace( '\\', '/' ).trim() );
+        public void trace(final String s) {
+            throw new IllegalStateException("should not be called");
         }
 
         @Override
-        public void error( String s, Throwable throwable )
-        {
-            // no-op
+        public void trace(final String s, final Object o) {
+            throw new IllegalStateException("should not be called");
         }
 
         @Override
-        public void fatalError( String s, Throwable throwable )
-        {
-            // no-op
+        public void trace(final String s, final Object o, final Object o1) {
+            throw new IllegalStateException("should not be called");
         }
 
         @Override
-        public Logger getChildLogger( String s )
-        {
-            return this;
+        public void trace(final String s, final Object... objects) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void trace(final String s, final Throwable throwable) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public boolean isDebugEnabled() {
+            return true;
+        }
+
+        @Override
+        public void debug(final String s) {
+            debugMessages.add(s.replace('\\', '/').trim());
+        }
+
+        @Override
+        public void debug(final String s, final Object o) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void debug(final String s, final Object o, final Object o1) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void debug(final String s, final Object... objects) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public boolean isInfoEnabled() {
+            return false;
+        }
+
+        @Override
+        public void info(final String s) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void info(final String s, final Object o) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void info(final String s, final Object o, final Object o1) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void info(final String s, final Object... objects) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void info(final String s, final Throwable throwable) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public boolean isWarnEnabled() {
+            return true;
+        }
+
+        @Override
+        public void warn(final String s) {
+            warnMessages.add(s.replace('\\', '/').trim());
+        }
+
+        @Override
+        public void warn(final String s, final Object o) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void warn(final String s, final Object... objects) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void warn(final String s, final Object o, final Object o1) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public boolean isErrorEnabled() {
+            return false;
+        }
+
+        @Override
+        public void error(final String s) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void error(final String s, final Object o) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void error(final String s, final Object o, final Object o1) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void error(final String s, final Object... objects) {
+            throw new IllegalStateException("should not be called");
+        }
+
+        @Override
+        public void error(final String s, final Throwable throwable) {
+            throw new IllegalStateException("should not be called");
         }
     }
 }

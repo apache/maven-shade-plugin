@@ -65,8 +65,9 @@
   </distributionManagement>
 
   <properties>
-    <mavenVersion>3.0</mavenVersion>
+    <mavenVersion>3.1.1</mavenVersion>
     <javaVersion>7</javaVersion>
+    <sisu.version>0.3.4</sisu.version>
     <currentVersion>${project.version}</currentVersion>
     <asmVersion>9.1</asmVersion>
     <project.build.outputTimestamp>2020-05-23T15:29:40Z</project.build.outputTimestamp>
@@ -96,16 +97,39 @@
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
       <version>${mavenVersion}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.eclipse.sisu</groupId>
+          <artifactId>org.eclipse.sisu.plexus</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-model</artifactId>
       <version>${mavenVersion}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-core</artifactId>
       <version>${mavenVersion}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.sonatype.sisu</groupId>
+          <artifactId>sisu-inject-plexus</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.sisu</groupId>
+          <artifactId>org.eclipse.sisu.plexus</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-component-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
@@ -125,12 +149,60 @@
       <version>3.3.0</version>
     </dependency>
 
+    <!-- DI -->
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <version>1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.sisu</groupId>
+      <artifactId>org.eclipse.sisu.inject</artifactId>
+      <version>${sisu.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- Used by: TransformerTesterRule only -->
+    <dependency>
+      <groupId>org.eclipse.sisu</groupId>
+      <artifactId>org.eclipse.sisu.plexus</artifactId>
+      <version>${sisu.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Make sure this goes to test only -->
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-component-annotations</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.sisu</groupId>
+      <artifactId>sisu-guice</artifactId>
+      <version>3.2.6</version>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.maven.shared</groupId>
       <artifactId>maven-artifact-transfer</artifactId>
       <version>0.13.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.sonatype.sisu</groupId>
+          <artifactId>sisu-inject-plexus</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-component-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+
     <!-- Others -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.25</version>
+    </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm</artifactId>
@@ -151,6 +223,12 @@
       <groupId>org.apache.maven.shared</groupId>
       <artifactId>maven-dependency-tree</artifactId>
       <version>3.0.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.codehaus.plexus</groupId>
+          <artifactId>plexus-component-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -163,37 +241,35 @@
       <version>2.6.0</version>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-component-annotations</artifactId>
-      <scope>provided</scope>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.8.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>4.2</version>
     </dependency>
 
+    <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.25</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.xmlunit</groupId>
       <artifactId>xmlunit-legacy</artifactId>
       <version>2.7.0</version>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>30.0-android</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.8.1</version>
-    </dependency>
-
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -244,21 +320,33 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <forceJavacCompilerUse>true</forceJavacCompilerUse>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.eclipse.sisu</groupId>
+          <artifactId>sisu-maven-plugin</artifactId>
+          <version>${sisu.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>main-index</goal>
+                <goal>test-index</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
     <plugins>
       <plugin>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-component-metadata</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate-metadata</goal>
-              <goal>generate-test-metadata</goal>
-            </goals>
-          </execution>
-        </executions>
+        <groupId>org.eclipse.sisu</groupId>
+        <artifactId>sisu-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

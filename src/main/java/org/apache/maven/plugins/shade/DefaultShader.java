@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -48,6 +49,11 @@ import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
@@ -55,27 +61,36 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ReproducibleResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.logging.AbstractLogEnabled;
 import org.codehaus.plexus.util.IOUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Jason van Zyl
  */
-@Component( role = Shader.class, hint = "default" )
+@Singleton
+@Named
 public class DefaultShader
-    extends AbstractLogEnabled
     implements Shader
 {
     private static final int BUFFER_SIZE = 32 * 1024;
+
+    private final Logger logger;
+
+    public DefaultShader()
+    {
+        this( LoggerFactory.getLogger( DefaultShader.class ) );
+    }
+
+    public DefaultShader( final Logger logger )
+    {
+        this.logger = Objects.requireNonNull( logger );
+    }
 
     public void shade( ShadeRequest shadeRequest )
         throws IOException, MojoExecutionException
@@ -106,13 +121,13 @@ public class DefaultShader
             goThroughAllJarEntriesForManifestTransformer( shadeRequest, resources, manifestTransformer, out );
 
             // CHECKSTYLE_OFF: MagicNumber
-            Multimap<String, File> duplicates = HashMultimap.create( 10000, 3 );
+            MultiValuedMap<String, File> duplicates = new HashSetValuedHashMap<>( 10000, 3 );
             // CHECKSTYLE_ON: MagicNumber
 
             shadeJars( shadeRequest, resources, transformers, remapper, out, duplicates );
 
             // CHECKSTYLE_OFF: MagicNumber
-            Multimap<Collection<File>, String> overlapping = HashMultimap.create( 20, 15 );
+            MultiValuedMap<Collection<File>, String> overlapping = new HashSetValuedHashMap<>( 20, 15 );
             // CHECKSTYLE_ON: MagicNumber
 
             for ( String clazz : duplicates.keySet() )
@@ -207,13 +222,13 @@ public class DefaultShader
     }
 
     private void shadeJars( ShadeRequest shadeRequest, Set<String> resources, List<ResourceTransformer> transformers,
-                            RelocatorRemapper remapper, JarOutputStream jos, Multimap<String, File> duplicates )
+                            RelocatorRemapper remapper, JarOutputStream jos, MultiValuedMap<String, File> duplicates )
         throws IOException, MojoExecutionException
     {
         for ( File jar : shadeRequest.getJars() )
         {
 
-            getLogger().debug( "Processing JAR " + jar );
+            logger.debug( "Processing JAR " + jar );
 
             List<Filter> jarFilters = getFilters( jar, shadeRequest.getFilters() );
 
@@ -242,7 +257,7 @@ public class DefaultShader
 
                     if ( "module-info.class".equals( name ) )
                     {
-                        getLogger().warn( "Discovered module-info.class. "
+                        logger.warn( "Discovered module-info.class. "
                             + "Shading will break its strong encapsulation." );
                         continue;
                     }
@@ -265,8 +280,8 @@ public class DefaultShader
 
     private void shadeSingleJar( ShadeRequest shadeRequest, Set<String> resources,
                                  List<ResourceTransformer> transformers, RelocatorRemapper remapper,
-                                 JarOutputStream jos, Multimap<String, File> duplicates, File jar, JarFile jarFile,
-                                 JarEntry entry, String name )
+                                 JarOutputStream jos, MultiValuedMap<String, File> duplicates, File jar,
+                                 JarFile jarFile, JarEntry entry, String name )
         throws IOException, MojoExecutionException
     {
         try ( InputStream in = jarFile.getInputStream( entry ) )
@@ -307,7 +322,7 @@ public class DefaultShader
                     // Avoid duplicates that aren't accounted for by the resource transformers
                     if ( resources.contains( mappedName ) )
                     {
-                        getLogger().debug( "We have a duplicate " + name + " in " + jar );
+                        logger.debug( "We have a duplicate " + name + " in " + jar );
                         return;
                     }
 
@@ -315,7 +330,7 @@ public class DefaultShader
                 }
                 else
                 {
-                    duplicates.remove( name, jar );
+                    duplicates.removeMapping( name, jar );
                 }
             }
         }
@@ -358,16 +373,16 @@ public class DefaultShader
 
     private void showOverlappingWarning()
     {
-        getLogger().warn( "maven-shade-plugin has detected that some class files are" );
-        getLogger().warn( "present in two or more JARs. When this happens, only one" );
-        getLogger().warn( "single version of the class is copied to the uber jar." );
-        getLogger().warn( "Usually this is not harmful and you can skip these warnings," );
-        getLogger().warn( "otherwise try to manually exclude artifacts based on" );
-        getLogger().warn( "mvn dependency:tree -Ddetail=true and the above output." );
-        getLogger().warn( "See http://maven.apache.org/plugins/maven-shade-plugin/" );
+        logger.warn( "maven-shade-plugin has detected that some class files are" );
+        logger.warn( "present in two or more JARs. When this happens, only one" );
+        logger.warn( "single version of the class is copied to the uber jar." );
+        logger.warn( "Usually this is not harmful and you can skip these warnings," );
+        logger.warn( "otherwise try to manually exclude artifacts based on" );
+        logger.warn( "mvn dependency:tree -Ddetail=true and the above output." );
+        logger.warn( "See http://maven.apache.org/plugins/maven-shade-plugin/" );
     }
 
-    private void logSummaryOfDuplicates( Multimap<Collection<File>, String> overlapping )
+    private void logSummaryOfDuplicates( MultiValuedMap<Collection<File>, String> overlapping )
     {
         for ( Collection<File> jarz : overlapping.keySet() )
         {
@@ -424,7 +439,7 @@ public class DefaultShader
             all.addAll( classes );
             all.addAll( resources );
 
-            getLogger().warn(
+            logger.warn(
                 StringUtils.join( jarzS, ", " ) + " define " + all.size()
                 + " overlapping " + StringUtils.join( overlaps, " and " ) + ": " );
             //CHECKSTYLE_ON: LineLength
@@ -435,12 +450,12 @@ public class DefaultShader
 
             for ( int i = 0; i < Math.min( max, all.size() ); i++ )
             {
-                getLogger().warn( "  - " + all.get( i ) );
+                logger.warn( "  - " + all.get( i ) );
             }
 
             if ( all.size() > max )
             {
-                getLogger().warn( "  - " + ( all.size() - max ) + " more..." );
+                logger.warn( "  - " + ( all.size() - max ) + " more..." );
             }
 
         }
@@ -512,7 +527,7 @@ public class DefaultShader
             }
             catch ( ZipException e )
             {
-                getLogger().debug( "We have a duplicate " + name + " in " + jar );
+                logger.debug( "We have a duplicate " + name + " in " + jar );
             }
 
             return;
@@ -572,7 +587,7 @@ public class DefaultShader
         }
         catch ( ZipException e )
         {
-            getLogger().debug( "We have a duplicate " + mappedName + " in " + jar );
+            logger.debug( "We have a duplicate " + mappedName + " in " + jar );
         }
     }
 
@@ -599,7 +614,7 @@ public class DefaultShader
         {
             if ( transformer.canTransformResource( name ) )
             {
-                getLogger().debug( "Transforming " + name + " using " + transformer.getClass().getName() );
+                logger.debug( "Transforming " + name + " using " + transformer.getClass().getName() );
 
                 if ( transformer instanceof ReproducibleResourceTransformer )
                 {
