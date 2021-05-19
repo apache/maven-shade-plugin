@@ -114,23 +114,22 @@ public class SisuIndexResourceTransformer
         jarEntry.setTime( time );
         jos.putNextEntry( jarEntry );
 
-
-        // read the content of service file for candidate classes for relocation.
-        // Specification requires that this file is encoded in UTF-8.
-        Writer writer = new OutputStreamWriter( jos, StandardCharsets.UTF_8 );
-        InputStreamReader streamReader = new InputStreamReader( data.toInputStream() );
-        BufferedReader reader = new BufferedReader( streamReader );
-        String className;
-
-        while ( ( className = reader.readLine() ) != null )
+        // read the content of Sisu index file for candidate classes for relocation.
+        try ( Writer writer = new OutputStreamWriter( jos, StandardCharsets.UTF_8 ) )
         {
-            writer.write( className );
-            writer.write( System.lineSeparator() );
-            writer.flush();
-        }
+            InputStreamReader streamReader = new InputStreamReader( data.toInputStream(), StandardCharsets.UTF_8 );
+            try ( BufferedReader reader = new BufferedReader( streamReader ) )
+            {
+                String className;
 
-        reader.close();
-        data.reset();
+                while ( ( className = reader.readLine() ) != null )
+                {
+                    writer.write( className );
+                    writer.write( System.lineSeparator() );
+                    writer.flush();
+                }
+            }
+        }
    }
 
     static class ServiceStream
