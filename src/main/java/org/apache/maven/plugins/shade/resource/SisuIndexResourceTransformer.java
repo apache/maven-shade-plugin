@@ -33,7 +33,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 
 /**
- * Resources transformer that relocates classes in {@code META-INF/sisu/javax.inject.Named} and appends resources
+ * Resource transformer that relocates classes in {@code META-INF/sisu/javax.inject.Named} and appends resources
  * into a single resource.
  *
  * @since 3.3.0
