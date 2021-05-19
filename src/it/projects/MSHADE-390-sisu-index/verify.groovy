@@ -20,5 +20,5 @@
 def jarFile = new java.util.jar.JarFile(new File(basedir, "two/target/two-1.0-SNAPSHOT.jar"))
 def jarEntry = jarFile.getJarEntry("META-INF/sisu/javax.inject.Named")
 def merged = jarFile.getInputStream(jarEntry).getText()
-assert merged.contains( 'org.apache.one.One' )
+assert merged.contains( 'org.apache.two.org.apache.one.One' )
 assert merged.contains( 'org.apache.two.Two' )
