@@ -167,10 +167,6 @@
           <groupId>org.sonatype.sisu</groupId>
           <artifactId>sisu-inject-plexus</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>org.codehaus.plexus</groupId>
-          <artifactId>plexus-component-annotations</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
 
@@ -200,12 +196,6 @@
       <groupId>org.apache.maven.shared</groupId>
       <artifactId>maven-dependency-tree</artifactId>
       <version>3.0.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.codehaus.plexus</groupId>
-          <artifactId>plexus-component-annotations</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -233,6 +223,11 @@
     <dependency>
       <groupId>org.eclipse.sisu</groupId>
       <artifactId>org.eclipse.sisu.plexus</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-component-annotations</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
