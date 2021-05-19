@@ -47,6 +47,8 @@ public class SisuIndexResourceTransformer
 {
     private static final String SISU_INDEX_PATH = "META-INF/sisu/javax.inject.Named";
 
+    private static final String NEWLINE = "\n";
+
     private ServiceStream serviceStream;
 
     private List<Relocator> relocators;
@@ -84,7 +86,7 @@ public class SisuIndexResourceTransformer
                     relContent = relocator.applyToSourceContent( relContent );
                 }
             }
-            serviceStream.append( relContent + "\n" );
+            serviceStream.append( relContent + NEWLINE );
         }
 
         if ( this.relocators == null )
@@ -125,10 +127,10 @@ public class SisuIndexResourceTransformer
                 while ( ( className = reader.readLine() ) != null )
                 {
                     writer.write( className );
-                    writer.write( System.lineSeparator() );
-                    writer.flush();
+                    writer.write( NEWLINE );
                 }
             }
+            writer.flush();
         }
    }
 
@@ -146,7 +148,7 @@ public class SisuIndexResourceTransformer
         {
             if ( count > 0 && buf[count - 1] != '\n' && buf[count - 1] != '\r' )
             {
-                write( '\n' );
+                write( NEWLINE.getBytes( StandardCharsets.UTF_8 ) );
             }
 
             byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
