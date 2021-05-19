@@ -112,6 +112,7 @@ public class SisuIndexResourceTransformer
         jos.putNextEntry( jarEntry );
         IOUtils.copy( serviceStream.toInputStream(), jos );
         jos.flush();
+        serviceStream.reset();
    }
 
     static class ServiceStream
