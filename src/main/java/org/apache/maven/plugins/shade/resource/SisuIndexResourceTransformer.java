@@ -24,10 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -110,28 +107,11 @@ public class SisuIndexResourceTransformer
     public void modifyOutputStream( final JarOutputStream jos )
         throws IOException
     {
-        ServiceStream data = serviceStream;
-
         JarEntry jarEntry = new JarEntry( SISU_INDEX_PATH );
         jarEntry.setTime( time );
         jos.putNextEntry( jarEntry );
-
-        // read the content of Sisu index file for candidate classes for relocation.
-        try ( Writer writer = new OutputStreamWriter( jos, StandardCharsets.UTF_8 ) )
-        {
-            InputStreamReader streamReader = new InputStreamReader( data.toInputStream(), StandardCharsets.UTF_8 );
-            try ( BufferedReader reader = new BufferedReader( streamReader ) )
-            {
-                String className;
-
-                while ( ( className = reader.readLine() ) != null )
-                {
-                    writer.write( className );
-                    writer.write( NEWLINE );
-                }
-            }
-            writer.flush();
-        }
+        IOUtils.copy( serviceStream.toInputStream(), jos );
+        jos.flush();
    }
 
     static class ServiceStream
@@ -146,13 +126,9 @@ public class SisuIndexResourceTransformer
         public void append( String content )
             throws IOException
         {
-            if ( count > 0 && buf[count - 1] != '\n' && buf[count - 1] != '\r' )
-            {
-                write( NEWLINE.getBytes( StandardCharsets.UTF_8 ) );
-            }
-
             byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
             this.write( contentBytes );
+            this.write( NEWLINE.getBytes( StandardCharsets.UTF_8 ) );
         }
 
         public InputStream toInputStream()
