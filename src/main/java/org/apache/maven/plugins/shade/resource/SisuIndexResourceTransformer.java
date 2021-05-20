@@ -42,8 +42,6 @@ public class SisuIndexResourceTransformer
 {
     private static final String SISU_INDEX_PATH = "META-INF/sisu/javax.inject.Named";
 
-    private static final String NEWLINE = "\n";
-
     private final ArrayList<String> indexEntries = new ArrayList<>();
 
     private long time = Long.MIN_VALUE;
@@ -93,7 +91,7 @@ public class SisuIndexResourceTransformer
         JarEntry jarEntry = new JarEntry( SISU_INDEX_PATH );
         jarEntry.setTime( time );
         jos.putNextEntry( jarEntry );
-        IOUtils.writeLines( indexEntries, NEWLINE, jos, StandardCharsets.UTF_8 );
+        IOUtils.writeLines( indexEntries, "\n", jos, StandardCharsets.UTF_8 );
         jos.flush();
         indexEntries.clear();
    }
