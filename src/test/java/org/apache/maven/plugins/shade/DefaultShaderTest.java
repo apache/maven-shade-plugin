@@ -50,13 +50,21 @@ import org.codehaus.plexus.util.IOUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
-import org.slf4j.helpers.MarkerIgnoringBase;
+import org.slf4j.Logger;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jason van Zyl
@@ -69,8 +77,7 @@ public class DefaultShaderTest
 
     @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
-        final MockLogger logs = new MockLogger();
-        final DefaultShader shader = new DefaultShader( logs );
+        final DefaultShader shader = newShader();
 
         // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
         // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
@@ -86,65 +93,64 @@ public class DefaultShaderTest
         shadeRequest.setUberJar( new File( "target/foo-custom_testOverlappingResourcesAreLogged.jar" ) );
         shader.shade( shadeRequest );
 
-        final String failureWarnMessage = logs.warnMessages.toString();
-        assertTrue( failureWarnMessage, logs.warnMessages.contains(
-                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:") );
-        assertTrue( failureWarnMessage, logs.warnMessages.contains("- META-INF/MANIFEST.MF") );
-
-        final String failureDebugMessage = logs.debugMessages.toString();
-        assertTrue( failureDebugMessage, logs.debugMessages.contains(
-                "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar" ) );
+        assertThat(warnMessages.getAllValues(),
+            hasItem(containsString("plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:")));
+        assertThat(warnMessages.getAllValues(),
+            hasItem(containsString("- META-INF/MANIFEST.MF")));
+        assertThat(debugMessages.getAllValues(),
+            hasItem(containsString("We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar")));
     }
 
     @Test
     public void testOverlappingResourcesAreLoggedExceptATransformerHandlesIt() throws Exception {
         TemporaryFolder temporaryFolder = new TemporaryFolder();
-        Set<File> set = new LinkedHashSet<>();
-        temporaryFolder.create();
-        File j1 = temporaryFolder.newFile("j1.jar");
-        try ( JarOutputStream jos = new JarOutputStream(new FileOutputStream( j1 ) ) )
-        {
-            jos.putNextEntry(new JarEntry( "foo.txt" ));
-            jos.write("c1".getBytes(StandardCharsets.UTF_8));
-            jos.closeEntry();
+        try {
+            Set<File> set = new LinkedHashSet<>();
+            temporaryFolder.create();
+            File j1 = temporaryFolder.newFile("j1.jar");
+            try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(j1))) {
+                jos.putNextEntry(new JarEntry("foo.txt"));
+                jos.write("c1".getBytes(StandardCharsets.UTF_8));
+                jos.closeEntry();
+            }
+            File j2 = temporaryFolder.newFile("j2.jar");
+            try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(j2))) {
+                jos.putNextEntry(new JarEntry("foo.txt"));
+                jos.write("c2".getBytes(StandardCharsets.UTF_8));
+                jos.closeEntry();
+            }
+            set.add(j1);
+            set.add(j2);
+
+            AppendingTransformer transformer = new AppendingTransformer();
+            Field resource = AppendingTransformer.class.getDeclaredField("resource");
+            resource.setAccessible(true);
+            resource.set(transformer, "foo.txt");
+
+            ShadeRequest shadeRequest = new ShadeRequest();
+            shadeRequest.setJars(set);
+            shadeRequest.setRelocators(Collections.<Relocator>emptyList());
+            shadeRequest.setResourceTransformers(Collections.<ResourceTransformer>singletonList(transformer));
+            shadeRequest.setFilters(Collections.<Filter>emptyList());
+            shadeRequest.setUberJar(new File("target/foo-custom_testOverlappingResourcesAreLogged.jar"));
+
+            DefaultShader shaderWithTransformer = newShader();
+            shaderWithTransformer.shade(shadeRequest);
+
+            assertThat(warnMessages.getAllValues().size(), is(0) );
+
+            DefaultShader shaderWithoutTransformer = newShader();
+            shadeRequest.setResourceTransformers(Collections.<ResourceTransformer>emptyList());
+            shaderWithoutTransformer.shade(shadeRequest);
+
+            assertThat(warnMessages.getAllValues(),
+                hasItems(containsString("j1.jar, j2.jar define 1 overlapping resource:")));
+            assertThat(warnMessages.getAllValues(),
+                hasItems(containsString("- foo.txt")));
         }
-        File j2 = temporaryFolder.newFile("j2.jar");
-        try ( JarOutputStream jos = new JarOutputStream(new FileOutputStream( j2 ) ) )
-        {
-            jos.putNextEntry(new JarEntry( "foo.txt" ));
-            jos.write("c2".getBytes(StandardCharsets.UTF_8));
-            jos.closeEntry();
+        finally {
+            temporaryFolder.delete();
         }
-        set.add( j1 );
-        set.add( j2 );
-
-        AppendingTransformer transformer = new AppendingTransformer();
-        Field resource = AppendingTransformer.class.getDeclaredField( "resource" );
-        resource.setAccessible( true );
-        resource.set( transformer, "foo.txt" );
-
-        ShadeRequest shadeRequest = new ShadeRequest();
-        shadeRequest.setJars( set );
-        shadeRequest.setRelocators( Collections.<Relocator>emptyList() );
-        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>singletonList( transformer) );
-        shadeRequest.setFilters( Collections.<Filter>emptyList() );
-        shadeRequest.setUberJar( new File( "target/foo-custom_testOverlappingResourcesAreLogged.jar" ) );
-
-        final MockLogger logWithTransformer = new MockLogger();
-        DefaultShader shaderWithTransformer = new DefaultShader( logWithTransformer );
-        shaderWithTransformer.shade( shadeRequest );
-
-        MockLogger logWithoutTransformer = new MockLogger();
-        DefaultShader shaderWithoutTransformer = new DefaultShader( logWithoutTransformer );
-        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>emptyList() );
-        shaderWithoutTransformer.shade( shadeRequest );
-
-        temporaryFolder.delete();
-
-        assertTrue( logWithTransformer.warnMessages.toString(), logWithTransformer.warnMessages.isEmpty() );
-        assertTrue( logWithoutTransformer.warnMessages.toString(),
-                logWithoutTransformer.warnMessages.containsAll(
-                        Arrays.asList( "j1.jar, j2.jar define 1 overlapping resource:", "- foo.txt" ) ) );
     }
 
     @Test
@@ -355,166 +361,24 @@ public class DefaultShaderTest
         s.shade( shadeRequest );
     }
 
-    private static DefaultShader newShader()
+    private DefaultShader newShader()
     {
-        DefaultShader s = new DefaultShader();
-
-        return s;
+        return new DefaultShader(mockLogger());
     }
 
-    private static class MockLogger extends MarkerIgnoringBase
+    private ArgumentCaptor<String> debugMessages;
+
+    private ArgumentCaptor<String> warnMessages;
+
+    private Logger mockLogger()
     {
-        private final List<String> debugMessages = new ArrayList<>();
-        private final List<String> warnMessages = new ArrayList<>();
-
-        @Override
-        public void debug(String s, Throwable throwable) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void warn(String s, Throwable throwable) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public boolean isTraceEnabled() {
-            return false;
-        }
-
-        @Override
-        public void trace(final String s) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void trace(final String s, final Object o) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void trace(final String s, final Object o, final Object o1) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void trace(final String s, final Object... objects) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void trace(final String s, final Throwable throwable) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public boolean isDebugEnabled() {
-            return true;
-        }
-
-        @Override
-        public void debug(final String s) {
-            debugMessages.add(s.replace('\\', '/').trim());
-        }
-
-        @Override
-        public void debug(final String s, final Object o) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void debug(final String s, final Object o, final Object o1) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void debug(final String s, final Object... objects) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public boolean isInfoEnabled() {
-            return false;
-        }
-
-        @Override
-        public void info(final String s) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void info(final String s, final Object o) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void info(final String s, final Object o, final Object o1) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void info(final String s, final Object... objects) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void info(final String s, final Throwable throwable) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public boolean isWarnEnabled() {
-            return true;
-        }
-
-        @Override
-        public void warn(final String s) {
-            warnMessages.add(s.replace('\\', '/').trim());
-        }
-
-        @Override
-        public void warn(final String s, final Object o) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void warn(final String s, final Object... objects) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void warn(final String s, final Object o, final Object o1) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public boolean isErrorEnabled() {
-            return false;
-        }
-
-        @Override
-        public void error(final String s) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void error(final String s, final Object o) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void error(final String s, final Object o, final Object o1) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void error(final String s, final Object... objects) {
-            throw new IllegalStateException("should not be called");
-        }
-
-        @Override
-        public void error(final String s, final Throwable throwable) {
-            throw new IllegalStateException("should not be called");
-        }
+        debugMessages = ArgumentCaptor.forClass(String.class);
+        warnMessages = ArgumentCaptor.forClass(String.class);
+        Logger logger = mock(Logger.class);
+        when(logger.isDebugEnabled()).thenReturn(true);
+        when(logger.isWarnEnabled()).thenReturn(true);
+        doNothing().when(logger).debug(debugMessages.capture());
+        doNothing().when(logger).warn(warnMessages.capture());
+        return logger;
     }
 }
