@@ -19,19 +19,14 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -51,7 +46,7 @@ public class ServicesResourceTransformer
 
     private static final String SERVICES_PATH = "META-INF/services";
 
-    private Map<String, ServiceStream> serviceEntries = new HashMap<>();
+    private final Map<String, ArrayList<String>> serviceEntries = new HashMap<>();
 
     private List<Relocator> relocators;
 
@@ -65,20 +60,17 @@ public class ServicesResourceTransformer
     public void processResource( String resource, InputStream is, final List<Relocator> relocators, long time )
         throws IOException
     {
-        ServiceStream out = serviceEntries.get( resource );
+        ArrayList<String> out = serviceEntries.get( resource );
         if ( out == null )
         {
-            out = new ServiceStream();
+            out = new ArrayList<>();
             serviceEntries.put( resource, out );
         }
 
-        final String content = IOUtils.toString( is, StandardCharsets.UTF_8 );
-        StringReader reader = new StringReader( content );
-        BufferedReader lineReader = new BufferedReader( reader );
-        String line;
-        while ( ( line = lineReader.readLine() ) != null )
+        Scanner scanner = new Scanner( is, StandardCharsets.UTF_8.name() );
+        while ( scanner.hasNextLine() )
         {
-            String relContent = line;
+            String relContent = scanner.nextLine();
             for ( Relocator relocator : relocators )
             {
                 if ( relocator.canRelocateClass( relContent ) )
@@ -86,7 +78,7 @@ public class ServicesResourceTransformer
                     relContent = relocator.applyToSourceContent( relContent );
                 }
             }
-            out.append( relContent + "\n" );
+            out.add( relContent );
         }
 
         if ( this.relocators == null )
@@ -102,16 +94,16 @@ public class ServicesResourceTransformer
 
     public boolean hasTransformedResource()
     {
-        return serviceEntries.size() > 0;
+        return !serviceEntries.isEmpty();
     }
 
     public void modifyOutputStream( JarOutputStream jos )
         throws IOException
     {
-        for ( Map.Entry<String, ServiceStream> entry : serviceEntries.entrySet() )
+        for ( Map.Entry<String, ArrayList<String>> entry : serviceEntries.entrySet() )
         {
             String key = entry.getKey();
-            ServiceStream data = entry.getValue();
+            ArrayList<String> data = entry.getValue();
 
             if ( relocators != null )
             {
@@ -132,52 +124,9 @@ public class ServicesResourceTransformer
             jarEntry.setTime( time );
             jos.putNextEntry( jarEntry );
 
-
-            // read the content of service file for candidate classes for relocation.
-            // Specification requires that this file is encoded in UTF-8.
-            Writer writer = new OutputStreamWriter( jos, StandardCharsets.UTF_8 );
-            InputStreamReader streamReader = new InputStreamReader( data.toInputStream() );
-            BufferedReader reader = new BufferedReader( streamReader );
-            String className;
-
-            while ( ( className = reader.readLine() ) != null )
-            {
-                writer.write( className );
-                writer.write( System.lineSeparator() );
-                writer.flush();
-            }
-
-            reader.close();
-            data.reset();
+            IOUtils.writeLines( data, "\n", jos, StandardCharsets.UTF_8 );
+            jos.flush();
+            data.clear();
         }
     }
-
-    static class ServiceStream
-        extends ByteArrayOutputStream
-    {
-
-        ServiceStream()
-        {
-            super( 1024 );
-        }
-
-        public void append( String content )
-            throws IOException
-        {
-            if ( count > 0 && buf[count - 1] != '\n' && buf[count - 1] != '\r' )
-            {
-                write( '\n' );
-            }
-
-            byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
-            this.write( contentBytes );
-        }
-
-        public InputStream toInputStream()
-        {
-            return new ByteArrayInputStream( buf, 0, count );
-        }
-
-    }
-
 }
