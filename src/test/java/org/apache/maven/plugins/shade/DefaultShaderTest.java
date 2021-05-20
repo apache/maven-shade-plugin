@@ -47,6 +47,7 @@ import org.apache.maven.plugins.shade.resource.AppendingTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.codehaus.plexus.util.IOUtil;
+import org.codehaus.plexus.util.Os;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -97,8 +98,14 @@ public class DefaultShaderTest
             hasItem(containsString("plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:")));
         assertThat(warnMessages.getAllValues(),
             hasItem(containsString("- META-INF/MANIFEST.MF")));
-        assertThat(debugMessages.getAllValues(),
-            hasItem(containsString("We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar")));
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            assertThat(debugMessages.getAllValues(),
+                hasItem(containsString("We have a duplicate META-INF/MANIFEST.MF in src\\test\\jars\\plexus-utils-1.4.1.jar")));
+        }
+        else {
+            assertThat(debugMessages.getAllValues(),
+                hasItem(containsString("We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar")));
+        }
     }
 
     @Test
