@@ -646,7 +646,7 @@ public class ShadeMojo
             if ( shader == null )
             {
                 throw new MojoExecutionException(
-                    "unable to lookup own Shader implementation with hint:'" + shaderHint + "'"
+                    "unable to lookup own Shader implementation with hint: '" + shaderHint + "'"
                 );
             }
         }
