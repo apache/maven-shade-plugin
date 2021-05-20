@@ -19,11 +19,10 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.jar.JarEntry;
@@ -45,7 +44,7 @@ public class SisuIndexResourceTransformer
 
     private static final String NEWLINE = "\n";
 
-    private ServiceStream serviceStream;
+    private final ArrayList<String> indexEntries = new ArrayList<>();
 
     private long time = Long.MIN_VALUE;
 
@@ -61,13 +60,7 @@ public class SisuIndexResourceTransformer
                                  final List<Relocator> relocators,
                                  long time ) throws IOException
     {
-        if ( serviceStream == null )
-        {
-            serviceStream = new ServiceStream();
-        }
-
-        final String content = IOUtils.toString( is, StandardCharsets.UTF_8 );
-        Scanner scanner = new Scanner( content );
+        Scanner scanner = new Scanner( is, StandardCharsets.UTF_8.name() );
         while ( scanner.hasNextLine() )
         {
             String relContent = scanner.nextLine();
@@ -78,8 +71,7 @@ public class SisuIndexResourceTransformer
                     relContent = relocator.applyToSourceContent( relContent );
                 }
             }
-            serviceStream.append( relContent );
-            serviceStream.append( NEWLINE );
+            indexEntries.add( relContent );
         }
 
         if ( time > this.time )
@@ -91,7 +83,7 @@ public class SisuIndexResourceTransformer
     @Override
     public boolean hasTransformedResource()
     {
-        return serviceStream != null;
+        return !indexEntries.isEmpty();
     }
 
     @Override
@@ -101,30 +93,8 @@ public class SisuIndexResourceTransformer
         JarEntry jarEntry = new JarEntry( SISU_INDEX_PATH );
         jarEntry.setTime( time );
         jos.putNextEntry( jarEntry );
-        IOUtils.copy( serviceStream.toInputStream(), jos );
+        IOUtils.writeLines( indexEntries, NEWLINE, jos, StandardCharsets.UTF_8 );
         jos.flush();
-        serviceStream.reset();
+        indexEntries.clear();
    }
-
-    static class ServiceStream
-        extends ByteArrayOutputStream
-    {
-
-        ServiceStream()
-        {
-            super( 1024 );
-        }
-
-        public void append( String content )
-            throws IOException
-        {
-            byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
-            this.write( contentBytes );
-        }
-
-        public InputStream toInputStream()
-        {
-            return new ByteArrayInputStream( buf, 0, count );
-        }
-    }
 }
