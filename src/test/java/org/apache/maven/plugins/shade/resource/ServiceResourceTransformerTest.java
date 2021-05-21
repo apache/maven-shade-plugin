@@ -44,7 +44,8 @@ import org.junit.Test;
  * Test for handling META-INF/service/...
  */
 public class ServiceResourceTransformerTest {
-    
+    private final String NEWLINE = "\n";
+
     private List<Relocator> relocators = new ArrayList<Relocator>();
 
     @Test
@@ -75,8 +76,8 @@ public class ServiceResourceTransformerTest {
             assertNotNull( jarEntry );
             try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
                 String xformedContent = IOUtils.toString( entryStream, "utf-8" );
-                assertEquals( "borg.foo.Service" + System.getProperty( "line.separator" )
-                    + "org.foo.exclude.OtherService" + System.getProperty( "line.separator" ), xformedContent );
+                assertEquals( "borg.foo.Service" + NEWLINE
+                    + "org.foo.exclude.OtherService" + NEWLINE, xformedContent );
             } finally {
                 jarFile.close();
             }
@@ -111,8 +112,8 @@ public class ServiceResourceTransformerTest {
             JarEntry jarEntry = jarFile.getJarEntry( contentResource );
             assertNotNull( jarEntry );
             try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
-                String xformedContent = IOUtils.toString(entryStream, "utf-8");
-                assertEquals( "org.eclipse1234.osgi.launch.EquinoxFactory" + System.getProperty( "line.separator" ), xformedContent );
+                String xformedContent = IOUtils.toString(entryStream, StandardCharsets.UTF_8);
+                assertEquals( "org.eclipse1234.osgi.launch.EquinoxFactory" + NEWLINE, xformedContent );
             } finally {
                 jarFile.close();
             }
