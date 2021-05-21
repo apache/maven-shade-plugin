@@ -20,6 +20,7 @@ package org.apache.maven.plugins.shade;
  */
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -264,7 +265,7 @@ public class DefaultShader
 
                     try
                     {
-                        shadeSingleJar( shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
+                        shadeJarEntry( shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
                                         jarFile, entry, name );
                     }
                     catch ( Exception e )
@@ -278,12 +279,13 @@ public class DefaultShader
         }
     }
 
-    private void shadeSingleJar( ShadeRequest shadeRequest, Set<String> resources,
+    private void shadeJarEntry( ShadeRequest shadeRequest, Set<String> resources,
                                  List<ResourceTransformer> transformers, RelocatorRemapper remapper,
                                  JarOutputStream jos, MultiValuedMap<String, File> duplicates, File jar,
                                  JarFile jarFile, JarEntry entry, String name )
         throws IOException, MojoExecutionException
     {
+        remapper.wasRelocated.set( false );
         try ( InputStream in = jarFile.getInputStream( entry ) )
         {
             String mappedName = remapper.map( name );
@@ -532,8 +534,13 @@ public class DefaultShader
 
             return;
         }
-
-        ClassReader cr = new ClassReader( is );
+        
+        // Keep the original class in, in case nothing was relocated by RelocatorRemapper. This avoids binary
+        // differences between classes, simply because they were rewritten and only details like constant pool or
+        // stack map frames are slightly different.
+        byte[] originalClass = IOUtil.toByteArray( is );
+        
+        ClassReader cr = new ClassReader( new ByteArrayInputStream( originalClass ) );
 
         // We don't pass the ClassReader here. This forces the ClassWriter to rebuild the constant pool.
         // Copying the original constant pool should be avoided because it would keep references
@@ -571,7 +578,8 @@ public class DefaultShader
             throw new MojoExecutionException( "Error in ASM processing class " + name, ise );
         }
 
-        byte[] renamedClass = cw.toByteArray();
+        // If nothing was relocated by RelocatorRemapper, write the original class, otherwise the transformed one
+        byte[] renamedClass = remapper.wasRelocated.get() ? cw.toByteArray() : originalClass;
 
         // Need to take the .class off for remapping evaluation
         String mappedName = remapper.map( name.substring( 0, name.indexOf( '.' ) ) );
@@ -694,6 +702,11 @@ public class DefaultShader
 
         List<Relocator> relocators;
 
+        // Use thread-local, just in case 'map*' calls are ever done concurrently. Make sure that the using class
+        // initialises this value according to its needs, usually setting the value to false per file before starting
+        // relocation.
+        final ThreadLocal<Boolean> wasRelocated = new ThreadLocal<>();
+
         RelocatorRemapper( List<Relocator> relocators )
         {
             this.relocators = relocators;
@@ -704,47 +717,29 @@ public class DefaultShader
             return !relocators.isEmpty();
         }
 
+        @Override
         public Object mapValue( Object object )
         {
-            if ( object instanceof String )
-            {
-                String name = (String) object;
-                String value = name;
-
-                String prefix = "";
-                String suffix = "";
-
-                Matcher m = classPattern.matcher( name );
-                if ( m.matches() )
-                {
-                    prefix = m.group( 1 ) + "L";
-                    suffix = ";";
-                    name = m.group( 2 );
-                }
-
-                for ( Relocator r : relocators )
-                {
-                    if ( r.canRelocateClass( name ) )
-                    {
-                        value = prefix + r.relocateClass( name ) + suffix;
-                        break;
-                    }
-                    else if ( r.canRelocatePath( name ) )
-                    {
-                        value = prefix + r.relocatePath( name ) + suffix;
-                        break;
-                    }
-                }
-
-                return value;
-            }
-
-            return super.mapValue( object );
+            return object instanceof String ? map( (String) object, true ) : super.mapValue( object );
         }
 
+        @Override
         public String map( String name )
         {
-            String value = name;
+            // TODO: Before the refactoring of duplicate code to 'private String map(String, boolean)', this method did
+            //   exactly the same as 'mapValue', except for not trying to replace "dotty" class patterns (only "slashy"
+            //   ones). Therefore, I refactored it the same way. But actually, the unit and integration tests pass too,
+            //   if I unify the two variants into one which always tries to replace both. -> Discuss with maintainers,
+            //   is this special case really makes sense and has any special meaning or avoids any known problem.
+            //   If not, then eliminate the private helper method, factor it in here and make 'mapValue' delegate to
+            //   this one.
+            return map( name, false );
+        }
+        
+        private String map( String name, boolean relocateClass )
+        {
+            final String originalName = name;
+            String value = originalName;
 
             String prefix = "";
             String suffix = "";
@@ -759,13 +754,23 @@ public class DefaultShader
 
             for ( Relocator r : relocators )
             {
-                if ( r.canRelocatePath( name ) )
+                if ( relocateClass && r.canRelocateClass( name ) )
+                {
+                    value = prefix + r.relocateClass( name ) + suffix;
+                    break;
+                }
+                else if ( r.canRelocatePath( name ) )
                 {
                     value = prefix + r.relocatePath( name ) + suffix;
                     break;
                 }
             }
-
+            if ( !originalName.equals( value ) )
+            {
+                // Something was mapped (relocated) -> set thread-local flag, which later can be evaluated in
+                // DefaultShader.addRemappedClass in order to decide whether to replace the original class file or not
+                wasRelocated.set( true );
+            }
             return value;
         }
 
