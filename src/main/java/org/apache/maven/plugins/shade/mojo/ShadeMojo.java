@@ -55,12 +55,6 @@ import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
-import org.codehaus.plexus.PlexusConstants;
-import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.codehaus.plexus.context.Context;
-import org.codehaus.plexus.context.ContextException;
-import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 
@@ -81,6 +75,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 /**
  * Mojo that performs shading delegating to the Shader component.
  *
@@ -94,7 +90,6 @@ import java.util.Set;
 // CHECKSTYLE_ON: LineLength
 public class ShadeMojo
     extends AbstractMojo
-    implements Contextualizable
 {
     /**
      * The current Maven session.
@@ -375,15 +370,10 @@ public class ShadeMojo
     private boolean shadeTestJar;
 
     /**
-     * @since 1.6
+     * All the present Shaders.
      */
-    private PlexusContainer plexusContainer;
-
-    public void contextualize( Context context )
-        throws ContextException
-    {
-        plexusContainer = (PlexusContainer) context.get( PlexusConstants.PLEXUS_KEY );
-    }
+    @Inject
+    private Map<String, Shader> shaders;
 
     /**
      * @throws MojoExecutionException in case of an error.
@@ -651,14 +641,13 @@ public class ShadeMojo
     {
         if ( shaderHint != null )
         {
-            try
+            shader = shaders.get( shaderHint );
+
+            if ( shader == null )
             {
-                shader = (Shader) plexusContainer.lookup( Shader.ROLE, shaderHint );
-            }
-            catch ( ComponentLookupException e )
-            {
-                throw new MojoExecutionException( "unable to lookup own Shader implementation with hint:'" + shaderHint
-                    + "'", e );
+                throw new MojoExecutionException(
+                    "unable to lookup own Shader implementation with hint: '" + shaderHint + "'"
+                );
             }
         }
     }

@@ -28,8 +28,6 @@ import org.apache.maven.plugin.MojoExecutionException;
  */
 public interface Shader
 {
-    String ROLE = Shader.class.getName();
-
     /**
      * Perform a shading operation.
      *

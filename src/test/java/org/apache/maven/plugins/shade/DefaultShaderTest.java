@@ -46,19 +46,26 @@ import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.AppendingTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
-import org.codehaus.plexus.logging.AbstractLogger;
-import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.codehaus.plexus.util.IOUtil;
+import org.codehaus.plexus.util.Os;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jason van Zyl
@@ -71,9 +78,7 @@ public class DefaultShaderTest
 
     @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
-        final DefaultShader shader = new DefaultShader();
-        final MockLogger logs = new MockLogger();
-        shader.enableLogging(logs);
+        final DefaultShader shader = newShader();
 
         // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
         // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
@@ -89,67 +94,70 @@ public class DefaultShaderTest
         shadeRequest.setUberJar( new File( "target/foo-custom_testOverlappingResourcesAreLogged.jar" ) );
         shader.shade( shadeRequest );
 
-        final String failureWarnMessage = logs.warnMessages.toString();
-        assertTrue( failureWarnMessage, logs.warnMessages.contains(
-                "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:") );
-        assertTrue( failureWarnMessage, logs.warnMessages.contains("- META-INF/MANIFEST.MF") );
-
-        final String failureDebugMessage = logs.debugMessages.toString();
-        assertTrue( failureDebugMessage, logs.debugMessages.contains(
-                "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar" ) );
+        assertThat(warnMessages.getAllValues(),
+            hasItem(containsString("plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:")));
+        assertThat(warnMessages.getAllValues(),
+            hasItem(containsString("- META-INF/MANIFEST.MF")));
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            assertThat(debugMessages.getAllValues(),
+                hasItem(containsString("We have a duplicate META-INF/MANIFEST.MF in src\\test\\jars\\plexus-utils-1.4.1.jar")));
+        }
+        else {
+            assertThat(debugMessages.getAllValues(),
+                hasItem(containsString("We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar")));
+        }
     }
 
     @Test
     public void testOverlappingResourcesAreLoggedExceptATransformerHandlesIt() throws Exception {
         TemporaryFolder temporaryFolder = new TemporaryFolder();
-        Set<File> set = new LinkedHashSet<>();
-        temporaryFolder.create();
-        File j1 = temporaryFolder.newFile("j1.jar");
-        try ( JarOutputStream jos = new JarOutputStream(new FileOutputStream( j1 ) ) )
-        {
-            jos.putNextEntry(new JarEntry( "foo.txt" ));
-            jos.write("c1".getBytes(StandardCharsets.UTF_8));
-            jos.closeEntry();
+        try {
+            Set<File> set = new LinkedHashSet<>();
+            temporaryFolder.create();
+            File j1 = temporaryFolder.newFile("j1.jar");
+            try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(j1))) {
+                jos.putNextEntry(new JarEntry("foo.txt"));
+                jos.write("c1".getBytes(StandardCharsets.UTF_8));
+                jos.closeEntry();
+            }
+            File j2 = temporaryFolder.newFile("j2.jar");
+            try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(j2))) {
+                jos.putNextEntry(new JarEntry("foo.txt"));
+                jos.write("c2".getBytes(StandardCharsets.UTF_8));
+                jos.closeEntry();
+            }
+            set.add(j1);
+            set.add(j2);
+
+            AppendingTransformer transformer = new AppendingTransformer();
+            Field resource = AppendingTransformer.class.getDeclaredField("resource");
+            resource.setAccessible(true);
+            resource.set(transformer, "foo.txt");
+
+            ShadeRequest shadeRequest = new ShadeRequest();
+            shadeRequest.setJars(set);
+            shadeRequest.setRelocators(Collections.<Relocator>emptyList());
+            shadeRequest.setResourceTransformers(Collections.<ResourceTransformer>singletonList(transformer));
+            shadeRequest.setFilters(Collections.<Filter>emptyList());
+            shadeRequest.setUberJar(new File("target/foo-custom_testOverlappingResourcesAreLogged.jar"));
+
+            DefaultShader shaderWithTransformer = newShader();
+            shaderWithTransformer.shade(shadeRequest);
+
+            assertThat(warnMessages.getAllValues().size(), is(0) );
+
+            DefaultShader shaderWithoutTransformer = newShader();
+            shadeRequest.setResourceTransformers(Collections.<ResourceTransformer>emptyList());
+            shaderWithoutTransformer.shade(shadeRequest);
+
+            assertThat(warnMessages.getAllValues(),
+                hasItems(containsString("j1.jar, j2.jar define 1 overlapping resource:")));
+            assertThat(warnMessages.getAllValues(),
+                hasItems(containsString("- foo.txt")));
         }
-        File j2 = temporaryFolder.newFile("j2.jar");
-        try ( JarOutputStream jos = new JarOutputStream(new FileOutputStream( j2 ) ) )
-        {
-            jos.putNextEntry(new JarEntry( "foo.txt" ));
-            jos.write("c2".getBytes(StandardCharsets.UTF_8));
-            jos.closeEntry();
+        finally {
+            temporaryFolder.delete();
         }
-        set.add( j1 );
-        set.add( j2 );
-
-        AppendingTransformer transformer = new AppendingTransformer();
-        Field resource = AppendingTransformer.class.getDeclaredField( "resource" );
-        resource.setAccessible( true );
-        resource.set( transformer, "foo.txt" );
-
-        ShadeRequest shadeRequest = new ShadeRequest();
-        shadeRequest.setJars( set );
-        shadeRequest.setRelocators( Collections.<Relocator>emptyList() );
-        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>singletonList( transformer) );
-        shadeRequest.setFilters( Collections.<Filter>emptyList() );
-        shadeRequest.setUberJar( new File( "target/foo-custom_testOverlappingResourcesAreLogged.jar" ) );
-
-        DefaultShader shaderWithTransformer = new DefaultShader();
-        final MockLogger logWithTransformer = new MockLogger();
-        shaderWithTransformer.enableLogging( logWithTransformer );
-        shaderWithTransformer.shade( shadeRequest );
-
-        DefaultShader shaderWithoutTransformer = new DefaultShader();
-        MockLogger logWithoutTransformer = new MockLogger();
-        shaderWithoutTransformer.enableLogging( logWithoutTransformer );
-        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>emptyList() );
-        shaderWithoutTransformer.shade( shadeRequest );
-
-        temporaryFolder.delete();
-
-        assertTrue( logWithTransformer.warnMessages.toString(), logWithTransformer.warnMessages.isEmpty() );
-        assertTrue( logWithoutTransformer.warnMessages.toString(),
-                logWithoutTransformer.warnMessages.containsAll(
-                        Arrays.asList( "j1.jar, j2.jar define 1 overlapping resource:", "- foo.txt" ) ) );
     }
 
     @Test
@@ -360,59 +368,24 @@ public class DefaultShaderTest
         s.shade( shadeRequest );
     }
 
-    private static DefaultShader newShader()
+    private DefaultShader newShader()
     {
-        DefaultShader s = new DefaultShader();
-
-        s.enableLogging( new ConsoleLogger( Logger.LEVEL_INFO, "TEST" ) );
-
-        return s;
+        return new DefaultShader(mockLogger());
     }
 
-    private static class MockLogger extends AbstractLogger
+    private ArgumentCaptor<String> debugMessages;
+
+    private ArgumentCaptor<String> warnMessages;
+
+    private Logger mockLogger()
     {
-        private final List<String> debugMessages = new ArrayList<>();
-        private final List<String> warnMessages = new ArrayList<>();
-
-        private MockLogger()
-        {
-            super( Logger.LEVEL_INFO, "test" );
-        }
-
-        @Override
-        public void debug( String s, Throwable throwable )
-        {
-            debugMessages.add( s.replace( '\\', '/' ).trim() );
-        }
-
-        @Override
-        public void info( String s, Throwable throwable )
-        {
-            // no-op
-        }
-
-        @Override
-        public void warn( String s, Throwable throwable )
-        {
-            warnMessages.add( s.replace( '\\', '/' ).trim() );
-        }
-
-        @Override
-        public void error( String s, Throwable throwable )
-        {
-            // no-op
-        }
-
-        @Override
-        public void fatalError( String s, Throwable throwable )
-        {
-            // no-op
-        }
-
-        @Override
-        public Logger getChildLogger( String s )
-        {
-            return this;
-        }
+        debugMessages = ArgumentCaptor.forClass(String.class);
+        warnMessages = ArgumentCaptor.forClass(String.class);
+        Logger logger = mock(Logger.class);
+        when(logger.isDebugEnabled()).thenReturn(true);
+        when(logger.isWarnEnabled()).thenReturn(true);
+        doNothing().when(logger).debug(debugMessages.capture());
+        doNothing().when(logger).warn(warnMessages.capture());
+        return logger;
     }
 }

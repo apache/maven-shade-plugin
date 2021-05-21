@@ -19,14 +19,17 @@ package org.apache.maven.plugins.shade;
  */
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.codehaus.plexus.component.annotations.Component;
 
 import java.io.IOException;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 /**
  * @author Olivier Lamy
  */
-@Component( role = Shader.class, hint = "mock" )
+@Singleton
+@Named( "mock" )
 public class MockShader
     implements Shader
 {
