@@ -107,6 +107,7 @@
         <groupId>org.sonatype.sisu</groupId>
         <artifactId>sisu-guice</artifactId>
         <version>3.2.6</version>
+        <classifier>no_aop</classifier>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -228,6 +229,7 @@
     <dependency>
       <groupId>org.sonatype.sisu</groupId>
       <artifactId>sisu-guice</artifactId>
+      <classifier>no_aop</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -252,6 +254,12 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>2.28.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.30</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
