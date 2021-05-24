@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -57,12 +58,17 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 
+import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -75,6 +81,54 @@ public class DefaultShaderTest
 {
     private static final String[] EXCLUDES = new String[] { "org/codehaus/plexus/util/xml/Xpp3Dom",
         "org/codehaus/plexus/util/xml/pull.*" };
+
+    @Test
+    public void testNoopWhenNotRelocated() throws IOException, MojoExecutionException {
+        final File plexusJar = new File("src/test/jars/plexus-utils-1.4.1.jar" );
+        final File shadedOutput = new File( "target/foo-custom_testNoopWhenNotRelocated.jar" );
+
+        final DefaultShader shader = newShader();
+
+        // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
+        // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
+        final Set<File> set = new LinkedHashSet<>();
+        set.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
+        set.add( plexusJar );
+
+        final ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars( set );
+        shadeRequest.setRelocators( Collections.<Relocator>singletonList( new SimpleRelocator(
+                "org/codehaus/plexus/util/cli", "relocated/plexus/util/cli",
+                Collections.<String>emptyList(), Collections.<String>emptyList() ) ) );
+        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>emptyList() );
+        shadeRequest.setFilters( Collections.<Filter>emptyList() );
+        shadeRequest.setUberJar( shadedOutput );
+        shader.shade( shadeRequest );
+
+        try ( final JarFile originalJar = new JarFile( plexusJar );
+              final JarFile shadedJar = new JarFile( shadedOutput ) )
+        {
+            // important: this is what we want but it is also what we generally get without any code
+            //             ie asm does not modify the bytecode, so we should add logger asserts anyway
+            assertTrue( areEquals( originalJar, shadedJar, "org/codehaus/plexus/util/Expand.class" ) );
+            /* not tested since names are different so bytes too obviously
+            assertFalse( areEquals( originalJar, shadedJar, "org/codehaus/plexus/util/cli/Arg.class" ) );
+             */
+        }
+        int result = 0;
+        for ( final String msg : debugMessages.getAllValues() )
+        {
+            if ( "Rewrote class bytecode: org/codehaus/plexus/util/cli/Arg.class".equals(msg) )
+            {
+                result |= 1;
+            }
+            else if ( "Keeping original class bytecode: org/codehaus/plexus/util/Expand.class".equals(msg) )
+            {
+                result |= 2;
+            }
+        }
+        assertEquals( 3 /* 1 | 2 */ , result);
+    }
 
     @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
@@ -387,5 +441,16 @@ public class DefaultShaderTest
         doNothing().when(logger).debug(debugMessages.capture());
         doNothing().when(logger).warn(warnMessages.capture());
         return logger;
+    }
+
+    private boolean areEquals( final JarFile jar1, final JarFile jar2, final String entry ) throws IOException
+    {
+        try ( final InputStream s1 = jar1.getInputStream(
+                requireNonNull(jar1.getJarEntry(entry), entry + " in " + jar1.getName() ) );
+              final InputStream s2 = jar2.getInputStream(
+                      requireNonNull(jar2.getJarEntry(entry), entry + " in " + jar2.getName() ) ))
+        {
+            return Arrays.equals( IOUtil.toByteArray( s1 ), IOUtil.toByteArray( s2 ) );
+        }
     }
 }

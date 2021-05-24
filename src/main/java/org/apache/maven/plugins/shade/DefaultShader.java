@@ -111,7 +111,7 @@ public class DefaultShader
             }
         }
 
-        RelocatorRemapper remapper = new RelocatorRemapper( shadeRequest.getRelocators() );
+        final DefaultRelocators relocators = new DefaultRelocators( shadeRequest.getRelocators() );
 
         // noinspection ResultOfMethodCallIgnored
         shadeRequest.getUberJar().getParentFile().mkdirs();
@@ -125,7 +125,7 @@ public class DefaultShader
             MultiValuedMap<String, File> duplicates = new HashSetValuedHashMap<>( 10000, 3 );
             // CHECKSTYLE_ON: MagicNumber
 
-            shadeJars( shadeRequest, resources, transformers, remapper, out, duplicates );
+            shadeJars( shadeRequest, resources, transformers, out, duplicates, relocators );
 
             // CHECKSTYLE_OFF: MagicNumber
             MultiValuedMap<Collection<File>, String> overlapping = new HashSetValuedHashMap<>( 20, 15 );
@@ -223,8 +223,9 @@ public class DefaultShader
     }
 
     private void shadeJars( ShadeRequest shadeRequest, Set<String> resources, List<ResourceTransformer> transformers,
-                            RelocatorRemapper remapper, JarOutputStream jos, MultiValuedMap<String, File> duplicates )
-        throws IOException, MojoExecutionException
+                            JarOutputStream jos, MultiValuedMap<String, File> duplicates,
+                            DefaultRelocators relocators )
+        throws IOException
     {
         for ( File jar : shadeRequest.getJars() )
         {
@@ -265,7 +266,7 @@ public class DefaultShader
 
                     try
                     {
-                        shadeJarEntry( shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
+                        shadeJarEntry( shadeRequest, resources, transformers, relocators, jos, duplicates, jar,
                                         jarFile, entry, name );
                     }
                     catch ( Exception e )
@@ -280,15 +281,14 @@ public class DefaultShader
     }
 
     private void shadeJarEntry( ShadeRequest shadeRequest, Set<String> resources,
-                                 List<ResourceTransformer> transformers, RelocatorRemapper remapper,
+                                 List<ResourceTransformer> transformers, DefaultRelocators relocators,
                                  JarOutputStream jos, MultiValuedMap<String, File> duplicates, File jar,
                                  JarFile jarFile, JarEntry entry, String name )
         throws IOException, MojoExecutionException
     {
-        remapper.wasRelocated.set( false );
         try ( InputStream in = jarFile.getInputStream( entry ) )
         {
-            String mappedName = remapper.map( name );
+            String mappedName = relocators.map( name, false );
 
             int idx = mappedName.lastIndexOf( '/' );
             if ( idx != -1 )
@@ -304,7 +304,7 @@ public class DefaultShader
             duplicates.put( name, jar );
             if ( name.endsWith( ".class" ) )
             {
-                addRemappedClass( remapper, jos, jar, name, entry.getTime(), in );
+                addRemappedClass( jos, jar, name, entry.getTime(), in, relocators );
             }
             else if ( shadeRequest.isShadeSourcesContent() && name.endsWith( ".java" ) )
             {
@@ -514,11 +514,11 @@ public class DefaultShader
         resources.add( name );
     }
 
-    private void addRemappedClass( RelocatorRemapper remapper, JarOutputStream jos, File jar, String name,
-                                   long time, InputStream is )
+    private void addRemappedClass( JarOutputStream jos, File jar, String name,
+                                   long time, InputStream is, DefaultRelocators relocators )
         throws IOException, MojoExecutionException
     {
-        if ( !remapper.hasRelocators() )
+        if ( relocators.relocators.isEmpty() )
         {
             try
             {
@@ -550,24 +550,7 @@ public class DefaultShader
         ClassWriter cw = new ClassWriter( 0 );
 
         final String pkg = name.substring( 0, name.lastIndexOf( '/' ) + 1 );
-        ClassVisitor cv = new ClassRemapper( cw, remapper )
-        {
-            @Override
-            public void visitSource( final String source, final String debug )
-            {
-                if ( source == null )
-                {
-                    super.visitSource( source, debug );
-                }
-                else
-                {
-                    final String fqSource = pkg + source;
-                    final String mappedSource = remapper.map( fqSource );
-                    final String filename = mappedSource.substring( mappedSource.lastIndexOf( '/' ) + 1 );
-                    super.visitSource( filename, debug );
-                }
-            }
-        };
+        final ShadeClassRemapper cv = new ShadeClassRemapper( cw, pkg, relocators );
 
         try
         {
@@ -579,10 +562,20 @@ public class DefaultShader
         }
 
         // If nothing was relocated by RelocatorRemapper, write the original class, otherwise the transformed one
-        byte[] renamedClass = remapper.wasRelocated.get() ? cw.toByteArray() : originalClass;
+        final byte[] renamedClass;
+        if ( cv.remapped )
+        {
+            logger.debug( "Rewrote class bytecode: " + name );
+            renamedClass = cw.toByteArray();
+        }
+        else
+        {
+            logger.debug( "Keeping original class bytecode: " + name );
+            renamedClass = originalClass;
+        }
 
         // Need to take the .class off for remapping evaluation
-        String mappedName = remapper.map( name.substring( 0, name.indexOf( '.' ) ) );
+        String mappedName = relocators.map( name.substring( 0, name.indexOf( '.' ) ), false );
 
         try
         {
@@ -694,49 +687,27 @@ public class DefaultShader
         }
     }
 
-    static class RelocatorRemapper
-        extends Remapper
+    // limit at the minimum the relocating API we use to enable to add transversal features around it
+    // also use an interface to overpass the ASM API limitations (extends ClassRemapper + impl remapper)
+    private interface Relocators
     {
+        String map( String name, boolean clazz );
+    }
 
-        private final Pattern classPattern = Pattern.compile( "(\\[*)?L(.+);" );
+    // our relocators facade
+    private static class DefaultRelocators implements Relocators
+    {
+        private static final Pattern CLASS_PATTERN = Pattern.compile( "(\\[*)?L(.+);" );
 
-        List<Relocator> relocators;
+        private final List<Relocator> relocators;
 
-        // Use thread-local, just in case 'map*' calls are ever done concurrently. Make sure that the using class
-        // initialises this value according to its needs, usually setting the value to false per file before starting
-        // relocation.
-        final ThreadLocal<Boolean> wasRelocated = new ThreadLocal<>();
-
-        RelocatorRemapper( List<Relocator> relocators )
+        private DefaultRelocators( final List<Relocator> relocators )
         {
             this.relocators = relocators;
         }
 
-        public boolean hasRelocators()
-        {
-            return !relocators.isEmpty();
-        }
-
         @Override
-        public Object mapValue( Object object )
-        {
-            return object instanceof String ? map( (String) object, true ) : super.mapValue( object );
-        }
-
-        @Override
-        public String map( String name )
-        {
-            // TODO: Before the refactoring of duplicate code to 'private String map(String, boolean)', this method did
-            //   exactly the same as 'mapValue', except for not trying to replace "dotty" class patterns (only "slashy"
-            //   ones). Therefore, I refactored it the same way. But actually, the unit and integration tests pass too,
-            //   if I unify the two variants into one which always tries to replace both. -> Discuss with maintainers,
-            //   is this special case really makes sense and has any special meaning or avoids any known problem.
-            //   If not, then eliminate the private helper method, factor it in here and make 'mapValue' delegate to
-            //   this one.
-            return map( name, false );
-        }
-        
-        private String map( String name, boolean relocateClass )
+        public String map( String name, final boolean relocateClass )
         {
             final String originalName = name;
             String value = originalName;
@@ -744,7 +715,7 @@ public class DefaultShader
             String prefix = "";
             String suffix = "";
 
-            Matcher m = classPattern.matcher( name );
+            Matcher m = CLASS_PATTERN.matcher( name );
             if ( m.matches() )
             {
                 prefix = m.group( 1 ) + "L";
@@ -765,15 +736,87 @@ public class DefaultShader
                     break;
                 }
             }
-            if ( !originalName.equals( value ) )
-            {
-                // Something was mapped (relocated) -> set thread-local flag, which later can be evaluated in
-                // DefaultShader.addRemappedClass in order to decide whether to replace the original class file or not
-                wasRelocated.set( true );
-            }
             return value;
         }
-
     }
 
+    private static class LazyInitRemapper extends Remapper
+    {
+        private Relocators relocators;
+
+        @Override
+        public Object mapValue( Object object )
+        {
+            return object instanceof String
+                    ? relocators.map( (String) object, true )
+                    : super.mapValue( object );
+        }
+
+        @Override
+        public String map( String name )
+        {
+            // TODO: Before the refactoring of duplicate code to 'private String map(String, boolean)', this method did
+            //   exactly the same as 'mapValue', except for not trying to replace "dotty" class patterns (only "slashy"
+            //   ones). Therefore, I refactored it the same way. But actually, the unit and integration tests pass too,
+            //   if I unify the two variants into one which always tries to replace both. -> Discuss with maintainers,
+            //   is this special case really makes sense and has any special meaning or avoids any known problem.
+            //   If not, then eliminate the private helper method, factor it in here and make 'mapValue' delegate to
+            //   this one.
+            return relocators.map( name, false );
+        }
+    }
+
+    // TODO: we can avoid LazyInitRemapper N instantiations (and use a singleton)
+    //       reimplementing ClassRemapper there.
+    //       It looks a bad idea but actually enables us to respect our relocation API which has no
+    //       consistency with ASM one which can lead to multiple issues for short relocation patterns
+    //       plus overcome ClassRemapper limitations we can care about (see its javadoc for details).
+    //
+    // NOTE: very short term we can just reuse the same LazyInitRemapper and let the constructor set it.
+    //       since multithreading is not faster in this processing it would be more than sufficient if
+    //       caring of this 2 objects per class allocation (but keep in mind the visitor will allocate way more ;)).
+    //       Last point which makes it done this way as of now is that perf seems not impacted at all.
+    private static class ShadeClassRemapper extends ClassRemapper implements Relocators
+    {
+        private final String pkg;
+        private final Relocators relocators;
+        private boolean remapped;
+
+        ShadeClassRemapper( final ClassVisitor classVisitor, final String pkg,
+                            final DefaultRelocators relocators )
+        {
+            super( classVisitor, new LazyInitRemapper() /* can't be init in the constructor with "this" */ );
+            this.pkg = pkg;
+            this.relocators = relocators;
+
+            // use this to enrich relocators impl with "remapped" logic
+            LazyInitRemapper.class.cast( remapper ).relocators = this;
+        }
+
+        @Override
+        public void visitSource( final String source, final String debug )
+        {
+            if ( source == null )
+            {
+                super.visitSource( null, debug );
+                return;
+            }
+
+            final String fqSource = pkg + source;
+            final String mappedSource = map( fqSource, false );
+            final String filename = mappedSource.substring( mappedSource.lastIndexOf( '/' ) + 1 );
+            super.visitSource( filename, debug );
+        }
+
+        @Override
+        public String map( final String name, final boolean clazz )
+        {
+            final String mapped = relocators.map( name, clazz );
+            if ( !remapped )
+            {
+                remapped = !mapped.equals( name );
+            }
+            return mapped;
+        }
+    }
 }
