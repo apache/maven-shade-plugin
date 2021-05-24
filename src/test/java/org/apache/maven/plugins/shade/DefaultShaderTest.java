@@ -58,7 +58,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 
-import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -68,7 +67,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -87,33 +85,41 @@ public class DefaultShaderTest
         final File plexusJar = new File("src/test/jars/plexus-utils-1.4.1.jar" );
         final File shadedOutput = new File( "target/foo-custom_testNoopWhenNotRelocated.jar" );
 
-        final DefaultShader shader = newShader();
+        final Set<File> jars = new LinkedHashSet<>();
+        jars.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
+        jars.add( plexusJar );
 
-        // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
-        // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
-        final Set<File> set = new LinkedHashSet<>();
-        set.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
-        set.add( plexusJar );
+        final Relocator relocator = new SimpleRelocator(
+            "org/codehaus/plexus/util/cli", "relocated/plexus/util/cli",
+            Collections.<String>emptyList(), Collections.<String>emptyList() );
 
         final ShadeRequest shadeRequest = new ShadeRequest();
-        shadeRequest.setJars( set );
-        shadeRequest.setRelocators( Collections.<Relocator>singletonList( new SimpleRelocator(
-                "org/codehaus/plexus/util/cli", "relocated/plexus/util/cli",
-                Collections.<String>emptyList(), Collections.<String>emptyList() ) ) );
+        shadeRequest.setJars( jars );
+        shadeRequest.setRelocators( Collections.singletonList( relocator ) );
         shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>emptyList() );
         shadeRequest.setFilters( Collections.<Filter>emptyList() );
         shadeRequest.setUberJar( shadedOutput );
+
+        final DefaultShader shader = newShader();
         shader.shade( shadeRequest );
 
         try ( final JarFile originalJar = new JarFile( plexusJar );
               final JarFile shadedJar = new JarFile( shadedOutput ) )
         {
-            // important: this is what we want but it is also what we generally get without any code
-            //             ie asm does not modify the bytecode, so we should add logger asserts anyway
-            assertTrue( areEquals( originalJar, shadedJar, "org/codehaus/plexus/util/Expand.class" ) );
-            /* not tested since names are different so bytes too obviously
-            assertFalse( areEquals( originalJar, shadedJar, "org/codehaus/plexus/util/cli/Arg.class" ) );
-             */
+            // ASM processes all class files. In doing so, it modifies them, even when not relocating anything.
+            // Before MSHADE-391, the processed files were written to the uber JAR, which did no harm, but made it
+            // difficult to find out by simple file comparison, if a file was actually relocated or not. Now, Shade
+            // makes sure to always write the original file if the class neither was relocated itself nor references
+            // other, relocated classes. So we are checking for regressions here. 
+            assertTrue( areEqual( originalJar, shadedJar,
+                "org/codehaus/plexus/util/Expand.class" ) );
+
+            // Relocated files should always be different, because they contain different package names in their byte
+            // code. We should verify this anyway, in order to avoid an existing class file from simply being moved to
+            // another location without actually having been relocated internally.
+            assertFalse( areEqual(
+                originalJar, shadedJar,
+                "org/codehaus/plexus/util/cli/Arg.class", "relocated/plexus/util/cli/Arg.class" ) );
         }
         int result = 0;
         for ( final String msg : debugMessages.getAllValues() )
@@ -443,12 +449,18 @@ public class DefaultShaderTest
         return logger;
     }
 
-    private boolean areEquals( final JarFile jar1, final JarFile jar2, final String entry ) throws IOException
+    private boolean areEqual( final JarFile jar1, final JarFile jar2, final String entry ) throws IOException
+    {
+        return areEqual( jar1, jar2, entry, entry );
+    }
+
+    private boolean areEqual( final JarFile jar1, final JarFile jar2, final String entry1, String entry2 )
+        throws IOException
     {
         try ( final InputStream s1 = jar1.getInputStream(
-                requireNonNull(jar1.getJarEntry(entry), entry + " in " + jar1.getName() ) );
+                requireNonNull(jar1.getJarEntry(entry1), entry1 + " in " + jar1.getName() ) );
               final InputStream s2 = jar2.getInputStream(
-                      requireNonNull(jar2.getJarEntry(entry), entry + " in " + jar2.getName() ) ))
+                      requireNonNull(jar2.getJarEntry(entry2), entry2 + " in " + jar2.getName() ) ))
         {
             return Arrays.equals( IOUtil.toByteArray( s1 ), IOUtil.toByteArray( s2 ) );
         }
