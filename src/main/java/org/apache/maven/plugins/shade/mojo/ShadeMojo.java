@@ -76,7 +76,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
-import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomXmlReplaceTransformers;
+import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomReplaceTransformers;
 
 /**
  * Mojo that performs shading delegating to the Shader component.
@@ -287,7 +287,7 @@ public class ShadeMojo
     private boolean generateUniqueDependencyReducedPom;
 
     /**
-     * Do we put the dependency reduced pom in the jar instead of the jar file provided by the project.
+     * Add dependency reduced POM to the JAR instead of the original one provided by the project.
      *
      * @since 3.3.0
      */
@@ -473,7 +473,7 @@ public class ShadeMojo
 
                 // In some cases the used implementation of the resourceTransformers is immutable.
                 resourceTransformers = new ArrayList<>( resourceTransformers );
-                resourceTransformers.addAll( createPomXmlReplaceTransformers( project, dependencyReducedPomLocation ) );
+                resourceTransformers.addAll( createPomReplaceTransformers( project, dependencyReducedPomLocation ) );
             }
 
             ShadeRequest shadeRequest = shadeRequest( "jar", artifacts, outputJar, filters, relocators,

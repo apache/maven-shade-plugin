@@ -27,28 +27,28 @@ import java.util.List;
 
 /**
  * Manually creates the resource processors needed to remove the original pom.xml and inject
- * the dependency-reduced-pom.xml in it's place in the shaded JAR.
+ * the dependency-reduced-pom.xml in its place in the shaded JAR.
  */
 public class UseDependencyReducedPom
 {
-    public static List<ResourceTransformer> createPomXmlReplaceTransformers(
+    public static List<ResourceTransformer> createPomReplaceTransformers(
             MavenProject project,
             File dependencyReducedPomLocation
     )
     {
-        String pomXmlInFinalJarFilename =
+        String pomInFinalJarFilename =
                 "META-INF/maven/" + project.getGroupId() + "/" + project.getArtifactId() + "/pom.xml";
 
         List<ResourceTransformer> resourceTransformers = new ArrayList<>();
 
-        DontIncludeResourceTransformer removePomXML = new DontIncludeResourceTransformer();
-        removePomXML.resource = pomXmlInFinalJarFilename;
-        resourceTransformers.add( removePomXML );
+        DontIncludeResourceTransformer removePom = new DontIncludeResourceTransformer();
+        removePom.resource = pomInFinalJarFilename;
+        resourceTransformers.add( removePom );
 
-        IncludeResourceTransformer insertDependencyReducedPomXML = new IncludeResourceTransformer();
-        insertDependencyReducedPomXML.file = dependencyReducedPomLocation;
-        insertDependencyReducedPomXML.resource = pomXmlInFinalJarFilename;
-        resourceTransformers.add( insertDependencyReducedPomXML );
+        IncludeResourceTransformer insertDependencyReducedPom = new IncludeResourceTransformer();
+        insertDependencyReducedPom.file = dependencyReducedPomLocation;
+        insertDependencyReducedPom.resource = pomInFinalJarFilename;
+        resourceTransformers.add( insertDependencyReducedPom );
 
         return resourceTransformers;
     }
