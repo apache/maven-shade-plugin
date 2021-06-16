@@ -36,13 +36,8 @@ under the License.
 
   <name>MSHADE-36</name>
   <description>
-    Test to see that the dependency-reduced-pom.xml is injected into the final jar instead of the normal pom.xml
+    Test to see that the dependency-reduced-pom.xml is injected into the final jar instead of the original pom.xml
   </description>
-
-  <properties>
-    <maven.compiler.source>1.4</maven.compiler.source>
-    <maven.compiler.target>1.4</maven.compiler.target>
-  </properties>
 
   <dependencies>
     <dependency>
@@ -82,7 +77,7 @@ under the License.
               <relocations>
                 <relocation>
                   <pattern>org.codehaus.plexus</pattern>
-                  <shadedPattern>nl.example.shaded.org.codehaus.plexus</shadedPattern>
+                  <shadedPattern>com.example.shaded.org.codehaus.plexus</shadedPattern>
                 </relocation>
               </relocations>
               <artifactSet>

@@ -289,7 +289,7 @@ public class ShadeMojo
     /**
      * Do we put the dependency reduced pom in the jar instead of the jar file provided by the project.
      *
-     * @since 3.2.5
+     * @since 3.3.0
      */
     @Parameter( defaultValue = "false" )
     private boolean useDependencyReducedPomInJar;

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package nl.example;
+package com.example;
 
 import org.codehaus.plexus.util.StringUtils;
 
