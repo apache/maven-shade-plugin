@@ -461,19 +461,14 @@ public class ShadeMojo
             if ( createDependencyReducedPom )
             {
                 createDependencyReducedPom( artifactIds );
-            }
 
-            if ( useDependencyReducedPomInJar )
-            {
-                if ( !createDependencyReducedPom )
+                if ( useDependencyReducedPomInJar )
                 {
-                    throw new MojoExecutionException(
-                            "Cannot use the dependency-reduced-pom.xml if it is not created." );
+                    // In some cases the used implementation of the resourceTransformers is immutable.
+                    resourceTransformers = new ArrayList<>( resourceTransformers );
+                    resourceTransformers.addAll(
+                            createPomReplaceTransformers( project, dependencyReducedPomLocation ) );
                 }
-
-                // In some cases the used implementation of the resourceTransformers is immutable.
-                resourceTransformers = new ArrayList<>( resourceTransformers );
-                resourceTransformers.addAll( createPomReplaceTransformers( project, dependencyReducedPomLocation ) );
             }
 
             ShadeRequest shadeRequest = shadeRequest( "jar", artifacts, outputJar, filters, relocators,
