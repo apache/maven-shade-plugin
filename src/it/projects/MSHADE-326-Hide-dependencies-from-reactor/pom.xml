@@ -38,11 +38,6 @@ under the License.
     Test to see that the reduced dependencies are gone from the reactor.
   </description>
 
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
