@@ -288,6 +288,7 @@ public class ShadeMojo
 
     /**
      * Add dependency reduced POM to the JAR instead of the original one provided by the project.
+     * If {@code createDependencyReducedPom} is {@code false} this parameter will be ignored.
      *
      * @since 3.3.0
      */
