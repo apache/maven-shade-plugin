@@ -17,11 +17,20 @@
  * under the License.
  */
 
-package nl.example;
+package com.example;
 
-public class Main
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+
+public class TestStringTester
 {
-    public static void main( String[] args ) {
-        System.out.println( "Hello World!" + ( StringTester.isEmpty("foo") ? " is empty!" : " -- ") );
+    @Test
+    public void runTest()
+    {
+        assertTrue(StringTester.isEmpty(""));
+        assertFalse(StringTester.isEmpty("FooBar"));
     }
+
 }

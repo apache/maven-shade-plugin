@@ -24,8 +24,8 @@ import org.codehaus.plexus.util.*;
 
 String[] libraryWanted =
 {
-    "nl/example/StringTester.class",
-    "nl/example/shaded/org/codehaus/plexus/util/StringUtils.class",
+    "com/example/StringTester.class",
+    "com/example/shaded/org/codehaus/plexus/util/StringUtils.class",
 };
 
 String[] libraryUnwanted =
@@ -73,9 +73,9 @@ finally
 
 String[] commandlineWanted =
 {
-    "nl/example/Main.class",
-    "nl/example/StringTester.class",
-    "nl/example/shaded/org/codehaus/plexus/util/StringUtils.class",
+    "com/example/Main.class",
+    "com/example/StringTester.class",
+    "com/example/shaded/org/codehaus/plexus/util/StringUtils.class",
 };
 
 String[] commandlineUnwanted =

@@ -65,7 +65,7 @@ under the License.
               <relocations>
                 <relocation>
                   <pattern>org.codehaus.plexus</pattern>
-                  <shadedPattern>nl.example.shaded.org.codehaus.plexus</shadedPattern>
+                  <shadedPattern>com.example.shaded.org.codehaus.plexus</shadedPattern>
                 </relocation>
               </relocations>
               <artifactSet>
