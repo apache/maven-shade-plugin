@@ -296,8 +296,8 @@ public class ShadeMojo
     private boolean useDependencyReducedPomInJar;
 
     /**
-     * Do we hide the shaded/removed dependencies from the rest of the reactor build.
-     * Requires both {@code createDependencyReducedPom} and {@code useDependencyReducedPomInJar} to be true.
+     * Hide the shaded/removed dependencies from the rest of the reactor build.
+     * Requires both {@code createDependencyReducedPom} and {@code useDependencyReducedPomInJar} to be {@code true}.
      *
      * @since 3.3.0
      */
