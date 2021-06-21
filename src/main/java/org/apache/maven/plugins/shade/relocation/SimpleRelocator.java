@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -121,7 +122,7 @@ public class SimpleRelocator
                     sourcePackageExcludes.add( exclude.substring( pattern.length() ).replaceFirst( "[.][*]$", "" ) );
                 }
                 // Excludes should be subpackages of the global pattern
-                else if ( exclude.startsWith( pathPattern ) )
+                if ( exclude.startsWith( pathPattern ) )
                 {
                     sourcePathExcludes.add( exclude.substring( pathPattern.length() ).replaceFirst( "[/][*]$", "" ) );
                 }
@@ -230,15 +231,13 @@ public class SimpleRelocator
 
     public String applyToSourceContent( String sourceContent )
     {
-        if ( rawString )
-        {
-            return sourceContent;
-        }
-        else
+        if ( !rawString )
         {
             sourceContent = shadeSourceWithExcludes( sourceContent, pattern, shadedPattern, sourcePackageExcludes );
-            return shadeSourceWithExcludes( sourceContent, pathPattern, shadedPathPattern, sourcePathExcludes );
+            sourceContent = shadeSourceWithExcludes( sourceContent, pathPattern, shadedPathPattern,
+                    sourcePathExcludes );
         }
+        return sourceContent;
     }
 
     private String shadeSourceWithExcludes( String sourceContent, String patternFrom, String patternTo,
@@ -246,29 +245,57 @@ public class SimpleRelocator
     {
         // Usually shading makes package names a bit longer, so make buffer 10% bigger than original source
         StringBuilder shadedSourceContent = new StringBuilder( sourceContent.length() * 11 / 10 );
-        boolean isFirstSnippet = true;
-        // Make sure that search pattern starts at word boundary and we look for literal ".", not regex jokers
-        for ( String snippet : sourceContent.split( "\\b" + patternFrom.replace( ".", "[.]" ) ) )
+
+        int index = 0;
+        // Make sure that we look for literal ".", not regex jokers
+        Matcher matcher = Pattern.compile( patternFrom.replace( ".", "[.]" ) ).matcher( sourceContent );
+        while ( matcher.find( index ) )
         {
             boolean doExclude = false;
-            for ( String excludedPattern : excludedPatterns )
+            shadedSourceContent.append( sourceContent.substring( index, matcher.start() ) );
+            index = matcher.end();
+            if ( matcher.start() > 1 )
             {
-                if ( snippet.startsWith( excludedPattern ) )
+                char before = sourceContent.charAt( matcher.start() - 1 );
+                /*
+                 * Exclude the following situation
+                 * Pattern: "io"
+                 * Content: java.io.IOException;
+                 * Content: private String myException;
+                 * We found "io" in "java.io" or myException, which should be excluded
+                 */
+                if ( '.' == before || Character.isLetter( before ) )
                 {
                     doExclude = true;
-                    break;
                 }
             }
-            if ( isFirstSnippet )
+            char after = sourceContent.charAt( matcher.end() );
+            /*
+             * If next char is not a "." nor a "/"  we need to exclude
+             * Pattern: io
+             * Content: private String ioInput
+             * Content: String io, val;
+             * We found io in "ioInput" or "io,", which should be excluded
+             */
+            if ( '.' != after && '/' != after )
             {
-                shadedSourceContent.append( snippet );
-                isFirstSnippet = false;
-        }
-            else
-            {
-                shadedSourceContent.append( doExclude ? patternFrom : patternTo ).append( snippet );
+                doExclude = true;
             }
+
+            if ( !doExclude )
+            {
+                for ( String excludedPattern : excludedPatterns )
+                {
+                    if ( sourceContent.startsWith( excludedPattern, index ) )
+                    {
+                        doExclude = true;
+                        break;
+                    }
+                }
+            }
+            shadedSourceContent.append( doExclude ? patternFrom : patternTo );
         }
+        shadedSourceContent.append( sourceContent.substring( index ) );
         return shadedSourceContent.toString();
     }
 }

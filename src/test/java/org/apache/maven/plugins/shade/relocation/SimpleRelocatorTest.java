@@ -201,12 +201,15 @@ public class SimpleRelocatorTest
             "import org.apache.maven.In;\n" +
             "import org.apache.maven.e.InE;\n" +
             "import org.apache.maven.f.g.InFG;\n" +
+            "import java.io.IOException;\n" +
             "\n" +
             "public class MyClass {\n" +
             "  private org.apache.maven.exclude1.x.X myX;\n" +
             "  private org.apache.maven.h.H;\n" +
+            "  private String ioInput;\n" +
             "\n" +
             "  public void doSomething() {\n" +
+            "    String io, val;\n" +
             "    String noRelocation = \"NoWordBoundaryXXXorg.apache.maven.In\";\n" +
             "    String relocationPackage = \"org.apache.maven.In\";\n" +
             "    String relocationPath = \"org/apache/maven/In\";\n" +
@@ -225,12 +228,15 @@ public class SimpleRelocatorTest
             "import com.acme.maven.In;\n" +
             "import com.acme.maven.e.InE;\n" +
             "import com.acme.maven.f.g.InFG;\n" +
+            "import java.io.IOException;\n" +
             "\n" +
             "public class MyClass {\n" +
             "  private org.apache.maven.exclude1.x.X myX;\n" +
             "  private com.acme.maven.h.H;\n" +
+            "  private String ioInput;\n" +
             "\n" +
             "  public void doSomething() {\n" +
+            "    String io, val;\n" +
             "    String noRelocation = \"NoWordBoundaryXXXorg.apache.maven.In\";\n" +
             "    String relocationPackage = \"com.acme.maven.In\";\n" +
             "    String relocationPath = \"com/acme/maven/In\";\n" +
@@ -254,5 +260,16 @@ public class SimpleRelocatorTest
                 Arrays.asList( "foo.bar", "zot.baz" ),
                 Arrays.asList( "irrelevant.exclude", "org.apache.maven.exclude1", "org.apache.maven.sub.exclude2" ) );
         assertEquals( relocatedFile,  relocator.applyToSourceContent( sourceFile ) );
+    }
+
+    @Test
+    public void testRelocateSourceWithMultipleRelocators()
+    {
+        SimpleRelocator relocator = new SimpleRelocator( "org.apache.maven", "com.acme.maven",
+                Arrays.asList( "foo.bar", "zot.baz" ),
+                Arrays.asList( "irrelevant.exclude", "org.apache.maven.exclude1", "org.apache.maven.sub.exclude2" ) );
+
+        SimpleRelocator relocatorPackage = new SimpleRelocator( "io", "shaded.io", null, null);
+        assertEquals( relocatedFile,  relocatorPackage.applyToSourceContent( relocator.applyToSourceContent( sourceFile ) ) );
     }
 }
