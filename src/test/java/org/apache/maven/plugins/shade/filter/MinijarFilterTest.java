@@ -28,6 +28,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
@@ -38,12 +44,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class MinijarFilterTest
 {
@@ -166,27 +166,22 @@ public class MinijarFilterTest
     }
 
     /**
-     * Check that the algorithm that removes services does not consider directories comming from the
-     * classpath as jar file candidates.
-     * 
-     * @see https://issues.apache.org/jira/browse/MSHADE-366
+     * Verify that directories are ignored when scanning the classpath for JARs containing services,
+     * but warnings are logged instead
+     *
+     * @see <a href="https://issues.apache.org/jira/browse/MSHADE-366">MSHADE-366</a>
      */
     @Test
-    public void remove_services_ignores_directories() throws Exception {
-        MavenProject mockedProject = mockProject(emptyFile, tempFolder.getRoot().getAbsolutePath());
-
-        new MinijarFilter(mockedProject, log);
-
-        verify(log, never()).warn(logCaptor.capture());
-    }
-
-    @Test
-    public void remove_services_logs_ignored_items() throws Exception {
+    public void removeServicesShouldIgnoreDirectories() throws Exception {
         String classPathElementToIgnore = tempFolder.getRoot().getAbsolutePath();
         MavenProject mockedProject = mockProject(emptyFile, classPathElementToIgnore);
 
         new MinijarFilter(mockedProject, log);
 
-        verify(log, times(1)).debug("Not a JAR file candidate. Ignoring classpath element '" + classPathElementToIgnore + "'.");
+        verify(log, never()).warn(logCaptor.capture());
+        verify(log, times(1)).debug(
+            "Not a JAR file candidate. Ignoring classpath element '" + classPathElementToIgnore + "'."
+        );
     }
+
 }
