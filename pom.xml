@@ -69,7 +69,7 @@
     <javaVersion>7</javaVersion>
     <sisu.version>0.3.4</sisu.version>
     <currentVersion>${project.version}</currentVersion>
-    <asmVersion>9.1</asmVersion>
+    <asmVersion>9.2</asmVersion>
     <project.build.outputTimestamp>2021-07-14T11:28:32Z</project.build.outputTimestamp>
   </properties>
 
