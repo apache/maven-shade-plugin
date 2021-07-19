@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.maven.model.ActivationFile;
 import org.apache.maven.model.ActivationOS;
@@ -90,17 +91,22 @@ public class MavenJDOMWriter
     /**
      * Field factory
      */
-    private DefaultJDOMFactory factory;
+    private final DefaultJDOMFactory factory;
 
     /**
      * Field lineSeparator
      */
-    private String lineSeparator;
+    private final String lineSeparator;
 
     public MavenJDOMWriter()
     {
-        factory = new DefaultJDOMFactory();
-        lineSeparator = "\n";
+        this( "\n" );
+    }
+
+    public MavenJDOMWriter( final String lineSeparator )
+    {
+        this.factory = new DefaultJDOMFactory();
+        this.lineSeparator = Objects.requireNonNull( lineSeparator );
     }
 
     /**
@@ -2126,7 +2132,7 @@ public class MavenJDOMWriter
         updateModel( project, "project", new Counter( 0 ), document.getRootElement() );
         XMLOutputter outputter = new XMLOutputter();
         Format format = Format.getPrettyFormat();
-        format.setIndent( "    " ).setLineSeparator( System.getProperty( "line.separator" ) );
+        format.setIndent( "    " ).setLineSeparator( lineSeparator );
         outputter.setFormat( format );
         outputter.output( document, stream );
     }
@@ -2143,7 +2149,7 @@ public class MavenJDOMWriter
         throws IOException
     {
         Format format = Format.getRawFormat();
-        format.setEncoding( writer.getEncoding() ).setLineSeparator( System.getProperty( "line.separator" ) );
+        format.setEncoding( writer.getEncoding() ).setLineSeparator( lineSeparator );
         write( project, document, writer, format );
     }
 
