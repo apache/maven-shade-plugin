@@ -106,7 +106,7 @@
       <dependency>
         <groupId>org.sonatype.sisu</groupId>
         <artifactId>sisu-guice</artifactId>
-        <version>3.2.6</version>
+        <version>4.2.0</version>
         <classifier>no_aop</classifier>
       </dependency>
     </dependencies>
