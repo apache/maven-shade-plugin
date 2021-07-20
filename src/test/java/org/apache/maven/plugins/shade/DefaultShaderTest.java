@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -57,12 +58,15 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 
+import static java.util.Objects.requireNonNull;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -75,6 +79,62 @@ public class DefaultShaderTest
 {
     private static final String[] EXCLUDES = new String[] { "org/codehaus/plexus/util/xml/Xpp3Dom",
         "org/codehaus/plexus/util/xml/pull.*" };
+
+    @Test
+    public void testNoopWhenNotRelocated() throws IOException, MojoExecutionException {
+        final File plexusJar = new File("src/test/jars/plexus-utils-1.4.1.jar" );
+        final File shadedOutput = new File( "target/foo-custom_testNoopWhenNotRelocated.jar" );
+
+        final Set<File> jars = new LinkedHashSet<>();
+        jars.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
+        jars.add( plexusJar );
+
+        final Relocator relocator = new SimpleRelocator(
+            "org/codehaus/plexus/util/cli", "relocated/plexus/util/cli",
+            Collections.<String>emptyList(), Collections.<String>emptyList() );
+
+        final ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars( jars );
+        shadeRequest.setRelocators( Collections.singletonList( relocator ) );
+        shadeRequest.setResourceTransformers( Collections.<ResourceTransformer>emptyList() );
+        shadeRequest.setFilters( Collections.<Filter>emptyList() );
+        shadeRequest.setUberJar( shadedOutput );
+
+        final DefaultShader shader = newShader();
+        shader.shade( shadeRequest );
+
+        try ( final JarFile originalJar = new JarFile( plexusJar );
+              final JarFile shadedJar = new JarFile( shadedOutput ) )
+        {
+            // ASM processes all class files. In doing so, it modifies them, even when not relocating anything.
+            // Before MSHADE-391, the processed files were written to the uber JAR, which did no harm, but made it
+            // difficult to find out by simple file comparison, if a file was actually relocated or not. Now, Shade
+            // makes sure to always write the original file if the class neither was relocated itself nor references
+            // other, relocated classes. So we are checking for regressions here. 
+            assertTrue( areEqual( originalJar, shadedJar,
+                "org/codehaus/plexus/util/Expand.class" ) );
+
+            // Relocated files should always be different, because they contain different package names in their byte
+            // code. We should verify this anyway, in order to avoid an existing class file from simply being moved to
+            // another location without actually having been relocated internally.
+            assertFalse( areEqual(
+                originalJar, shadedJar,
+                "org/codehaus/plexus/util/cli/Arg.class", "relocated/plexus/util/cli/Arg.class" ) );
+        }
+        int result = 0;
+        for ( final String msg : debugMessages.getAllValues() )
+        {
+            if ( "Rewrote class bytecode: org/codehaus/plexus/util/cli/Arg.class".equals(msg) )
+            {
+                result |= 1;
+            }
+            else if ( "Keeping original class bytecode: org/codehaus/plexus/util/Expand.class".equals(msg) )
+            {
+                result |= 2;
+            }
+        }
+        assertEquals( 3 /* 1 | 2 */ , result);
+    }
 
     @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
@@ -387,5 +447,22 @@ public class DefaultShaderTest
         doNothing().when(logger).debug(debugMessages.capture());
         doNothing().when(logger).warn(warnMessages.capture());
         return logger;
+    }
+
+    private boolean areEqual( final JarFile jar1, final JarFile jar2, final String entry ) throws IOException
+    {
+        return areEqual( jar1, jar2, entry, entry );
+    }
+
+    private boolean areEqual( final JarFile jar1, final JarFile jar2, final String entry1, String entry2 )
+        throws IOException
+    {
+        try ( final InputStream s1 = jar1.getInputStream(
+                requireNonNull(jar1.getJarEntry(entry1), entry1 + " in " + jar1.getName() ) );
+              final InputStream s2 = jar2.getInputStream(
+                      requireNonNull(jar2.getJarEntry(entry2), entry2 + " in " + jar2.getName() ) ))
+        {
+            return Arrays.equals( IOUtil.toByteArray( s1 ), IOUtil.toByteArray( s2 ) );
+        }
     }
 }
