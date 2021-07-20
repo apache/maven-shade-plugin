@@ -21,6 +21,7 @@ package org.apache.maven.plugins.shade;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +41,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -231,60 +233,140 @@ public class DefaultShader
             logger.debug( "Processing JAR " + jar );
 
             List<Filter> jarFilters = getFilters( jar, shadeRequest.getFilters() );
-
-            try ( JarFile jarFile = newJarFile( jar ) )
+            if ( jar.isDirectory() )
             {
-
-                for ( Enumeration<JarEntry> j = jarFile.entries(); j.hasMoreElements(); )
-                {
-                    JarEntry entry = j.nextElement();
-
-                    String name = entry.getName();
-                    
-                    if ( entry.isDirectory() || isFiltered( jarFilters, name ) )
-                    {
-                        continue;
-                    }
-
-
-                    if ( "META-INF/INDEX.LIST".equals( name ) )
-                    {
-                        // we cannot allow the jar indexes to be copied over or the
-                        // jar is useless. Ideally, we could create a new one
-                        // later
-                        continue;
-                    }
-
-                    if ( "module-info.class".equals( name ) )
-                    {
-                        logger.warn( "Discovered module-info.class. "
-                            + "Shading will break its strong encapsulation." );
-                        continue;
-                    }
-
-                    try
-                    {
-                        shadeSingleJar( shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
-                                        jarFile, entry, name );
-                    }
-                    catch ( Exception e )
-                    {
-                        throw new IOException( String.format( "Problem shading JAR %s entry %s: %s", jar, name, e ),
-                                               e );
-                    }
-                }
-
+                shadeDir( shadeRequest, resources, transformers, remapper, jos, duplicates, jar, jar, "", jarFilters );
+            }
+            else
+            {
+                shadeJar( shadeRequest, resources, transformers, remapper, jos, duplicates, jar, jarFilters );
             }
         }
+    }
+
+    private void shadeDir( ShadeRequest shadeRequest, Set<String> resources,
+                           List<ResourceTransformer> transformers, RelocatorRemapper remapper,
+                           JarOutputStream jos, MultiValuedMap<String, File> duplicates,
+                           File jar, File current, String prefix, List<Filter> jarFilters ) throws IOException
+    {
+        final File[] children = current.listFiles();
+        if ( children == null )
+        {
+            return;
+        }
+        for ( final File file : children )
+        {
+            final  String name = prefix + file.getName();
+            if ( file.isDirectory() )
+            {
+                try
+                {
+                    shadeDir(
+                            shadeRequest, resources, transformers, remapper, jos,
+                            duplicates, jar, file,
+                            prefix + file.getName() + '/', jarFilters );
+                    continue;
+                }
+                catch ( Exception e )
+                {
+                    throw new IOException(
+                            String.format( "Problem shading JAR %s entry %s: %s", current, name, e ), e );
+                }
+            }
+            if ( isFiltered( jarFilters, name ) || isExcludedEntry( name ) )
+            {
+                continue;
+            }
+
+            try
+            {
+                shadeSingleJar(
+                        shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
+                        new Callable<InputStream>()
+                        {
+                            @Override
+                            public InputStream call() throws Exception
+                            {
+                                return new FileInputStream( file );
+                            }
+                        }, name, file.lastModified(), -1 /*ignore*/ );
+            }
+            catch ( Exception e )
+            {
+                throw new IOException( String.format( "Problem shading JAR %s entry %s: %s", current, name, e ),
+                                       e );
+            }
+        }
+    }
+
+    private void shadeJar( ShadeRequest shadeRequest, Set<String> resources,
+                           List<ResourceTransformer> transformers, RelocatorRemapper remapper,
+                           JarOutputStream jos, MultiValuedMap<String, File> duplicates,
+                           File jar, List<Filter> jarFilters ) throws IOException
+    {
+        try ( JarFile jarFile = newJarFile( jar ) )
+        {
+
+            for ( Enumeration<JarEntry> j = jarFile.entries(); j.hasMoreElements(); )
+            {
+                final JarEntry entry = j.nextElement();
+
+                String name = entry.getName();
+
+                if ( entry.isDirectory() || isFiltered( jarFilters, name ) || isExcludedEntry( name ) )
+                {
+                    continue;
+                }
+
+                try
+                {
+                    shadeSingleJar(
+                            shadeRequest, resources, transformers, remapper, jos, duplicates, jar,
+                            new Callable<InputStream>()
+                            {
+                                @Override
+                                public InputStream call() throws Exception
+                                {
+                                    return jarFile.getInputStream( entry );
+                                }
+                            }, name, entry.getTime(), entry.getMethod() );
+                }
+                catch ( Exception e )
+                {
+                    throw new IOException( String.format( "Problem shading JAR %s entry %s: %s", jar, name, e ),
+                                           e );
+                }
+            }
+
+        }
+    }
+
+    private boolean isExcludedEntry( final String name )
+    {
+        if ( "META-INF/INDEX.LIST".equals( name ) )
+        {
+            // we cannot allow the jar indexes to be copied over or the
+            // jar is useless. Ideally, we could create a new one
+            // later
+            return true;
+        }
+
+        if ( "module-info.class".equals( name ) )
+        {
+            logger.warn( "Discovered module-info.class. "
+                    + "Shading will break its strong encapsulation." );
+            return true;
+        }
+        return false;
     }
 
     private void shadeSingleJar( ShadeRequest shadeRequest, Set<String> resources,
                                  List<ResourceTransformer> transformers, RelocatorRemapper remapper,
                                  JarOutputStream jos, MultiValuedMap<String, File> duplicates, File jar,
-                                 JarFile jarFile, JarEntry entry, String name )
-        throws IOException, MojoExecutionException
+                                 Callable<InputStream> inputProvider, String name, long time, int method )
+        throws Exception
     {
-        try ( InputStream in = jarFile.getInputStream( entry ) )
+        try ( InputStream in = inputProvider.call() )
         {
             String mappedName = remapper.map( name );
 
@@ -295,14 +377,14 @@ public class DefaultShader
                 String dir = mappedName.substring( 0, idx );
                 if ( !resources.contains( dir ) )
                 {
-                    addDirectory( resources, jos, dir, entry.getTime() );
+                    addDirectory( resources, jos, dir, time );
                 }
             }
 
             duplicates.put( name, jar );
             if ( name.endsWith( ".class" ) )
             {
-                addRemappedClass( remapper, jos, jar, name, entry.getTime(), in );
+                addRemappedClass( remapper, jos, jar, name, time, in );
             }
             else if ( shadeRequest.isShadeSourcesContent() && name.endsWith( ".java" ) )
             {
@@ -312,12 +394,12 @@ public class DefaultShader
                     return;
                 }
 
-                addJavaSource( resources, jos, mappedName, entry.getTime(), in, shadeRequest.getRelocators() );
+                addJavaSource( resources, jos, mappedName, time, in, shadeRequest.getRelocators() );
             }
             else
             {
                 if ( !resourceTransformed( transformers, mappedName, in, shadeRequest.getRelocators(),
-                                           entry.getTime() ) )
+                                           time ) )
                 {
                     // Avoid duplicates that aren't accounted for by the resource transformers
                     if ( resources.contains( mappedName ) )
@@ -326,7 +408,7 @@ public class DefaultShader
                         return;
                     }
 
-                    addResource( resources, jos, mappedName, entry, jarFile );
+                    addResource( resources, jos, mappedName, inputProvider, time, method );
                 }
                 else
                 {
@@ -655,24 +737,24 @@ public class DefaultShader
         resources.add( name );
     }
 
-    private void addResource( Set<String> resources, JarOutputStream jos, String name, JarEntry originalEntry,
-                              JarFile jarFile ) throws IOException
+    private void addResource( Set<String> resources, JarOutputStream jos, String name, Callable<InputStream> input,
+                              long time, int method ) throws Exception
     {
-        ZipHeaderPeekInputStream inputStream = new ZipHeaderPeekInputStream( jarFile.getInputStream( originalEntry ) );
+        ZipHeaderPeekInputStream inputStream = new ZipHeaderPeekInputStream( input.call() );
         try
         {
             final JarEntry entry = new JarEntry( name );
 
             // We should not change compressed level of uncompressed entries, otherwise JVM can't load these nested jars
-            if ( inputStream.hasZipHeader() && originalEntry.getMethod() == ZipEntry.STORED )
+            if ( inputStream.hasZipHeader() && method == ZipEntry.STORED )
             {
                 new CrcAndSize( inputStream ).setupStoredEntry( entry );
                 inputStream.close();
-                inputStream = new ZipHeaderPeekInputStream( jarFile.getInputStream( originalEntry ) );
+                inputStream = new ZipHeaderPeekInputStream( input.call() );
             }
 
 
-            entry.setTime( originalEntry.getTime() );
+            entry.setTime( time );
 
             jos.putNextEntry( entry );
 
@@ -770,5 +852,4 @@ public class DefaultShader
         }
 
     }
-
 }

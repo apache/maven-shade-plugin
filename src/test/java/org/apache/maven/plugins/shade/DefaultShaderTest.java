@@ -19,26 +19,6 @@ package org.apache.maven.plugins.shade;
  * under the License.
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
-import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
@@ -49,6 +29,7 @@ import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.Os;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
@@ -57,6 +38,32 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static org.codehaus.plexus.util.FileUtils.forceMkdir;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -75,6 +82,9 @@ public class DefaultShaderTest
 {
     private static final String[] EXCLUDES = new String[] { "org/codehaus/plexus/util/xml/Xpp3Dom",
         "org/codehaus/plexus/util/xml/pull.*" };
+
+    @ClassRule
+    public static final TemporaryFolder tmp = new TemporaryFolder();
 
     @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
@@ -221,6 +231,60 @@ public class DefaultShaderTest
     }
 
     @Test
+    public void testHandleDirectory()
+        throws Exception
+    {
+        final File dir = tmp.getRoot();
+        // explode src/test/jars/test-artifact-1.0-SNAPSHOT.jar in this temp dir
+        try ( final JarInputStream in = new JarInputStream(
+                new FileInputStream( "src/test/jars/test-artifact-1.0-SNAPSHOT.jar" ) ) )
+        {
+            JarEntry nextJarEntry;
+            while ( (nextJarEntry = in.getNextJarEntry()) != null )
+            {
+                if ( nextJarEntry.isDirectory() )
+                {
+                    continue;
+                }
+                final File out = new File( dir, nextJarEntry.getName() );
+                forceMkdir( out.getParentFile() );
+                try ( final OutputStream outputStream = new FileOutputStream( out ) )
+                {
+                    IOUtil.copy( in, outputStream, (int) Math.max( nextJarEntry.getSize(), 512 ) );
+                }
+            }
+        }
+
+        // do shade
+        final File shade = new File( "target/testHandleDirectory.jar" );
+        shaderWithPattern( "org/shaded/plexus/util", shade, new String[0], singleton( dir ) );
+
+        // ensure directory was shaded properly
+        try ( final JarFile jar = new JarFile( shade ) )
+        {
+            final List<String> entries = new ArrayList<>();
+            final Enumeration<JarEntry> jarEntryEnumeration = jar.entries();
+            while ( jarEntryEnumeration.hasMoreElements() )
+            {
+                final JarEntry jarEntry = jarEntryEnumeration.nextElement();
+                if ( jarEntry.isDirectory() )
+                {
+                    continue;
+                }
+                entries.add( jarEntry.getName() );
+            }
+            Collections.sort( entries );
+            assertEquals(
+                    asList(
+                            "META-INF/maven/org.apache.maven.plugins.shade/test-artifact/pom.properties",
+                            "META-INF/maven/org.apache.maven.plugins.shade/test-artifact/pom.xml",
+                            "org/apache/maven/plugins/shade/Lib.class"
+                    ),
+                    entries );
+        }
+    }
+
+    @Test
     public void testShaderWithRelocatedClassname()
         throws Exception
     {
@@ -337,16 +401,18 @@ public class DefaultShaderTest
         jos.closeEntry();
     }
 
-    private void shaderWithPattern( String shadedPattern, File jar, String[] excludes )
+    private void shaderWithPattern( String shadedPattern, File jar, String[] excludes ) throws Exception
+    {
+        Set<File> set = new LinkedHashSet<>();
+        set.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
+        set.add( new File( "src/test/jars/plexus-utils-1.4.1.jar" ) );
+        shaderWithPattern( shadedPattern, jar, excludes, set );
+    }
+
+    private void shaderWithPattern( String shadedPattern, File jar, String[] excludes, Set<File> set )
         throws Exception
     {
         DefaultShader s = newShader();
-
-        Set<File> set = new LinkedHashSet<>();
-
-        set.add( new File( "src/test/jars/test-project-1.0-SNAPSHOT.jar" ) );
-
-        set.add( new File( "src/test/jars/plexus-utils-1.4.1.jar" ) );
 
         List<Relocator> relocators = new ArrayList<>();
 
