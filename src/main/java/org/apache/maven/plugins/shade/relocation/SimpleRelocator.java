@@ -34,6 +34,23 @@ import java.util.regex.Pattern;
 public class SimpleRelocator
     implements Relocator
 {
+    /**
+     * Match dot, slash or space at end of string
+     */
+    private static final Pattern RX_ENDS_WITH_DOT_SLASH_SPACE = Pattern.compile( "[./ ]$" );
+
+    /**
+     * Match <ul>
+     *     <li>certain Java keywords + space</li>
+     *     <li>beginning of Javadoc link + optional line breaks and continuations with '*'</li>
+     * </ul>
+     * at end of string
+     */
+    private static final Pattern RX_ENDS_WITH_JAVA_KEYWORD = Pattern.compile(
+        "\\b(import|package|public|protected|private|static|final|synchronized|abstract|volatile) $"
+            + "|"
+            + "\\{@link( \\*)* $"
+    );
 
     private final String pattern;
 
@@ -104,7 +121,7 @@ public class SimpleRelocator
         {
             this.includes.addAll( includes );
         }
-        
+
         if ( excludes != null && !excludes.isEmpty() )
         {
             this.excludes.addAll( excludes );
@@ -121,7 +138,7 @@ public class SimpleRelocator
                     sourcePackageExcludes.add( exclude.substring( pattern.length() ).replaceFirst( "[.][*]$", "" ) );
                 }
                 // Excludes should be subpackages of the global pattern
-                else if ( exclude.startsWith( pathPattern ) )
+                if ( exclude.startsWith( pathPattern ) )
                 {
                     sourcePathExcludes.add( exclude.substring( pathPattern.length() ).replaceFirst( "[/][*]$", "" ) );
                 }
@@ -234,11 +251,8 @@ public class SimpleRelocator
         {
             return sourceContent;
         }
-        else
-        {
-            sourceContent = shadeSourceWithExcludes( sourceContent, pattern, shadedPattern, sourcePackageExcludes );
-            return shadeSourceWithExcludes( sourceContent, pathPattern, shadedPathPattern, sourcePathExcludes );
-        }
+        sourceContent = shadeSourceWithExcludes( sourceContent, pattern, shadedPattern, sourcePackageExcludes );
+        return shadeSourceWithExcludes( sourceContent, pathPattern, shadedPathPattern, sourcePathExcludes );
     }
 
     private String shadeSourceWithExcludes( String sourceContent, String patternFrom, String patternTo,
@@ -248,8 +262,11 @@ public class SimpleRelocator
         StringBuilder shadedSourceContent = new StringBuilder( sourceContent.length() * 11 / 10 );
         boolean isFirstSnippet = true;
         // Make sure that search pattern starts at word boundary and we look for literal ".", not regex jokers
-        for ( String snippet : sourceContent.split( "\\b" + patternFrom.replace( ".", "[.]" ) ) )
+        String[] snippets = sourceContent.split( "\\b" + patternFrom.replace( ".", "[.]" ) + "\\b" );
+        for ( int i = 0, snippetsLength = snippets.length; i < snippetsLength; i++ )
         {
+            String snippet = snippets[i];
+            String previousSnippet = isFirstSnippet ? "" : snippets[i - 1];
             boolean doExclude = false;
             for ( String excludedPattern : excludedPatterns )
             {
@@ -263,10 +280,14 @@ public class SimpleRelocator
             {
                 shadedSourceContent.append( snippet );
                 isFirstSnippet = false;
-        }
+            }
             else
             {
-                shadedSourceContent.append( doExclude ? patternFrom : patternTo ).append( snippet );
+                String previousSnippetOneLine = previousSnippet.replaceAll( "\\s+", " " );
+                boolean afterDotSlashSpace = RX_ENDS_WITH_DOT_SLASH_SPACE.matcher( previousSnippetOneLine ).find();
+                boolean afterJavaKeyWord = RX_ENDS_WITH_JAVA_KEYWORD.matcher( previousSnippetOneLine ).find();
+                boolean shouldExclude = doExclude || afterDotSlashSpace && !afterJavaKeyWord;
+                shadedSourceContent.append( shouldExclude ? patternFrom : patternTo ).append( snippet );
             }
         }
         return shadedSourceContent.toString();

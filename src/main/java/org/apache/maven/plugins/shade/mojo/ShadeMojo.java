@@ -327,9 +327,19 @@ public class ShadeMojo
     private boolean createTestSourcesJar;
 
     /**
-     * When true, it will attempt to shade the contents of the java source files when creating the sources jar. When
-     * false, it will just relocate the java source files to the shaded paths, but will not modify the actual contents
-     * of the java source files.
+     * When true, it will attempt to shade the contents of Java source files when creating the sources JAR. When false,
+     * it will just relocate the Java source files to the shaded paths, but will not modify the actual source file
+     * contents.
+     * <p>
+     * <b>Please note:</b> This feature uses a heuristic search & replace approach which covers many, but definitely not
+     * all possible cases of source code shading and its excludes. There is no full Java parser behind this
+     * functionality, which would be the only way to get this right for Java language elements. As for matching within
+     * Java string constants, this is next to impossible to get 100% right, trying to guess if they are used in
+     * reflection or not.
+     * <p>
+     * Please understand that the source shading feature is not meant as a source code generator anyway, merely as a
+     * tool creating reasonably plausible source code when navigating to a relocated library class from an IDE,
+     * hopefully displaying source code which makes 95% sense - no more, no less.
      */
     @Parameter( property = "shadeSourcesContent", defaultValue = "false" )
     private boolean shadeSourcesContent;

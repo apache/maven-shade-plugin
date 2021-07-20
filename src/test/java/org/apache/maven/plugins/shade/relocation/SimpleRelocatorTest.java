@@ -8,9 +8,9 @@ package org.apache.maven.plugins.shade.relocation;
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -103,7 +103,7 @@ public class SimpleRelocatorTest
 
         relocator = new SimpleRelocator( "org/foo", null, null, null, true );
         assertTrue( relocator.canRelocatePath( "(I)org/foo/bar/Class;" ) );
-        
+
         relocator = new SimpleRelocator( "^META-INF/org.foo.xml$", null, null, null, true );
         assertTrue( relocator.canRelocatePath( "META-INF/org.foo.xml" ) );
     }
@@ -173,7 +173,7 @@ public class SimpleRelocatorTest
         relocator = new SimpleRelocator( "^META-INF/org.foo.xml$", "META-INF/hidden.org.foo.xml", null, null, true );
         assertEquals( "META-INF/hidden.org.foo.xml", relocator.relocatePath( "META-INF/org.foo.xml" ) );
     }
-    
+
     @Test
     public void testRelocateMavenFiles()
     {
@@ -191,6 +191,7 @@ public class SimpleRelocatorTest
 
     private static final String sourceFile =
             "package org.apache.maven.hello;\n" +
+            "package org.objectweb.asm;\n" +
             "\n" +
             "import foo.bar.Bar;\n" +
             "import zot.baz.Baz;\n" +
@@ -201,12 +202,19 @@ public class SimpleRelocatorTest
             "import org.apache.maven.In;\n" +
             "import org.apache.maven.e.InE;\n" +
             "import org.apache.maven.f.g.InFG;\n" +
+            "import java.io.IOException;\n" +
             "\n" +
+            "/**\n" +
+            " * Also check out {@link org.apache.maven.hello.OtherClass} and {@link\n" +
+            " * org.apache.maven.hello.YetAnotherClass}\n" +
+            " */\n" +
             "public class MyClass {\n" +
             "  private org.apache.maven.exclude1.x.X myX;\n" +
-            "  private org.apache.maven.h.H;\n" +
+            "  private org.apache.maven.h.H h;\n" +
+            "  private String ioInput;\n" +
             "\n" +
             "  public void doSomething() {\n" +
+            "    String io, val;\n" +
             "    String noRelocation = \"NoWordBoundaryXXXorg.apache.maven.In\";\n" +
             "    String relocationPackage = \"org.apache.maven.In\";\n" +
             "    String relocationPath = \"org/apache/maven/In\";\n" +
@@ -215,6 +223,7 @@ public class SimpleRelocatorTest
 
     private static final String relocatedFile =
             "package com.acme.maven.hello;\n" +
+            "package aj.org.objectweb.asm;\n" +
             "\n" +
             "import foo.bar.Bar;\n" +
             "import zot.baz.Baz;\n" +
@@ -225,12 +234,19 @@ public class SimpleRelocatorTest
             "import com.acme.maven.In;\n" +
             "import com.acme.maven.e.InE;\n" +
             "import com.acme.maven.f.g.InFG;\n" +
+            "import java.io.IOException;\n" +
             "\n" +
+            "/**\n" +
+            " * Also check out {@link com.acme.maven.hello.OtherClass} and {@link\n" +
+            " * com.acme.maven.hello.YetAnotherClass}\n" +
+            " */\n" +
             "public class MyClass {\n" +
             "  private org.apache.maven.exclude1.x.X myX;\n" +
-            "  private com.acme.maven.h.H;\n" +
+            "  private com.acme.maven.h.H h;\n" +
+            "  private String ioInput;\n" +
             "\n" +
             "  public void doSomething() {\n" +
+            "    String io, val;\n" +
             "    String noRelocation = \"NoWordBoundaryXXXorg.apache.maven.In\";\n" +
             "    String relocationPackage = \"com.acme.maven.In\";\n" +
             "    String relocationPath = \"com/acme/maven/In\";\n" +
@@ -250,9 +266,25 @@ public class SimpleRelocatorTest
     @Test
     public void testRelocateSourceWithExcludes()
     {
+        // Main relocator with in-/excludes
         SimpleRelocator relocator = new SimpleRelocator( "org.apache.maven", "com.acme.maven",
                 Arrays.asList( "foo.bar", "zot.baz" ),
                 Arrays.asList( "irrelevant.exclude", "org.apache.maven.exclude1", "org.apache.maven.sub.exclude2" ) );
-        assertEquals( relocatedFile,  relocator.applyToSourceContent( sourceFile ) );
+        // Make sure not to replace variables 'io' and 'ioInput', package 'java.io'
+        SimpleRelocator ioRelocator = new SimpleRelocator( "io", "shaded.io", null, null );
+        // Check corner case which was not working in PR #100
+        SimpleRelocator asmRelocator = new SimpleRelocator( "org.objectweb.asm", "aj.org.objectweb.asm", null, null );
+        // Make sure not to replace 'foo' package by path-like 'shaded/foo'
+        SimpleRelocator fooRelocator = new SimpleRelocator( "foo", "shaded.foo", null, Arrays.asList( "foo.bar" ) );
+        assertEquals(
+            relocatedFile,
+            fooRelocator.applyToSourceContent(
+                asmRelocator.applyToSourceContent(
+                    ioRelocator.applyToSourceContent(
+                        relocator.applyToSourceContent( sourceFile )
+                    )
+                )
+            )
+        );
     }
 }
