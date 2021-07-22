@@ -21,28 +21,25 @@ import java.util.jar.*;
 
 String[] wanted =
 {
-    "Main.class",
-    "META-INF/services/SomeServiceInterface",
-    "SomeServiceInterface.class",
-    "SomeServiceClass.class",
-    "SomeReferencedClass.class",
-    "META-INF/services/DependencyServiceInterface",
-    "DependencyServiceInterface.class",
-    "DependencyServiceClass.class",
-    "DependencyReferencedClass.class"
+    "META-INF/services/org.acme.UsedService",
+    "org/acme/Application.class",
+    "org/acme/UsedClass.class",
+    "org/acme/UsedService.class",
+    "org/acme/UsedServiceUsedImpl.class"
 };
 
 String[] unwanted =
 {
     // Unused SPI config files are not removed
-    //"META-INF/services/UnusedServiceInterface",
-    "UnusedServiceInterface.class",
-    "UnusedServiceClass.class",
-    "SomeUnreferencedClass.class",
-    "DependencyUnreferencedClass.class"
+    //"META-INF/services/org.acme.UnusedService",
+    "org/acme/UsedServiceUnusedImpl.class",
+    "org/acme/UnusedClass.class",
+    "org/acme/UnusedService.class",
+    "org/acme/UnusedServiceImplA.class",
+    "org/acme/UnusedServiceImplB.class"
 };
 
-JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.0.jar" ) );
+JarFile jarFile = new JarFile( new File( basedir, "target/module-with-services-1.0.jar" ) );
 
 for ( String path : wanted )
 {

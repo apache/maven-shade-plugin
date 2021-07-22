@@ -111,7 +111,7 @@ public class ShadeMojo
      * syntax <code>groupId</code> is equivalent to <code>groupId:*:*:*</code>, <code>groupId:artifactId</code> is
      * equivalent to <code>groupId:artifactId:*:*</code> and <code>groupId:artifactId:classifier</code> is equivalent to
      * <code>groupId:artifactId:*:classifier</code>. For example:
-     * 
+     *
      * <pre>
      * &lt;artifactSet&gt;
      *   &lt;includes&gt;
@@ -128,7 +128,7 @@ public class ShadeMojo
 
     /**
      * Packages to be relocated. For example:
-     * 
+     *
      * <pre>
      * &lt;relocations&gt;
      *   &lt;relocation&gt;
@@ -143,7 +143,7 @@ public class ShadeMojo
      *   &lt;/relocation&gt;
      * &lt;/relocations&gt;
      * </pre>
-     * 
+     *
      * <em>Note:</em> Support for includes exists only since version 1.4.
      */
     @SuppressWarnings( "MismatchedReadAndWriteOfArray" )
@@ -164,7 +164,7 @@ public class ShadeMojo
      * to use an include to collect a set of files from the archive then use excludes to further reduce the set. By
      * default, all files are included and no files are excluded. If multiple filters apply to an artifact, the
      * intersection of the matched files will be included in the final JAR. For example:
-     * 
+     *
      * <pre>
      * &lt;filters&gt;
      *   &lt;filter&gt;
@@ -310,12 +310,40 @@ public class ShadeMojo
 
     /**
      * When true, dependencies will be stripped down on the class level to only the transitive hull required for the
-     * artifact. <em>Note:</em> Usage of this feature requires Java 1.5 or higher.
+     * artifact. See also {@link #entryPoints}, if you wish to further optimize JAR minimization.
+     * <p>
+     * <em>Note:</em> This feature requires Java 1.8 or higher due to its use of
+     * <a href="https://github.com/tcurdt/jdependency">jdependency</a>. Its accuracy therefore also depends on
+     * jdependency's limitations.
      *
      * @since 1.4
      */
     @Parameter
     private boolean minimizeJar;
+
+    /**
+     * Use this option in order to fine-tune {@link #minimizeJar}: By default, all of the target module's classes are
+     * kept and used as entry points for JAR minimization. By explicitly limiting the set of entry points, you can
+     * further minimize the set of classes kept in the shaded JAR. This affects both classes in the module itself and
+     * dependency classes. If {@link #minimizeJar} is inactive, this option has no effect either.
+     * <p>
+     * <em>Note:</em> This feature requires Java 1.8 or higher due to its use of
+     * <a href="https://github.com/tcurdt/jdependency">jdependency</a>. Its accuracy therefore also depends on
+     * jdependency's limitations.
+     * <p>
+     * Configuration example:
+     * <pre>{@code
+     * <minimizeJar>true</minimizeJar>
+     * <entryPoints>
+     *   <entryPoint>org.acme.Application</entryPoint>
+     *   <entryPoint>org.acme.OtherEntryPoint</entryPoint>
+     * </entryPoints>
+     * }</pre>
+     *
+     * @since 3.5.0
+     */
+    @Parameter
+    private Set<String> entryPoints;
 
     /**
      * The path to the output file for the shaded artifact. When this parameter is set, the created archive will neither
@@ -551,7 +579,7 @@ public class ShadeMojo
                         replaceFile( finalFile, testSourcesJar );
                         testSourcesJar = finalFile;
                     }
-                
+
                     renamed = true;
                 }
 
@@ -964,11 +992,16 @@ public class ShadeMojo
 
         if ( minimizeJar )
         {
-            getLog().info( "Minimizing jar " + project.getArtifact() );
+            if ( entryPoints == null )
+            {
+                entryPoints = new HashSet<>();
+            }
+            getLog().info( "Minimizing jar " + project.getArtifact()
+                    + ( entryPoints.isEmpty() ? "" : " with entry points" ) );
 
             try
             {
-                filters.add( new MinijarFilter( project, getLog(), simpleFilters ) );
+                filters.add( new MinijarFilter( project, getLog(), simpleFilters, entryPoints ) );
             }
             catch ( IOException e )
             {
@@ -1153,7 +1186,7 @@ public class ShadeMojo
                 }
 
                 File f = dependencyReducedPomLocation;
-                // MSHADE-225 
+                // MSHADE-225
                 // Works for now, maybe there's a better algorithm where no for-loop is required
                 if ( loopCounter == 0 )
                 {

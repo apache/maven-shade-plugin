@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -14,6 +15,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+#
 
-# jdependency-2.6.0 needs Java 8+
-invoker.java.version = 1.8+
+# These services are defined, but not used in the entry point or any of its dependency classes
+org.acme.UnusedServiceUsedImplA
+org.acme.UnusedServiceUsedImplB

@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +71,7 @@ public class MinijarFilterTest
         this.outputDirectory = tempFolder.newFolder();
         this.emptyFile = tempFolder.newFile();
         this.jarFile = tempFolder.newFile();
-        new JarOutputStream( new FileOutputStream( this.jarFile ) ).close();
+        new JarOutputStream(Files.newOutputStream(this.jarFile.toPath())).close();
         this.log = mock(Log.class);
         logCaptor = ArgumentCaptor.forClass(CharSequence.class);
     }
@@ -185,25 +186,6 @@ public class MinijarFilterTest
 
         assertEquals( "Minimized 0 -> 0", logCaptor.getValue() );
 
-    }
-
-    /**
-     * Verify that directories are ignored when scanning the classpath for JARs containing services,
-     * but warnings are logged instead
-     *
-     * @see <a href="https://issues.apache.org/jira/browse/MSHADE-366">MSHADE-366</a>
-     */
-    @Test
-    public void removeServicesShouldIgnoreDirectories() throws Exception {
-        String classPathElementToIgnore = tempFolder.newFolder().getAbsolutePath();
-        MavenProject mockedProject = mockProject( outputDirectory, jarFile, classPathElementToIgnore );
-
-        new MinijarFilter(mockedProject, log);
-
-        verify( log, times( 1 ) ).warn( logCaptor.capture() );
-
-        assertThat( logCaptor.getValue().toString(), startsWith(
-                "Not a JAR file candidate. Ignoring classpath element '" + classPathElementToIgnore + "' (" ) );
     }
 
 }
