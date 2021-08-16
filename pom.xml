@@ -70,6 +70,7 @@
     <sisu.version>0.3.4</sisu.version>
     <currentVersion>${project.version}</currentVersion>
     <asmVersion>9.2</asmVersion>
+    <slf4j.version>1.7.31</slf4j.version>
     <project.build.outputTimestamp>2021-07-14T11:28:32Z</project.build.outputTimestamp>
   </properties>
 
@@ -175,7 +176,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.31</version>
+      <version>${slf4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
@@ -259,7 +260,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>1.7.31</version>
+      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
