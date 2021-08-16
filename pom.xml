@@ -65,12 +65,12 @@
   </distributionManagement>
 
   <properties>
-    <mavenVersion>3.1.1</mavenVersion>
+    <mavenVersion>3.8.2</mavenVersion>
     <javaVersion>7</javaVersion>
     <sisu.version>0.3.4</sisu.version>
     <currentVersion>${project.version}</currentVersion>
     <asmVersion>9.2</asmVersion>
-    <slf4j.version>1.7.31</slf4j.version>
+    <slf4j.version>1.7.32</slf4j.version>
     <project.build.outputTimestamp>2021-07-14T11:28:32Z</project.build.outputTimestamp>
   </properties>
 
