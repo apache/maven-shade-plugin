@@ -14,39 +14,15 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-
 name: Java CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - dependabot/**
+  pull_request:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        java: [8, 11, 16, 17-ea]
-        jdk: [adopt, zulu]
-      fail-fast: false
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Set up cache for ~/.m2/repository
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: maven-${{ matrix.os }}-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            maven-${{ matrix.os }}-
-
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v2
-        with:
-          distribution: ${{ matrix.jdk }}
-          java-version: ${{ matrix.java }}
-
-      - name: Build with Maven
-        run: mvn clean verify -P run-its -e -B -V
+    name: Verify
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v1
