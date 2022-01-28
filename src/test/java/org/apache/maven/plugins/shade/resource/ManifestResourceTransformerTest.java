@@ -89,7 +89,7 @@ public class ManifestResourceTransformerTest
         
         final ByteArrayOutputStream out = transform( manifest, relocators );
 
-        try ( final JarInputStream jis = new JarInputStream( new ByteArrayInputStream( out.toByteArray() ) ) )
+        try ( JarInputStream jis = new JarInputStream( new ByteArrayInputStream( out.toByteArray() ) ) )
         {
             final Attributes attrs = jis.getManifest().getMainAttributes();
             assertEquals(
@@ -142,7 +142,7 @@ public class ManifestResourceTransformerTest
         transformer.setAdditionalAttributes( Arrays.asList("description-custom", "attribute-unknown") );
         final ByteArrayOutputStream out = transform( manifest, relocators );
 
-        try ( final JarInputStream jis = new JarInputStream( new ByteArrayInputStream( out.toByteArray() ) ) )
+        try ( JarInputStream jis = new JarInputStream( new ByteArrayInputStream( out.toByteArray() ) ) )
         {
             final Attributes attrs = jis.getManifest().getMainAttributes();
             assertEquals( "This jar uses jakarta packages", attrs.getValue( "description-custom" ) );
@@ -153,7 +153,7 @@ public class ManifestResourceTransformerTest
         throws IOException
     {
         final ByteArrayOutputStream mboas = new ByteArrayOutputStream();
-        try ( final OutputStream mos = mboas )
+        try ( OutputStream mos = mboas )
         {
             manifest.write( mos );
         }
@@ -161,7 +161,7 @@ public class ManifestResourceTransformerTest
                                      relocators, 0 );
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try ( final JarOutputStream jarOutputStream = new JarOutputStream( out ) )
+        try ( JarOutputStream jarOutputStream = new JarOutputStream( out ) )
         {
             transformer.modifyOutputStream( jarOutputStream );
         }

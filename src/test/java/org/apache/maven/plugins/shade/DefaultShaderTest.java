@@ -103,7 +103,7 @@ public class DefaultShaderTest
         final DefaultShader shader = newShader();
         shader.shade( shadeRequest );
 
-        try ( final JarFile originalJar = new JarFile( plexusJar );
+        try ( JarFile originalJar = new JarFile( plexusJar );
               final JarFile shadedJar = new JarFile( shadedOutput ) )
         {
             // ASM processes all class files. In doing so, it modifies them, even when not relocating anything.
@@ -457,7 +457,7 @@ public class DefaultShaderTest
     private boolean areEqual( final JarFile jar1, final JarFile jar2, final String entry1, String entry2 )
         throws IOException
     {
-        try ( final InputStream s1 = jar1.getInputStream(
+        try ( InputStream s1 = jar1.getInputStream(
                 requireNonNull(jar1.getJarEntry(entry1), entry1 + " in " + jar1.getName() ) );
               final InputStream s2 = jar2.getInputStream(
                       requireNonNull(jar2.getJarEntry(entry2), entry2 + " in " + jar2.getName() ) ))

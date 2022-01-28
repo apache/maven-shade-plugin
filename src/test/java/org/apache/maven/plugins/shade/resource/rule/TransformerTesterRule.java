@@ -115,13 +115,13 @@ public class TransformerTesterRule
         throws IOException
     {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try ( final JarOutputStream jar = new JarOutputStream( out ) )
+        try ( JarOutputStream jar = new JarOutputStream( out ) )
         {
             transformer.modifyOutputStream( jar );
         }
 
         final Map<String, String> created = new HashMap<>();
-        try ( final JarInputStream jar = new JarInputStream( new ByteArrayInputStream( out.toByteArray() ) ) )
+        try ( JarInputStream jar = new JarInputStream( new ByteArrayInputStream( out.toByteArray() ) ) )
         {
             JarEntry entry;
             while ( ( entry = jar.getNextJarEntry() ) != null )

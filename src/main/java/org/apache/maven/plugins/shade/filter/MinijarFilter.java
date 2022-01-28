@@ -131,7 +131,7 @@ public class MinijarFilter
             {
                 for ( final String fileName : project.getRuntimeClasspathElements() )
                 {
-                    try ( final JarFile jar = new JarFile( fileName ) )
+                    try ( JarFile jar = new JarFile( fileName ) )
                     {
                         for ( final Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements(); )
                         {
@@ -149,7 +149,7 @@ public class MinijarFilter
                                 continue;
                             }
 
-                            try ( final BufferedReader bufferedReader =
+                            try ( BufferedReader bufferedReader =
                             new BufferedReader( new InputStreamReader( jar.getInputStream( jarEntry ), UTF_8 ) ) )
                             {
                                 for ( String line = bufferedReader.readLine(); line != null;
