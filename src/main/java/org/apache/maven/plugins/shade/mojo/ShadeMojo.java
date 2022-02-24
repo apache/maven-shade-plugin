@@ -147,7 +147,7 @@ public class ShadeMojo
      * syntax <code>groupId</code> is equivalent to <code>groupId:*:*:*</code>, <code>groupId:artifactId</code> is
      * equivalent to <code>groupId:artifactId:*:*</code> and <code>groupId:artifactId:classifier</code> is equivalent to
      * <code>groupId:artifactId:*:classifier</code>. For example:
-     * 
+     *
      * <pre>
      * &lt;artifactSet&gt;
      *   &lt;includes&gt;
@@ -164,7 +164,7 @@ public class ShadeMojo
 
     /**
      * Packages to be relocated. For example:
-     * 
+     *
      * <pre>
      * &lt;relocations&gt;
      *   &lt;relocation&gt;
@@ -179,7 +179,7 @@ public class ShadeMojo
      *   &lt;/relocation&gt;
      * &lt;/relocations&gt;
      * </pre>
-     * 
+     *
      * <em>Note:</em> Support for includes exists only since version 1.4.
      */
     @SuppressWarnings( "MismatchedReadAndWriteOfArray" )
@@ -200,7 +200,7 @@ public class ShadeMojo
      * to use an include to collect a set of files from the archive then use excludes to further reduce the set. By
      * default, all files are included and no files are excluded. If multiple filters apply to an artifact, the
      * intersection of the matched files will be included in the final JAR. For example:
-     * 
+     *
      * <pre>
      * &lt;filters&gt;
      *   &lt;filter&gt;
@@ -401,7 +401,16 @@ public class ShadeMojo
      */
     @Parameter( defaultValue = "false" )
     private boolean skip;
-    
+
+     /**
+     * When true, the JAR files of the dependencies will not be verified (only relevant in case of signed JAR files).
+     * This is to work around issues with incorrectly signed but otherwise valid dependencies (e.g. certificate
+     * expired).
+     * @since 3.3.1
+     */
+    @Parameter( defaultValue = "false" )
+    private boolean disableJarFileVerification;
+
     /**
      * @throws MojoExecutionException in case of an error.
      */
@@ -565,7 +574,7 @@ public class ShadeMojo
                         replaceFile( finalFile, testSourcesJar );
                         testSourcesJar = finalFile;
                     }
-                
+
                     renamed = true;
                 }
 
@@ -663,6 +672,7 @@ public class ShadeMojo
         shadeRequest.setFilters( filters );
         shadeRequest.setRelocators( relocators );
         shadeRequest.setResourceTransformers( toResourceTransformers( shade, resourceTransformers ) );
+        shadeRequest.setDisableJarFileVerification( disableJarFileVerification );
         return shadeRequest;
     }
 
@@ -1159,7 +1169,7 @@ public class ShadeMojo
                 }
 
                 File f = dependencyReducedPomLocation;
-                // MSHADE-225 
+                // MSHADE-225
                 // Works for now, maybe there's a better algorithm where no for-loop is required
                 if ( loopCounter == 0 )
                 {

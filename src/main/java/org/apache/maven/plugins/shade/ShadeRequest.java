@@ -46,6 +46,8 @@ public class ShadeRequest
 
     private boolean shadeSourcesContent;
 
+    private boolean disableJarFileVerification;
+
     public Set<File> getJars()
     {
         return jars;
@@ -137,4 +139,15 @@ public class ShadeRequest
     {
         this.shadeSourcesContent = shadeSourcesContent;
     }
+
+    public boolean isDisableJarFileVerification()
+    {
+        return disableJarFileVerification;
+    }
+
+    public void setDisableJarFileVerification( boolean disableJarFileVerification )
+    {
+        this.disableJarFileVerification = disableJarFileVerification;
+    }
+
 }

@@ -234,7 +234,7 @@ public class DefaultShader
 
             List<Filter> jarFilters = getFilters( jar, shadeRequest.getFilters() );
 
-            try ( JarFile jarFile = newJarFile( jar ) )
+            try ( JarFile jarFile = newJarFile( jar, shadeRequest.isDisableJarFileVerification() ) )
             {
 
                 for ( Enumeration<JarEntry> j = jarFile.entries(); j.hasMoreElements(); )
@@ -242,7 +242,7 @@ public class DefaultShader
                     JarEntry entry = j.nextElement();
 
                     String name = entry.getName();
-                    
+
                     if ( entry.isDirectory() || isFiltered( jarFilters, name ) )
                     {
                         continue;
@@ -347,7 +347,7 @@ public class DefaultShader
         {
             for ( File jar : shadeRequest.getJars() )
             {
-                try ( JarFile jarFile = newJarFile( jar ) )
+                try ( JarFile jarFile = newJarFile( jar, shadeRequest.isDisableJarFileVerification() ) )
                 {
                     for ( Enumeration<JarEntry> en = jarFile.entries(); en.hasMoreElements(); )
                     {
@@ -463,12 +463,12 @@ public class DefaultShader
         }
     }
 
-    private JarFile newJarFile( File jar )
+    private JarFile newJarFile( File jar, boolean disableJarFileVerification )
         throws IOException
     {
         try
         {
-            return new JarFile( jar );
+            return new JarFile( jar, !disableJarFileVerification );
         }
         catch ( ZipException zex )
         {
@@ -534,12 +534,12 @@ public class DefaultShader
 
             return;
         }
-        
+
         // Keep the original class in, in case nothing was relocated by RelocatorRemapper. This avoids binary
         // differences between classes, simply because they were rewritten and only details like constant pool or
         // stack map frames are slightly different.
         byte[] originalClass = IOUtil.toByteArray( is );
-        
+
         ClassReader cr = new ClassReader( new ByteArrayInputStream( originalClass ) );
 
         // We don't pass the ClassReader here. This forces the ClassWriter to rebuild the constant pool.
@@ -691,7 +691,7 @@ public class DefaultShader
     {
         /**
          * Map an entity name according to the mapping rules known to this package mapper
-         * 
+         *
          * @param entityName entity name to be mapped
          * @param mapPaths map "slashy" names like paths or internal Java class names, e.g. {@code com/acme/Foo}?
          * @param mapPackages  map "dotty" names like qualified Java class or package names, e.g. {@code com.acme.Foo}?
