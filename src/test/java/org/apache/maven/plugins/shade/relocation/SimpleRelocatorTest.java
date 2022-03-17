@@ -39,6 +39,12 @@ public class SimpleRelocatorTest
 {
 
     @Test
+    public void testNoNpeRelocateClass()
+    {
+        new SimpleRelocator( "foo", "bar", null, null, true ).relocateClass( "foo" );
+    }
+
+    @Test
     public void testCanRelocatePath()
     {
         SimpleRelocator relocator;

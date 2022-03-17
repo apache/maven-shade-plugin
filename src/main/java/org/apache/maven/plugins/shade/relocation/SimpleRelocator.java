@@ -242,7 +242,7 @@ public class SimpleRelocator
 
     public String relocateClass( String clazz )
     {
-        return clazz.replaceFirst( pattern, shadedPattern );
+        return rawString ? clazz : clazz.replaceFirst( pattern, shadedPattern );
     }
 
     public String applyToSourceContent( String sourceContent )
