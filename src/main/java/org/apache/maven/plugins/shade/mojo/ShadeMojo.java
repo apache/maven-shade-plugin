@@ -1061,10 +1061,6 @@ public class ShadeMojo
     private void createDependencyReducedPom( Set<String> artifactsToRemove )
         throws IOException, DependencyGraphBuilderException, ProjectBuildingException
     {
-        List<Dependency> dependencies = new ArrayList<>();
-
-        boolean modified = false;
-
         List<Dependency> transitiveDeps = new ArrayList<>();
 
         // NOTE: By using the getArtifacts() we get the completely evaluated artifacts
@@ -1083,39 +1079,48 @@ public class ShadeMojo
             // we'll figure out the exclusions in a bit.
             transitiveDeps.add( dep );
         }
-        List<Dependency> origDeps = project.getDependencies();
-
-        if ( promoteTransitiveDependencies )
-        {
-            origDeps = transitiveDeps;
-        }
 
         Model model = project.getOriginalModel();
+
+        // MSHADE-413: Must not use objects (for example `Model` or `Dependency`) that are "owned
+        // by Maven" and being used by other projects/plugins. Modifying those will break the
+        // correctness of the build - or cause an endless loop.
+        List<Dependency> origDeps = new ArrayList<>();
+        List<Dependency> source = promoteTransitiveDependencies ? transitiveDeps : project.getDependencies();
+        for ( Dependency d : source )
+        {
+            origDeps.add( d.clone() );
+        }
+        model = model.clone();
+
         // MSHADE-185: We will remove all system scoped dependencies which usually
         // have some kind of property usage. At this time the properties within
         // such things are already evaluated.
         List<Dependency> originalDependencies = model.getDependencies();
         removeSystemScopedDependencies( artifactsToRemove, originalDependencies );
 
+        List<Dependency> dependencies = new ArrayList<>();
+        boolean modified = false;
         for ( Dependency d : origDeps )
         {
-            dependencies.add( d );
-
-            String id = getId( d );
-
-            if ( artifactsToRemove.contains( id ) )
+            if ( artifactsToRemove.contains( getId( d ) ) )
             {
-                modified = true;
-
                 if ( keepDependenciesWithProvidedScope )
                 {
-                    d.setScope( "provided" );
+                    if ( !"provided".equals( d.getScope() ) )
+                    {
+                        modified = true;
+                        d.setScope( "provided" );
+                    }
                 }
                 else
                 {
-                    dependencies.remove( d );
+                    modified = true;
+                    continue;
                 }
             }
+
+            dependencies.add( d );
         }
 
         // MSHADE-155
@@ -1299,8 +1304,13 @@ public class ShadeMojo
             boolean modified = false;
             for ( DependencyNode n2 : node.getChildren() )
             {
+                String artifactId2 = getId( n2.getArtifact() );
+
                 for ( DependencyNode n3 : n2.getChildren() )
                 {
+                    Artifact artifact3 = n3.getArtifact();
+                    String artifactId3 = getId( artifact3 );
+
                     // check if it really isn't in the list of original dependencies. Maven
                     // prior to 2.0.8 may grab versions from transients instead of
                     // from the direct deps in which case they would be marked included
@@ -1310,7 +1320,7 @@ public class ShadeMojo
                     boolean found = false;
                     for ( Dependency dep : transitiveDeps )
                     {
-                        if ( getId( dep ).equals( getId( n3.getArtifact() ) ) )
+                        if ( getId( dep ).equals( artifactId3 ) )
                         {
                             found = true;
                             break;
@@ -1321,18 +1331,31 @@ public class ShadeMojo
                     //       note: MSHADE-31 introduced the exclusion logic for promoteTransitiveDependencies=true,
                     //             but as of 3.2.1 promoteTransitiveDependencies has no effect for provided deps,
                     //             which makes this fix even possible (see also MSHADE-181)
-                    if ( !found && !"provided".equals( n3.getArtifact().getScope() ) )
+                    if ( !found && !"provided".equals( artifact3.getScope() ) )
                     {
+                        getLog().debug( String.format( "dependency %s (scope %s) not found in transitive dependencies",
+                            artifactId3, artifact3.getScope() ) );
                         for ( Dependency dep : dependencies )
                         {
-                            if ( getId( dep ).equals( getId( n2.getArtifact() ) ) )
+                            if ( getId( dep ).equals( artifactId2 ) )
                             {
-                                Exclusion exclusion = new Exclusion();
-                                exclusion.setArtifactId( n3.getArtifact().getArtifactId() );
-                                exclusion.setGroupId( n3.getArtifact().getGroupId() );
-                                dep.addExclusion( exclusion );
-                                modified = true;
-                                break;
+                                // MSHADE-413: First check whether the exclusion has already been added,
+                                // because it's meaningless to add it more than once. Certain cases
+                                // can end up adding the exclusion "forever" and cause an endless loop
+                                // rewriting the whole dependency-reduced-pom.xml file.
+                                if ( !dependencyHasExclusion( dep, artifact3 ) )
+                                {
+                                    getLog().debug( String.format( "Adding exclusion for dependency %s (scope %s) "
+                                            + "to %s (scope %s)",
+                                        artifactId3, artifact3.getScope(),
+                                        getId( dep ), dep.getScope() ) );
+                                    Exclusion exclusion = new Exclusion();
+                                    exclusion.setArtifactId( artifact3.getArtifactId() );
+                                    exclusion.setGroupId( artifact3.getGroupId() );
+                                    dep.addExclusion( exclusion );
+                                    modified = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -1345,6 +1368,21 @@ public class ShadeMojo
             // restore it
             session.getProjectBuildingRequest().setProject( original );
         }
+    }
+
+    private boolean dependencyHasExclusion( Dependency dep, Artifact exclusionToCheck )
+    {
+        boolean containsExclusion = false;
+        for ( Exclusion existingExclusion : dep.getExclusions() )
+        {
+            if ( existingExclusion.getGroupId().equals( exclusionToCheck.getGroupId() )
+                && existingExclusion.getArtifactId().equals( exclusionToCheck.getArtifactId() ) )
+            {
+                containsExclusion = true;
+                break;
+            }
+        }
+        return containsExclusion;
     }
 
     private List<ResourceTransformer> toResourceTransformers(
