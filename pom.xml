@@ -26,11 +26,11 @@
     <artifactId>maven-plugins</artifactId>
     <groupId>org.apache.maven.plugins</groupId>
     <version>34</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <artifactId>maven-shade-plugin</artifactId>
-  <version>3.3.1-SNAPSHOT</version>
+  <version>3.3.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>Apache Maven Shade Plugin</name>
@@ -47,7 +47,7 @@
     <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-shade-plugin.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven-shade-plugin.git</developerConnection>
     <url>https://github.com/apache/maven-shade-plugin/tree/${project.scm.tag}</url>
-    <tag>HEAD</tag>
+    <tag>maven-shade-plugin-3.3.0</tag>
   </scm>
   <issueManagement>
     <system>jira</system>
@@ -71,7 +71,7 @@
     <currentVersion>${project.version}</currentVersion>
     <asmVersion>9.2</asmVersion>
     <slf4j.version>1.7.32</slf4j.version>
-    <project.build.outputTimestamp>2021-07-14T11:28:32Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2022-03-24T18:05:29Z</project.build.outputTimestamp>
   </properties>
 
   <contributors>
