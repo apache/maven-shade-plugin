@@ -73,6 +73,28 @@ under the License.
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>enforce-basedir-is-not-changed</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+	    <phase>package</phase>
+            <configuration>
+              <rules>
+                <requireProperty>
+                  <property>basedir</property>
+                  <regex><![CDATA[.*(?<!/target)$]]></regex>
+                </requireProperty>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

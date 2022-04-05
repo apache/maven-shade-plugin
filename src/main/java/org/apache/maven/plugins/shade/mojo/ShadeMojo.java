@@ -267,9 +267,7 @@ public class ShadeMojo
     private boolean createDependencyReducedPom;
 
     /**
-     * Where to put the dependency reduced pom. Note: setting a value for this parameter with a directory other than
-     * ${basedir} will change the value of ${basedir} for all executions that come after the shade execution. This is
-     * often not what you want. This is considered an open issue with this plugin.
+     * Where to put the dependency reduced pom.
      *
      * @since 1.7
      */
@@ -1220,7 +1218,7 @@ public class ShadeMojo
                 modified = updateExcludesInDeps( result.getProject(), dependencies, transitiveDeps );
             }
 
-            project.setFile( dependencyReducedPomLocation );
+            project.setPomFile( dependencyReducedPomLocation );
         }
     }
 
