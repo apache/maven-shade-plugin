@@ -28,7 +28,7 @@ under the License.
 
   <name>MSHADE-323</name>
   <description>
-    Test that integration of shade and flatten plugins.
+    Test the integration of Shade and Flatten plugins.
   </description>
 
   <properties>
