@@ -25,7 +25,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -58,7 +58,6 @@ import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -141,6 +140,12 @@ public class ShadeMojo
      */
     @Component
     protected ArtifactResolver artifactResolver;
+
+    /**
+     * Model reader for parsing pom file
+     */
+    @Component
+    private ModelReader modelReader;
 
     /**
      * Artifacts to include/exclude from the final artifact. Artifacts are denoted by composite identifiers of the
@@ -483,7 +488,7 @@ public class ShadeMojo
 
             List<ResourceTransformer> resourceTransformers = getResourceTransformers();
 
-            if ( createDependencyReducedPom )
+            if ( createDependencyReducedPom && project.getFile() != null )
             {
                 createDependencyReducedPom( artifactIds );
 
@@ -1061,7 +1066,7 @@ public class ShadeMojo
     // We need to find the direct dependencies that have been included in the uber JAR so that we can modify the
     // POM accordingly.
     private void createDependencyReducedPom( Set<String> artifactsToRemove )
-        throws IOException, DependencyGraphBuilderException, ProjectBuildingException, XmlPullParserException
+        throws IOException, DependencyGraphBuilderException, ProjectBuildingException
     {
         List<Dependency> dependencies = new ArrayList<>();
 
@@ -1092,9 +1097,7 @@ public class ShadeMojo
             origDeps = transitiveDeps;
         }
 
-        final Model model = project.getFile() == null
-                            ? project.getOriginalModel().clone()
-                            : new MavenXpp3Reader().read( new FileInputStream( project.getFile() ) );
+        final Model model = modelReader.read( project.getFile(), null );
 
         // MSHADE-185: We will remove all system scoped dependencies which usually
         // have some kind of property usage. At this time the properties within
