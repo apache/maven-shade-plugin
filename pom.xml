@@ -25,7 +25,7 @@
   <parent>
     <artifactId>maven-plugins</artifactId>
     <groupId>org.apache.maven.plugins</groupId>
-    <version>35</version>
+    <version>36</version>
     <relativePath />
   </parent>
 
