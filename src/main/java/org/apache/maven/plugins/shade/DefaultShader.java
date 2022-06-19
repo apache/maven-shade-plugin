@@ -182,7 +182,10 @@ public class DefaultShader
         {
             final byte[] header = new byte[HEADER_LEN];
             int len = super.read( header, 0, HEADER_LEN );
-            super.unread( header, 0, len );
+            if ( len != -1 )
+            {
+                super.unread( header, 0, len );
+            }
             return Arrays.equals( header, ZIP_HEADER );
         }
     }
