@@ -181,8 +181,8 @@ public class DefaultShader
         public boolean hasZipHeader() throws IOException
         {
             final byte[] header = new byte[HEADER_LEN];
-            super.read( header, 0, HEADER_LEN );
-            super.unread( header );
+            int len = super.read( header, 0, HEADER_LEN );
+            super.unread( header, 0, len );
             return Arrays.equals( header, ZIP_HEADER );
         }
     }
