@@ -1775,7 +1775,6 @@ public class MavenJDOMWriter
                                      !value.isExtensions() ? null : String.valueOf( value.isExtensions() ), "false" );
         iteratePluginExecution( innerCount, root, value.getExecutions(), "executions", "execution" );
         iterateDependency( innerCount, root, value.getDependencies(), "dependencies", "dependency" );
-        findAndReplaceXpp3DOM( innerCount, root, "goals", (Xpp3Dom) value.getGoals() );
         findAndReplaceSimpleElement( innerCount, root, "inherited", value.getInherited(), null );
         findAndReplaceXpp3DOM( innerCount, root, "configuration", (Xpp3Dom) value.getConfiguration() );
     }
