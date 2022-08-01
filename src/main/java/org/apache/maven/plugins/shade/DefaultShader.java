@@ -55,7 +55,6 @@ import javax.inject.Singleton;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
@@ -442,8 +441,8 @@ public class DefaultShader
             all.addAll( resources );
 
             logger.warn(
-                StringUtils.join( jarzS, ", " ) + " define " + all.size()
-                + " overlapping " + StringUtils.join( overlaps, " and " ) + ": " );
+                String.join( ", ", jarzS ) + " define " + all.size()
+                + " overlapping " + String.join( " and ", overlaps ) + ": " );
             //CHECKSTYLE_ON: LineLength
 
             Collections.sort( all );
