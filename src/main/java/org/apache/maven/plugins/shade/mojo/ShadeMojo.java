@@ -483,7 +483,10 @@ public class ShadeMojo
 
             if ( createDependencyReducedPom )
             {
-                createDependencyReducedPom( artifactIds );
+                // MSHADE-419: only replace the pom of this project with the dependency reduced one,
+                // when the shaded artifact is replacing the original artifact
+                boolean modifyCurrentProjectModel = !shadedArtifactAttached;
+                createDependencyReducedPom( artifactIds, modifyCurrentProjectModel );
 
                 if ( useDependencyReducedPomInJar )
                 {
@@ -1058,7 +1061,7 @@ public class ShadeMojo
 
     // We need to find the direct dependencies that have been included in the uber JAR so that we can modify the
     // POM accordingly.
-    private void createDependencyReducedPom( Set<String> artifactsToRemove )
+    private void createDependencyReducedPom( Set<String> artifactsToRemove, boolean modifyCurrentProjectModel )
         throws IOException, DependencyGraphBuilderException, ProjectBuildingException
     {
         List<Dependency> dependencies = new ArrayList<>();
@@ -1091,6 +1094,10 @@ public class ShadeMojo
         }
 
         Model model = project.getOriginalModel();
+        if ( !modifyCurrentProjectModel )
+        {
+            model = model.clone();
+        }
         // MSHADE-185: We will remove all system scoped dependencies which usually
         // have some kind of property usage. At this time the properties within
         // such things are already evaluated.
@@ -1127,11 +1134,13 @@ public class ShadeMojo
         addSystemScopedDependencyFromNonInterpolatedPom( dependencies, originalDependencies );
 
         // Check to see if we have a reduction and if so rewrite the POM.
-        rewriteDependencyReducedPomIfWeHaveReduction( dependencies, modified, transitiveDeps, model );
+        rewriteDependencyReducedPomIfWeHaveReduction( dependencies, modified, transitiveDeps, model,
+            modifyCurrentProjectModel );
     }
 
     private void rewriteDependencyReducedPomIfWeHaveReduction( List<Dependency> dependencies, boolean modified,
-                                                               List<Dependency> transitiveDeps, Model model )
+                                                               List<Dependency> transitiveDeps, Model model,
+                                                               boolean modifyCurrentProjectModel )
                                                                    throws IOException, ProjectBuildingException,
                                                                    DependencyGraphBuilderException
     {
@@ -1220,7 +1229,10 @@ public class ShadeMojo
                 modified = updateExcludesInDeps( result.getProject(), dependencies, transitiveDeps );
             }
 
-            project.setFile( dependencyReducedPomLocation );
+            if ( modifyCurrentProjectModel )
+            {
+                project.setFile( dependencyReducedPomLocation );
+            }
         }
     }
 
