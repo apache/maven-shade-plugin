@@ -41,14 +41,11 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  * shading process.
  */
 public class ServicesResourceTransformer
-    extends AbstractCompatibilityTransformer
+        extends AbstractCompatibilityTransformer
 {
-
     private static final String SERVICES_PATH = "META-INF/services";
 
     private final Map<String, ArrayList<String>> serviceEntries = new HashMap<>();
-
-    private List<Relocator> relocators;
 
     private long time = Long.MIN_VALUE;
 
@@ -58,14 +55,20 @@ public class ServicesResourceTransformer
     }
 
     public void processResource( String resource, InputStream is, final List<Relocator> relocators, long time )
-        throws IOException
+            throws IOException
     {
-        ArrayList<String> out = serviceEntries.get( resource );
-        if ( out == null )
+        resource = resource.substring( SERVICES_PATH.length() + 1 );
+        for ( Relocator relocator : relocators )
         {
-            out = new ArrayList<>();
-            serviceEntries.put( resource, out );
+            if ( relocator.canRelocateClass( resource ) )
+            {
+                resource = relocator.relocateClass( resource );
+                break;
+            }
         }
+        resource = SERVICES_PATH + '/' + resource;
+
+        ArrayList<String> out = serviceEntries.computeIfAbsent( resource, k -> new ArrayList<>() );
 
         Scanner scanner = new Scanner( is, StandardCharsets.UTF_8.name() );
         while ( scanner.hasNextLine() )
@@ -81,14 +84,9 @@ public class ServicesResourceTransformer
             out.add( relContent );
         }
 
-        if ( this.relocators == null )
-        {
-            this.relocators = relocators;
-        }
-
         if ( time > this.time )
         {
-            this.time = time;        
+            this.time = time;
         }
     }
 
@@ -98,27 +96,12 @@ public class ServicesResourceTransformer
     }
 
     public void modifyOutputStream( JarOutputStream jos )
-        throws IOException
+            throws IOException
     {
         for ( Map.Entry<String, ArrayList<String>> entry : serviceEntries.entrySet() )
         {
             String key = entry.getKey();
             ArrayList<String> data = entry.getValue();
-
-            if ( relocators != null )
-            {
-                key = key.substring( SERVICES_PATH.length() + 1 );
-                for ( Relocator relocator : relocators )
-                {
-                    if ( relocator.canRelocateClass( key ) )
-                    {
-                        key = relocator.relocateClass( key );
-                        break;
-                    }
-                }
-
-                key = SERVICES_PATH + '/' + key;
-            }
 
             JarEntry jarEntry = new JarEntry( key );
             jarEntry.setTime( time );

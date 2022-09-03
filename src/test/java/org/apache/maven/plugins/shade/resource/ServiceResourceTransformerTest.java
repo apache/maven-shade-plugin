@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -78,6 +79,49 @@ public class ServiceResourceTransformerTest {
                 String xformedContent = IOUtils.toString( entryStream, "utf-8" );
                 assertEquals( "borg.foo.Service" + NEWLINE
                     + "org.foo.exclude.OtherService" + NEWLINE, xformedContent );
+            } finally {
+                jarFile.close();
+            }
+        } finally {
+            tempJar.delete();
+        }
+    }
+
+    @Test
+    public void mergeRelocatedFiles() throws Exception {
+        SimpleRelocator relocator =
+                new SimpleRelocator( "org.foo", "borg.foo", null, Collections.singletonList("org.foo.exclude.*"));
+        relocators.add( relocator );
+
+        String content = "org.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE;
+        String contentShaded = "borg.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE;
+        byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
+        String contentResource = "META-INF/services/org.foo.something.another";
+        String contentResourceShaded = "META-INF/services/borg.foo.something.another";
+
+        ServicesResourceTransformer xformer = new ServicesResourceTransformer();
+
+        try (InputStream contentStream = new ByteArrayInputStream( contentBytes )) {
+            xformer.processResource(contentResource, contentStream, relocators, 0);
+        }
+
+        try (InputStream contentStream = new ByteArrayInputStream( contentBytes )) {
+            xformer.processResource(contentResourceShaded, contentStream, relocators, 0);
+        }
+
+        File tempJar = File.createTempFile("shade.", ".jar");
+        tempJar.deleteOnExit();
+        FileOutputStream fos = new FileOutputStream( tempJar );
+        try ( JarOutputStream jos = new JarOutputStream( fos ) ) {
+            xformer.modifyOutputStream( jos );
+            jos.close();
+
+            JarFile jarFile = new JarFile( tempJar );
+            JarEntry jarEntry = jarFile.getJarEntry( contentResourceShaded );
+            assertNotNull( jarEntry );
+            try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
+                String xformedContent = IOUtils.toString( entryStream, StandardCharsets.UTF_8);
+                assertEquals( contentShaded + contentShaded, xformedContent );
             } finally {
                 jarFile.close();
             }
