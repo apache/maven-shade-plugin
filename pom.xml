@@ -55,7 +55,7 @@
   </issueManagement>
   <ciManagement>
     <system>Jenkins</system>
-    <url>https://ci-builds.apache.org/job/Maven/job/maven-box/job/maven-shade-plugin/</url>
+    <url>https://ci-maven.apache.org/job/Maven/job/maven-box/job/maven-shade-plugin/</url>
   </ciManagement>
   <distributionManagement>
     <site>
