@@ -31,6 +31,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -139,7 +140,7 @@ public class ShadeMojoTest
         set.add( new File( getBasedir(), "src/test/jars/test-artifact-1.0-SNAPSHOT.jar" ) );
 
         List<Relocator> relocators = new ArrayList<>();
-        relocators.add( new SimpleRelocator( "org.codehaus.plexus.util", "hidden", null, Arrays.asList(
+        relocators.add( new SimpleRelocator( "org.codehaus.plexus.util", "hidden", Collections.emptyList(), Arrays.asList(
                 "org.codehaus.plexus.util.xml.Xpp3Dom", "org.codehaus.plexus.util.xml.pull.*") ) );
 
         List<ResourceTransformer> resourceTransformers = new ArrayList<>();
@@ -283,7 +284,7 @@ public class ShadeMojoTest
 
         List<Relocator> relocators = new ArrayList<>();
 
-        relocators.add( new SimpleRelocator( "org/codehaus/plexus/util", shadedPattern, null, Arrays.asList(
+        relocators.add( new SimpleRelocator( "org/codehaus/plexus/util", shadedPattern, Collections.emptyList(), Arrays.asList(
                 "org/codehaus/plexus/util/xml/Xpp3Dom", "org/codehaus/plexus/util/xml/pull.*") ) );
 
         List<ResourceTransformer> resourceTransformers = new ArrayList<>();

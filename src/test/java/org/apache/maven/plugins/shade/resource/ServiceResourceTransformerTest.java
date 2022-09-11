@@ -29,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -52,7 +51,8 @@ public class ServiceResourceTransformerTest {
     @Test
     public void relocatedClasses() throws Exception {
         SimpleRelocator relocator =
-            new SimpleRelocator( "org.foo", "borg.foo", null, Arrays.asList( "org.foo.exclude.*" ) );
+            new SimpleRelocator( "org.foo", "borg.foo", Collections.emptyList(),
+                    Collections.singletonList( "org.foo.exclude.*" ) );
         relocators.add( relocator );
 
         String content = "org.foo.Service\norg.foo.exclude.OtherService\n";
@@ -76,7 +76,7 @@ public class ServiceResourceTransformerTest {
             JarEntry jarEntry = jarFile.getJarEntry( contentResourceShaded );
             assertNotNull( jarEntry );
             try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
-                String xformedContent = IOUtils.toString( entryStream, "utf-8" );
+                String xformedContent = IOUtils.toString( entryStream, StandardCharsets.UTF_8 );
                 assertEquals( "borg.foo.Service" + NEWLINE
                     + "org.foo.exclude.OtherService" + NEWLINE, xformedContent );
             } finally {
@@ -90,7 +90,7 @@ public class ServiceResourceTransformerTest {
     @Test
     public void mergeRelocatedFiles() throws Exception {
         SimpleRelocator relocator =
-                new SimpleRelocator( "org.foo", "borg.foo", null, Collections.singletonList("org.foo.exclude.*"));
+                new SimpleRelocator( "org.foo", "borg.foo", Collections.emptyList(), Collections.singletonList("org.foo.exclude.*"));
         relocators.add( relocator );
 
         String content = "org.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE;
@@ -133,11 +133,11 @@ public class ServiceResourceTransformerTest {
     @Test
     public void concatanationAppliedMultipleTimes() throws Exception {
         SimpleRelocator relocator =
-            new SimpleRelocator( "org.eclipse", "org.eclipse1234", null, null );
+            new SimpleRelocator( "org.eclipse", "org.eclipse1234", Collections.emptyList(), Collections.emptyList() );
         relocators.add( relocator );
         
         String content = "org.eclipse.osgi.launch.EquinoxFactory\n";
-        byte[] contentBytes = content.getBytes( "UTF-8" );
+        byte[] contentBytes = content.getBytes( StandardCharsets.UTF_8 );
         InputStream contentStream = new ByteArrayInputStream( contentBytes );
         String contentResource = "META-INF/services/org.osgi.framework.launch.FrameworkFactory";
 
@@ -168,7 +168,7 @@ public class ServiceResourceTransformerTest {
 
     @Test
     public void concatenation() throws Exception {
-        SimpleRelocator relocator = new SimpleRelocator("org.foo", "borg.foo", null, null);
+        SimpleRelocator relocator = new SimpleRelocator("org.foo", "borg.foo", Collections.emptyList(), Collections.emptyList());
         relocators.add( relocator );
         
         String content = "org.foo.Service\n";
@@ -199,7 +199,7 @@ public class ServiceResourceTransformerTest {
             JarEntry jarEntry = jarFile.getJarEntry( contentResource );
             assertNotNull( jarEntry );
             try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
-                String xformedContent = IOUtils.toString(entryStream, "utf-8");
+                String xformedContent = IOUtils.toString(entryStream, StandardCharsets.UTF_8 );
                 // must be two lines, with our two classes.
                 String[] classes = xformedContent.split("\r?\n");
                 boolean h1 = false;

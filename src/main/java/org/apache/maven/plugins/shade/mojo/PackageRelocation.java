@@ -19,6 +19,7 @@ package org.apache.maven.plugins.shade.mojo;
  * under the License.
  */
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,6 +37,12 @@ public class PackageRelocation
     private List<String> excludes;
 
     private boolean rawString;
+
+    public PackageRelocation()
+    {
+        this.includes = Collections.emptyList();
+        this.excludes = Collections.emptyList();
+    }
 
     public String getPattern()
     {

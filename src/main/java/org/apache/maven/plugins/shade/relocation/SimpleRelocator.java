@@ -22,6 +22,7 @@ package org.apache.maven.plugins.shade.relocation;
 import org.codehaus.plexus.util.SelectorUtils;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -117,17 +118,17 @@ public class SimpleRelocator
         this.excludes = normalizePatterns( excludes );
 
         // Don't replace all dots to slashes, otherwise /META-INF/maven/${groupId} can't be matched.
-        if ( includes != null && !includes.isEmpty() )
+        if ( !includes.isEmpty() )
         {
             this.includes.addAll( includes );
         }
 
-        if ( excludes != null && !excludes.isEmpty() )
+        if ( !excludes.isEmpty() )
         {
             this.excludes.addAll( excludes );
         }
 
-        if ( !rawString && this.excludes != null )
+        if ( !rawString && !this.excludes.isEmpty() )
         {
             // Create exclude pattern sets for sources
             for ( String exclude : this.excludes )
@@ -148,54 +149,55 @@ public class SimpleRelocator
 
     private static Set<String> normalizePatterns( Collection<String> patterns )
     {
-        Set<String> normalized = null;
-
-        if ( patterns != null && !patterns.isEmpty() )
+        if ( patterns.isEmpty() )
         {
-            normalized = new LinkedHashSet<>();
-            for ( String pattern : patterns )
-            {
-                String classPattern = pattern.replace( '.', '/' );
-                normalized.add( classPattern );
-                // Actually, class patterns should just use 'foo.bar.*' ending with a single asterisk, but some users
-                // mistake them for path patterns like 'my/path/**', so let us be a bit more lenient here.
-                if ( classPattern.endsWith( "/*" ) || classPattern.endsWith( "/**" ) )
-                {
-                    String packagePattern = classPattern.substring( 0, classPattern.lastIndexOf( '/' ) );
-                    normalized.add( packagePattern );
-                }
-            }
+            return Collections.emptySet();
         }
 
+        Set<String> normalized = new LinkedHashSet<>();
+        for ( String pattern : patterns )
+        {
+            String classPattern = pattern.replace( '.', '/' );
+            normalized.add( classPattern );
+            // Actually, class patterns should just use 'foo.bar.*' ending with a single asterisk, but some users
+            // mistake them for path patterns like 'my/path/**', so let us be a bit more lenient here.
+            if ( classPattern.endsWith( "/*" ) || classPattern.endsWith( "/**" ) )
+            {
+                String packagePattern = classPattern.substring( 0, classPattern.lastIndexOf( '/' ) );
+                normalized.add( packagePattern );
+            }
+        }
         return normalized;
+
+//        return patterns.stream()
+//                .map(s -> s.replace( '.', '/' ))
+//                .collect( Collectors.toSet());
+
     }
 
     private boolean isIncluded( String path )
     {
-        if ( includes != null && !includes.isEmpty() )
+        if ( includes.isEmpty() )
         {
-            for ( String include : includes )
-            {
-                if ( SelectorUtils.matchPath( include, path, true ) )
-                {
-                    return true;
-                }
-            }
-            return false;
+            return true;
         }
-        return true;
+
+        return includes.stream()
+                .anyMatch( s -> SelectorUtils.matchPath( s, path, true )  );
     }
 
     private boolean isExcluded( String path )
     {
-        if ( excludes != null && !excludes.isEmpty() )
+        if ( excludes.isEmpty() )
         {
-            for ( String exclude : excludes )
+            return false;
+        }
+
+        for ( String exclude : excludes )
+        {
+            if ( SelectorUtils.matchPath( exclude, path, true ) )
             {
-                if ( SelectorUtils.matchPath( exclude, path, true ) )
-                {
-                    return true;
-                }
+                return true;
             }
         }
         return false;
