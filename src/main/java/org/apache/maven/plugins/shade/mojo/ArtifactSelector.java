@@ -83,14 +83,7 @@ class ArtifactSelector
 
     private boolean matches( Collection<ArtifactId> patterns, ArtifactId id )
     {
-        for ( ArtifactId pattern : patterns )
-        {
-            if ( id.matches( pattern ) )
-            {
-                return true;
-            }
-        }
-        return false;
+        return patterns.stream().anyMatch( id::matches );
     }
 
 }

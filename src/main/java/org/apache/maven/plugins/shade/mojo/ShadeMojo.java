@@ -59,23 +59,26 @@ import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomReplaceTransformers;
 
 /**
@@ -126,19 +129,19 @@ public class ShadeMojo
      * Remote repositories which will be searched for source attachments.
      */
     @Parameter( readonly = true, required = true, defaultValue = "${project.remoteArtifactRepositories}" )
-    protected List<ArtifactRepository> remoteArtifactRepositories;
+    private List<ArtifactRepository> remoteArtifactRepositories;
 
     /**
      * Local maven repository.
      */
     @Parameter( readonly = true, required = true, defaultValue = "${localRepository}" )
-    protected ArtifactRepository localRepository;
+    private ArtifactRepository localRepository;
 
     /**
      * Artifact resolver, needed to download source jars for inclusion in classpath.
      */
     @Component
-    protected ArtifactResolver artifactResolver;
+    private ArtifactResolver artifactResolver;
 
     /**
      * Artifacts to include/exclude from the final artifact. Artifacts are denoted by composite identifiers of the
@@ -184,14 +187,14 @@ public class ShadeMojo
      */
     @SuppressWarnings( "MismatchedReadAndWriteOfArray" )
     @Parameter
-    private PackageRelocation[] relocations;
+    private PackageRelocation[] relocations = new PackageRelocation[0];
 
     /**
      * Resource transformers to be used. Please see the "Examples" section for more information on available
      * transformers and their configuration.
      */
     @Parameter
-    private ResourceTransformer[] transformers;
+    private ResourceTransformer[] transformers = new ResourceTransformer[0];
 
     /**
      * Archive Filters to be used. Allows you to specify an artifact in the form of a composite identifier as used by
@@ -217,7 +220,7 @@ public class ShadeMojo
      */
     @SuppressWarnings( "MismatchedReadAndWriteOfArray" )
     @Parameter
-    private ArchiveFilter[] filters;
+    private ArchiveFilter[] filters = new ArchiveFilter[0];
 
     /**
      * The destination directory for the shaded artifact.
@@ -844,10 +847,10 @@ public class ShadeMojo
     }
 
     private void copyFiles( File source, File target )
-        throws IOException
+            throws IOException
     {
-        try ( InputStream in = new FileInputStream( source );
-              OutputStream out = new FileOutputStream( target ) )
+        try ( InputStream in = Files.newInputStream( source.toPath() );
+              OutputStream out = Files.newOutputStream( target.toPath() ) )
         {
             IOUtil.copy( in, out );
         }
@@ -883,29 +886,15 @@ public class ShadeMojo
 
     private List<Relocator> getRelocators()
     {
-        List<Relocator> relocators = new ArrayList<>();
+        return Arrays.stream( relocations )
+                .map( r -> new SimpleRelocator( r.getPattern(), r.getShadedPattern(), r.getIncludes(), r.getExcludes(),
+                        r.isRawString() ) )
+                .collect( Collectors.toList() );
 
-        if ( relocations == null )
-        {
-            return relocators;
-        }
-
-        for ( PackageRelocation r : relocations )
-        {
-            relocators.add( new SimpleRelocator( r.getPattern(), r.getShadedPattern(), r.getIncludes(), r.getExcludes(),
-                                                 r.isRawString() ) );
-        }
-
-        return relocators;
     }
 
     private List<ResourceTransformer> getResourceTransformers()
     {
-        if ( transformers == null )
-        {
-            return Collections.emptyList();
-        }
-
         return Arrays.asList( transformers );
     }
 
@@ -915,7 +904,7 @@ public class ShadeMojo
         List<Filter> filters = new ArrayList<>();
         List<SimpleFilter> simpleFilters = new ArrayList<>();
 
-        if ( this.filters != null && this.filters.length > 0 )
+        if ( this.filters.length > 0 )
         {
             Map<Artifact, ArtifactId> artifacts = new HashMap<>();
 
@@ -1037,15 +1026,15 @@ public class ShadeMojo
 
         String shadedName;
 
-        if ( project.getBuild().getFinalName() != null )
+        if ( isNull( project.getBuild().getFinalName() ) )
         {
-            shadedName = project.getBuild().getFinalName() + "-" + classifier + "."
-                + artifact.getArtifactHandler().getExtension();
+            shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + classifier + "."
+                    + artifact.getArtifactHandler().getExtension();
         }
         else
         {
-            shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + classifier + "."
-                + artifact.getArtifactHandler().getExtension();
+            shadedName = project.getBuild().getFinalName() + "-" + classifier + "."
+                    + artifact.getArtifactHandler().getExtension();
         }
 
         return new File( outputDirectory, shadedName );
@@ -1056,6 +1045,8 @@ public class ShadeMojo
         return shadedArtifactFile( "tests" );
     }
 
+    private static final Predicate<Artifact> NON_POM_ARTIFACT = s -> !s.getType().equals( "pom" );
+
     // We need to find the direct dependencies that have been included in the uber JAR so that we can modify the
     // POM accordingly.
     private void createDependencyReducedPom( Set<String> artifactsToRemove )
@@ -1065,24 +1056,13 @@ public class ShadeMojo
 
         boolean modified = false;
 
-        List<Dependency> transitiveDeps = new ArrayList<>();
-
         // NOTE: By using the getArtifacts() we get the completely evaluated artifacts
         // including the system scoped artifacts with expanded values of properties used.
-        for ( Artifact artifact : project.getArtifacts() )
-        {
-            if ( "pom".equals( artifact.getType() ) )
-            {
-                // don't include pom type dependencies in dependency reduced pom
-                continue;
-            }
+        List<Dependency> transitiveDeps = project.getArtifacts().stream()
+                .filter( NON_POM_ARTIFACT )
+                .map( this::createDependency )
+                .collect( Collectors.toList() );
 
-            // promote
-            Dependency dep = createDependency( artifact );
-
-            // we'll figure out the exclusions in a bit.
-            transitiveDeps.add( dep );
-        }
         List<Dependency> origDeps = project.getDependencies();
 
         if ( promoteTransitiveDependencies )
@@ -1224,27 +1204,23 @@ public class ShadeMojo
         }
     }
 
+    private static final Predicate<Dependency> IS_SYSTEM_SCOPE = s -> s.getScope().equalsIgnoreCase( "system" );
+    private static final Predicate<Dependency> HAS_SCOPE = s -> nonNull( s.getScope() );
+
     private void removeSystemScopedDependencies( Set<String> artifactsToRemove, List<Dependency> originalDependencies )
     {
-        for ( Dependency dependency : originalDependencies )
-        {
-            if ( dependency.getScope() != null && dependency.getScope().equalsIgnoreCase( "system" ) )
-            {
-                artifactsToRemove.add( getId( dependency ) );
-            }
-        }
+        artifactsToRemove.addAll( originalDependencies.stream()
+                .filter( HAS_SCOPE.and( IS_SYSTEM_SCOPE ) )
+                .map( this::getId )
+                .collect( Collectors.toList() ) );
     }
 
     private void addSystemScopedDependencyFromNonInterpolatedPom( List<Dependency> dependencies,
                                                                   List<Dependency> originalDependencies )
     {
-        for ( Dependency dependency : originalDependencies )
-        {
-            if ( dependency.getScope() != null && dependency.getScope().equalsIgnoreCase( "system" ) )
-            {
-                dependencies.add( dependency );
-            }
-        }
+        dependencies.addAll( originalDependencies.stream()
+                .filter( HAS_SCOPE.and( IS_SYSTEM_SCOPE ) )
+                .collect( Collectors.toList() ) );
     }
 
     private Dependency createDependency( Artifact artifact )
