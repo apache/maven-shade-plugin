@@ -19,14 +19,15 @@ package org.apache.maven.plugins.shade.relocation;
  * under the License.
  */
 
-import org.codehaus.plexus.util.SelectorUtils;
-
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.codehaus.plexus.util.SelectorUtils;
 
 /**
  * @author Jason van Zyl
@@ -149,30 +150,23 @@ public class SimpleRelocator
 
     private static Set<String> normalizePatterns( Collection<String> patterns )
     {
-        if ( patterns.isEmpty() )
+        return patterns.stream()
+                .map( s -> s.replace( '.', '/' ) )
+                .flatMap( s -> Stream.concat( Stream.of( s ), convert( s ) ) )
+                .collect( Collectors.toSet() );
+
+    }
+
+    private static Stream<String> convert( String s )
+    {
+        if ( s.endsWith( "/*" ) || s.endsWith( "/**" ) )
         {
-            return Collections.emptySet();
+            return Stream.of( s.substring( 0, s.lastIndexOf( '/' ) ) );
         }
-
-        Set<String> normalized = new LinkedHashSet<>();
-        for ( String pattern : patterns )
+        else
         {
-            String classPattern = pattern.replace( '.', '/' );
-            normalized.add( classPattern );
-            // Actually, class patterns should just use 'foo.bar.*' ending with a single asterisk, but some users
-            // mistake them for path patterns like 'my/path/**', so let us be a bit more lenient here.
-            if ( classPattern.endsWith( "/*" ) || classPattern.endsWith( "/**" ) )
-            {
-                String packagePattern = classPattern.substring( 0, classPattern.lastIndexOf( '/' ) );
-                normalized.add( packagePattern );
-            }
+            return Stream.empty();
         }
-        return normalized;
-
-//        return patterns.stream()
-//                .map(s -> s.replace( '.', '/' ))
-//                .collect( Collectors.toSet());
-
     }
 
     private boolean isIncluded( String path )
@@ -188,19 +182,7 @@ public class SimpleRelocator
 
     private boolean isExcluded( String path )
     {
-        if ( excludes.isEmpty() )
-        {
-            return false;
-        }
-
-        for ( String exclude : excludes )
-        {
-            if ( SelectorUtils.matchPath( exclude, path, true ) )
-            {
-                return true;
-            }
-        }
-        return false;
+        return excludes.stream().anyMatch( s ->  SelectorUtils.matchPath( s, path, true ));
     }
 
     public boolean canRelocatePath( String path )
