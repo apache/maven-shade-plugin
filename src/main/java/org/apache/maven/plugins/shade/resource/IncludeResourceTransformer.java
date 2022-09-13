@@ -19,16 +19,16 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.codehaus.plexus.util.IOUtil;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+
+import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.codehaus.plexus.util.IOUtil;
 
 /**
  * A resource processor that allows the addition of an arbitrary file
@@ -68,7 +68,7 @@ public class IncludeResourceTransformer
         JarEntry jarEntry = new JarEntry( resource );
         jarEntry.setTime( time );
 
-        try ( InputStream in = new FileInputStream( file ) )
+        try ( InputStream in = Files.newInputStream( file.toPath() ) )
         {
             jos.putNextEntry( jarEntry );
             IOUtil.copy( in, jos );

@@ -182,7 +182,7 @@ public class SimpleRelocator
 
     private boolean isExcluded( String path )
     {
-        return excludes.stream().anyMatch( s ->  SelectorUtils.matchPath( s, path, true ));
+        return excludes.stream().anyMatch( s -> SelectorUtils.matchPath( s, path, true ) );
     }
 
     public boolean canRelocatePath( String path )

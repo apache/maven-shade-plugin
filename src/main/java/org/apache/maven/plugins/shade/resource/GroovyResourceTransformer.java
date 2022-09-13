@@ -19,18 +19,16 @@ package org.apache.maven.plugins.shade.resource;
  * under the License.
  */
 
-import org.apache.maven.plugins.shade.relocation.Relocator;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+
+import org.apache.maven.plugins.shade.relocation.Relocator;
 
 /**
  * Aggregate Apache Groovy extension modules descriptors
@@ -96,7 +94,7 @@ public class GroovyResourceTransformer
     @Override
     public boolean hasTransformedResource()
     {
-        return extensionClassesList.size() > 0 && staticExtensionClassesList.size() > 0;
+        return !( extensionClassesList.isEmpty() || staticExtensionClassesList.isEmpty() );
     }
 
     @Override
@@ -112,34 +110,15 @@ public class GroovyResourceTransformer
             Properties desc = new Properties();
             desc.put( "moduleName", extModuleName );
             desc.put( "moduleVersion", extModuleVersion );
-            if ( extensionClassesList.size() > 0 )
+            if ( !extensionClassesList.isEmpty() )
             {
-                desc.put( "extensionClasses", join( extensionClassesList ) );
+                desc.put( "extensionClasses", String.join( ",", extensionClassesList ) );
             }
-            if ( staticExtensionClassesList.size() > 0 )
+            if ( !staticExtensionClassesList.isEmpty() )
             {
-                desc.put( "staticExtensionClasses", join( staticExtensionClassesList ) );
+                desc.put( "staticExtensionClasses", String.join( ",", staticExtensionClassesList ) );
             }
             desc.store( os, null );
-        }
-    }
-
-    private String join( Collection<String> strings )
-    {
-        Iterator<String> it = strings.iterator();
-        switch ( strings.size() )
-        {
-            case 0:
-                return "";
-            case 1:
-                return it.next();
-            default:
-                StringBuilder buff = new StringBuilder( it.next() );
-                while ( it.hasNext() )
-                {
-                    buff.append( "," ).append( it.next() );
-                }
-                return buff.toString();
         }
     }
 
