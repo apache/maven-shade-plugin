@@ -39,6 +39,7 @@ public interface ResourceTransformer
      * @throws IOException When the IO blows up
      * @deprecated prefer ReproducibleResourceTransformer
      */
+    @Deprecated
     void processResource( String resource, InputStream is, List<Relocator> relocators )
         throws IOException;
 

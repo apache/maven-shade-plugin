@@ -44,19 +44,14 @@ public class DontIncludeResourceTransformer
         {
             return true;
         }
-        
-        if ( resources != null )
+
+        if ( resources == null )
         {
-            for ( String resourceEnd : resources )
-            {
-                if ( r.endsWith( resourceEnd ) )
-                {
-                    return true;
-                }
-            }
+            return false;
         }
 
-        return false;
+        return resources.stream().anyMatch( r::endsWith );
+
     }
 
     public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )

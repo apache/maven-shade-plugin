@@ -42,7 +42,7 @@ public class SisuIndexResourceTransformer
 {
     private static final String SISU_INDEX_PATH = "META-INF/sisu/javax.inject.Named";
 
-    private final ArrayList<String> indexEntries = new ArrayList<>();
+    private final List<String> indexEntries = new ArrayList<>();
 
     private long time = Long.MIN_VALUE;
 

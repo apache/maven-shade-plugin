@@ -64,13 +64,8 @@ public class ResourceBundleAppendingTransformer
     public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
         throws IOException
     {
-        ByteArrayOutputStream data = dataMap.get( resource );
-        if ( data == null )
-        {
-            data = new ByteArrayOutputStream();
-            dataMap.put( resource, data );
-        }
-        
+        ByteArrayOutputStream data = dataMap.computeIfAbsent( resource, v -> new ByteArrayOutputStream() );
+
         IOUtil.copy( is, data );
         data.write( '\n' );
 
