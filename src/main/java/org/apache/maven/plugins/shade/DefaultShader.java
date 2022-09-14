@@ -19,10 +19,12 @@ package org.apache.maven.plugins.shade;
  * under the License.
  */
 
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,6 +32,7 @@ import java.io.OutputStreamWriter;
 import java.io.PushbackInputStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,9 +53,6 @@ import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
@@ -80,6 +80,8 @@ public class DefaultShader
     implements Shader
 {
     private static final int BUFFER_SIZE = 32 * 1024;
+
+    private static final String CLASS = ".class";
 
     private final Logger logger;
 
@@ -116,8 +118,9 @@ public class DefaultShader
         // noinspection ResultOfMethodCallIgnored
         shadeRequest.getUberJar().getParentFile().mkdirs();
 
-        try ( JarOutputStream out  =
-                  new JarOutputStream( new BufferedOutputStream( new FileOutputStream( shadeRequest.getUberJar() ) ) ) )
+        try ( JarOutputStream out =
+                      new JarOutputStream( new BufferedOutputStream(
+                              Files.newOutputStream( shadeRequest.getUberJar().toPath() ) ) ) )
         {
             goThroughAllJarEntriesForManifestTransformer( shadeRequest, resources, manifestTransformer, out );
 
@@ -143,7 +146,7 @@ public class DefaultShader
             // Log a summary of duplicates
             logSummaryOfDuplicates( overlapping );
 
-            if ( overlapping.keySet().size() > 0 )
+            if ( !overlapping.keySet().isEmpty() )
             {
                 showOverlappingWarning();
             }
@@ -302,7 +305,7 @@ public class DefaultShader
             }
 
             duplicates.put( name, jar );
-            if ( name.endsWith( ".class" ) )
+            if ( name.endsWith( CLASS ) )
             {
                 addRemappedClass( jos, jar, name, entry.getTime(), in, packageMapper );
             }
@@ -400,9 +403,9 @@ public class DefaultShader
 
             for ( String name : overlapping.get( jarz ) )
             {
-                if ( name.endsWith( ".class" ) )
+                if ( name.endsWith( CLASS ) )
                 {
-                    classes.add( name.replace( ".class", "" ).replace( "/", "." ) );
+                    classes.add( name.replace( CLASS, "" ).replace( "/", "." ) );
                 }
                 else
                 {
@@ -576,7 +579,7 @@ public class DefaultShader
         try
         {
             // Now we put it back on so the class file is written out with the right extension.
-            JarEntry entry = new JarEntry( mappedName + ".class" );
+            JarEntry entry = new JarEntry( mappedName + CLASS );
             entry.setTime( time );
             jos.putNextEntry( entry );
 
