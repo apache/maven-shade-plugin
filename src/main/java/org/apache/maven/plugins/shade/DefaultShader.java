@@ -342,33 +342,35 @@ public class DefaultShader
                                                                JarOutputStream jos )
         throws IOException
     {
-        if ( manifestTransformer != null )
+        if ( manifestTransformer == null )
         {
-            for ( File jar : shadeRequest.getJars() )
+            return;
+        }
+
+        for ( File jar : shadeRequest.getJars() )
+        {
+            try ( JarFile jarFile = newJarFile( jar ) )
             {
-                try ( JarFile jarFile = newJarFile( jar ) )
+                for ( Enumeration<JarEntry> en = jarFile.entries(); en.hasMoreElements(); )
                 {
-                    for ( Enumeration<JarEntry> en = jarFile.entries(); en.hasMoreElements(); )
+                    JarEntry entry = en.nextElement();
+                    String resource = entry.getName();
+                    if ( manifestTransformer.canTransformResource( resource ) )
                     {
-                        JarEntry entry = en.nextElement();
-                        String resource = entry.getName();
-                        if ( manifestTransformer.canTransformResource( resource ) )
+                        resources.add( resource );
+                        try ( InputStream inputStream = jarFile.getInputStream( entry ) )
                         {
-                            resources.add( resource );
-                            try ( InputStream inputStream = jarFile.getInputStream( entry ) )
-                            {
-                                manifestTransformer.processResource( resource, inputStream,
-                                                                     shadeRequest.getRelocators(), entry.getTime() );
-                            }
-                            break;
+                            manifestTransformer.processResource( resource, inputStream,
+                                                                 shadeRequest.getRelocators(), entry.getTime() );
                         }
+                        break;
                     }
                 }
             }
-            if ( manifestTransformer.hasTransformedResource() )
-            {
-                manifestTransformer.modifyOutputStream( jos );
-            }
+        }
+        if ( manifestTransformer.hasTransformedResource() )
+        {
+            manifestTransformer.modifyOutputStream( jos );
         }
     }
 
