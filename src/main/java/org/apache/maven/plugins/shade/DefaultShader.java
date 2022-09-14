@@ -46,6 +46,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -389,14 +390,10 @@ public class DefaultShader
     {
         for ( Collection<File> jarz : overlapping.keySet() )
         {
-            List<String> jarzS = new ArrayList<>();
-
-            for ( File jjar : jarz )
-            {
-                jarzS.add( jjar.getName() );
-            }
-
-            Collections.sort( jarzS ); // deterministic messages to be able to compare outputs (useful on CI)
+            List<String> jarzS = jarz.stream()
+                    .map( File::getName )
+                    .sorted()
+                    .collect( Collectors.toList() );
 
             List<String> classes = new LinkedList<>();
             List<String> resources = new LinkedList<>();
@@ -413,7 +410,6 @@ public class DefaultShader
                 }
             }
 
-            //CHECKSTYLE_OFF: LineLength
             final Collection<String> overlaps = new ArrayList<>();
             if ( !classes.isEmpty() )
             {
@@ -443,9 +439,8 @@ public class DefaultShader
             all.addAll( resources );
 
             logger.warn(
-                String.join( ", ", jarzS ) + " define " + all.size()
-                + " overlapping " + String.join( " and ", overlaps ) + ": " );
-            //CHECKSTYLE_ON: LineLength
+                    String.join( ", ", jarzS ) + " define " + all.size()
+                            + " overlapping " + String.join( " and ", overlaps ) + ": " );
 
             Collections.sort( all );
 
