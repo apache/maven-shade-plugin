@@ -146,12 +146,6 @@
     </dependency>
 
     <!-- Plexus -->
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-utils</artifactId>
-      <version>3.3.0</version>
-    </dependency>
-
     <!-- DI -->
     <dependency>
       <groupId>javax.inject</groupId>

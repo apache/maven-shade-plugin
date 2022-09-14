@@ -20,7 +20,6 @@ package org.apache.maven.plugins.shade.resource;
  */
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.codehaus.plexus.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -117,7 +116,7 @@ public class ApacheNoticeResourceTransformer
         }
 
         BufferedReader reader;
-        if ( StringUtils.isNotEmpty( encoding ) )
+        if ( ( ( encoding != null ) && ( !encoding.isEmpty() ) ) )
         {
             reader = new BufferedReader( new InputStreamReader( is, encoding ) );
         }
@@ -144,12 +143,8 @@ public class ApacheNoticeResourceTransformer
                         if ( lineCount == 1
                             && sb.toString().contains( "This product includes/uses software(s) developed by" ) )
                         {
-                            currentOrg = organizationEntries.get( sb.toString().trim() );
-                            if ( currentOrg == null )
-                            {
-                                currentOrg = new TreeSet<>();
-                                organizationEntries.put( sb.toString().trim(), currentOrg );
-                            }
+                            currentOrg = organizationEntries
+                                    .computeIfAbsent( sb.toString().trim(), k -> new TreeSet<>() );
                             sb = new StringBuilder();
                         }
                         else if ( sb.length() > 0 && currentOrg != null )
@@ -215,7 +210,7 @@ public class ApacheNoticeResourceTransformer
         jos.putNextEntry( jarEntry );
 
         Writer writer;
-        if ( StringUtils.isNotEmpty( encoding ) )
+        if ( ( ( encoding != null ) && ( !encoding.isEmpty() ) ) )
         {
             writer = new OutputStreamWriter( jos, encoding );
         }
