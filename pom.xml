@@ -70,7 +70,7 @@
     <sisu.version>0.3.5</sisu.version>
     <currentVersion>${project.version}</currentVersion>
     <asmVersion>9.3</asmVersion>
-    <slf4j.version>1.7.32</slf4j.version>
+    <slf4j.version>2.0.2</slf4j.version>
     <project.build.outputTimestamp>2022-09-11T10:18:06Z</project.build.outputTimestamp>
   </properties>
 
