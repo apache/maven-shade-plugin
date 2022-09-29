@@ -25,6 +25,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -139,6 +140,12 @@ public class ShadeMojo
      */
     @Component
     protected ArtifactResolver artifactResolver;
+
+    /**
+     * Model reader for parsing pom file
+     */
+    @Component
+    private ModelReader modelReader;
 
     /**
      * Artifacts to include/exclude from the final artifact. Artifacts are denoted by composite identifiers of the
@@ -481,7 +488,7 @@ public class ShadeMojo
 
             List<ResourceTransformer> resourceTransformers = getResourceTransformers();
 
-            if ( createDependencyReducedPom )
+            if ( createDependencyReducedPom && project.getFile() != null )
             {
                 createDependencyReducedPom( artifactIds );
 
@@ -1090,7 +1097,8 @@ public class ShadeMojo
             origDeps = transitiveDeps;
         }
 
-        Model model = project.getOriginalModel();
+        final Model model = modelReader.read( project.getFile(), null );
+
         // MSHADE-185: We will remove all system scoped dependencies which usually
         // have some kind of property usage. At this time the properties within
         // such things are already evaluated.
