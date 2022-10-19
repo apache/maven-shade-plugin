@@ -1630,7 +1630,6 @@ public class MavenJDOMWriter
         iterateRepository( innerCount, root, value.getRepositories(), "repositories", "repository" );
         iterateRepository( innerCount, root, value.getPluginRepositories(), "pluginRepositories", "pluginRepository" );
         iterateDependency( innerCount, root, value.getDependencies(), "dependencies", "dependency" );
-        findAndReplaceXpp3DOM( innerCount, root, "reports", (Xpp3Dom) value.getReports() );
         updateReporting( value.getReporting(), "reporting", innerCount, root );
         updateDependencyManagement( value.getDependencyManagement(), "dependencyManagement", innerCount, root );
         updateDistributionManagement( value.getDistributionManagement(), "distributionManagement", innerCount, root );
@@ -1658,7 +1657,6 @@ public class MavenJDOMWriter
             iterateRepository( innerCount, root, value.getPluginRepositories(), "pluginRepositories",
                                "pluginRepository" );
             iterateDependency( innerCount, root, value.getDependencies(), "dependencies", "dependency" );
-            findAndReplaceXpp3DOM( innerCount, root, "reports", (Xpp3Dom) value.getReports() );
             updateReporting( value.getReporting(), "reporting", innerCount, root );
             updateDependencyManagement( value.getDependencyManagement(), "dependencyManagement", innerCount, root );
             updateDistributionManagement( value.getDistributionManagement(), "distributionManagement", innerCount, root );
@@ -1896,7 +1894,6 @@ public class MavenJDOMWriter
         iterateRepository( innerCount, root, value.getRepositories(), "repositories", "repository" );
         iterateRepository( innerCount, root, value.getPluginRepositories(), "pluginRepositories", "pluginRepository" );
         iterateDependency( innerCount, root, value.getDependencies(), "dependencies", "dependency" );
-        findAndReplaceXpp3DOM( innerCount, root, "reports", (Xpp3Dom) value.getReports() );
         updateReporting( value.getReporting(), "reporting", innerCount, root );
         updateDependencyManagement( value.getDependencyManagement(), "dependencyManagement", innerCount, root );
         updateDistributionManagement( value.getDistributionManagement(), "distributionManagement", innerCount, root );
