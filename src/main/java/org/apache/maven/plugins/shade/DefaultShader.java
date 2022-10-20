@@ -22,7 +22,6 @@ package org.apache.maven.plugins.shade;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -62,6 +61,7 @@ import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ReproducibleResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.codehaus.plexus.util.IOUtil;
+import org.codehaus.plexus.util.io.CachingOutputStream;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -116,7 +116,8 @@ public class DefaultShader
         shadeRequest.getUberJar().getParentFile().mkdirs();
 
         try ( JarOutputStream out  =
-                  new JarOutputStream( new BufferedOutputStream( new FileOutputStream( shadeRequest.getUberJar() ) ) ) )
+                  new JarOutputStream( new BufferedOutputStream(
+                          new CachingOutputStream( shadeRequest.getUberJar() ) ) ) )
         {
             goThroughAllJarEntriesForManifestTransformer( shadeRequest, resources, manifestTransformer, out );
 

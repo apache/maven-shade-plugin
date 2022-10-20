@@ -28,6 +28,9 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -338,6 +341,44 @@ public class DefaultShaderTest
 
     @Test
     public void testShaderWithNestedJar() throws Exception
+    {
+        TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+        final String innerJarFileName = "inner.jar";
+
+        temporaryFolder.create();
+        File innerJar = temporaryFolder.newFile( innerJarFileName );
+        try ( JarOutputStream jos = new JarOutputStream( Files.newOutputStream( innerJar.toPath() ) ) )
+        {
+            jos.putNextEntry( new JarEntry( "foo.txt" ) );
+            jos.write( "c1".getBytes( StandardCharsets.UTF_8 ) );
+            jos.closeEntry();
+        }
+
+        ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars( new LinkedHashSet<>( Collections.singleton( innerJar ) ) );
+        shadeRequest.setFilters( Collections.emptyList() );
+        shadeRequest.setRelocators( Collections.emptyList() );
+        shadeRequest.setResourceTransformers( Collections.emptyList() );
+        File shadedFile = temporaryFolder.newFile( "shaded.jar" );
+        shadeRequest.setUberJar( shadedFile );
+
+        DefaultShader shader = newShader();
+        shader.shade( shadeRequest );
+
+        FileTime lastModified = FileTime.from( Files.getLastModifiedTime( shadedFile.toPath() ).toInstant()
+                .minus( 5, ChronoUnit.SECONDS ) );
+
+        Files.setLastModifiedTime( shadedFile.toPath(), lastModified );
+
+        shader.shade(shadeRequest);
+        assertEquals( lastModified, Files.getLastModifiedTime( shadedFile.toPath() ) );
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void testShaderNoOverwrite() throws Exception
     {
         TemporaryFolder temporaryFolder = new TemporaryFolder();
 
