@@ -121,7 +121,7 @@ public class ServiceResourceTransformerTest {
             assertNotNull( jarEntry );
             try ( InputStream entryStream = jarFile.getInputStream( jarEntry ) ) {
                 String xformedContent = IOUtils.toString( entryStream, StandardCharsets.UTF_8);
-                assertEquals( contentShaded + contentShaded, xformedContent );
+                assertEquals( contentShaded, xformedContent );
             } finally {
                 jarFile.close();
             }

@@ -19,11 +19,13 @@ package org.apache.maven.plugins.shade;
  * under the License.
  */
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -40,6 +42,7 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 
@@ -50,6 +53,7 @@ import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.AppendingTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ServicesResourceTransformer;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.Os;
 import org.junit.Assert;
@@ -82,6 +86,8 @@ public class DefaultShaderTest
 {
     private static final String[] EXCLUDES = new String[] { "org/codehaus/plexus/util/xml/Xpp3Dom",
         "org/codehaus/plexus/util/xml/pull.*" };
+
+    private final String NEWLINE = "\n";
 
     @Test
     public void testNoopWhenNotRelocated() throws IOException, MojoExecutionException {
@@ -419,6 +425,54 @@ public class DefaultShaderTest
 
         //After shading, entry compression method should not be changed.
         Assert.assertEquals( entry.getMethod(), ZipEntry.STORED );
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void testShaderWithDuplicateService() throws Exception
+    {
+        TemporaryFolder temporaryFolder = new TemporaryFolder();
+        temporaryFolder.create();
+
+        String serviceEntryName = "META-INF/services/my.foo.Service";
+        String serviceEntryValue = "my.foo.impl.Service1";
+
+        File innerJar1 = temporaryFolder.newFile( "inner1.jar" );
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream( innerJar1.toPath() ) ) )
+        {
+            jos.putNextEntry( new JarEntry(serviceEntryName) );
+            jos.write( ( serviceEntryValue + NEWLINE ).getBytes( StandardCharsets.UTF_8 ) );
+            jos.closeEntry();
+        }
+
+        File innerJar2 = temporaryFolder.newFile( "inner2.jar" );
+        try ( JarOutputStream jos = new JarOutputStream( Files.newOutputStream( innerJar2.toPath() ) ) )
+        {
+            jos.putNextEntry( new JarEntry(serviceEntryName) );
+            jos.write( ( serviceEntryValue + NEWLINE ).getBytes( StandardCharsets.UTF_8 ) );
+            jos.closeEntry();
+        }
+
+        ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars( new LinkedHashSet<>( Arrays.asList( innerJar1, innerJar2 ) ) );
+        shadeRequest.setFilters( Collections.emptyList() );
+        shadeRequest.setRelocators( Collections.emptyList() );
+        shadeRequest.setResourceTransformers( Collections.singletonList( new ServicesResourceTransformer() ) );
+        File shadedFile = temporaryFolder.newFile( "shaded.jar" );
+        shadeRequest.setUberJar( shadedFile );
+
+        DefaultShader shader = newShader();
+        shader.shade( shadeRequest );
+
+        JarFile shadedJarFile = new JarFile( shadedFile );
+        JarEntry entry = shadedJarFile.getJarEntry(serviceEntryName);
+
+        List<String> lines = new BufferedReader( new InputStreamReader( shadedJarFile.getInputStream( entry ), StandardCharsets.UTF_8 ) )
+                .lines().collect( Collectors.toList() );
+
+        //After shading, there should be a single input
+        Assert.assertEquals( Collections.singletonList( serviceEntryValue ), lines );
 
         temporaryFolder.delete();
     }
