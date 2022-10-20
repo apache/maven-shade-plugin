@@ -22,11 +22,12 @@ package org.apache.maven.plugins.shade.resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -45,7 +46,7 @@ public class ServicesResourceTransformer
 {
     private static final String SERVICES_PATH = "META-INF/services";
 
-    private final Map<String, ArrayList<String>> serviceEntries = new HashMap<>();
+    private final Map<String, Set<String>> serviceEntries = new HashMap<>();
 
     private long time = Long.MIN_VALUE;
 
@@ -68,7 +69,7 @@ public class ServicesResourceTransformer
         }
         resource = SERVICES_PATH + '/' + resource;
 
-        ArrayList<String> out = serviceEntries.computeIfAbsent( resource, k -> new ArrayList<>() );
+        Set<String> out = serviceEntries.computeIfAbsent( resource, k -> new LinkedHashSet<>() );
 
         Scanner scanner = new Scanner( is, StandardCharsets.UTF_8.name() );
         while ( scanner.hasNextLine() )
@@ -98,10 +99,10 @@ public class ServicesResourceTransformer
     public void modifyOutputStream( JarOutputStream jos )
             throws IOException
     {
-        for ( Map.Entry<String, ArrayList<String>> entry : serviceEntries.entrySet() )
+        for ( Map.Entry<String, Set<String>> entry : serviceEntries.entrySet() )
         {
             String key = entry.getKey();
-            ArrayList<String> data = entry.getValue();
+            Set<String> data = entry.getValue();
 
             JarEntry jarEntry = new JarEntry( key );
             jarEntry.setTime( time );
