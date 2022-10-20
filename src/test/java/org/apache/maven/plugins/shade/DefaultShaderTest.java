@@ -477,6 +477,45 @@ public class DefaultShaderTest
         temporaryFolder.delete();
     }
 
+    @Test
+    public void testShaderWithSmallEntries() throws Exception
+    {
+        TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+        final String innerJarFileName = "inner.jar";
+        int len;
+
+        temporaryFolder.create();
+        File innerJar = temporaryFolder.newFile( innerJarFileName );
+        try ( JarOutputStream jos = new JarOutputStream( new FileOutputStream( innerJar ) ) )
+        {
+            jos.putNextEntry( new JarEntry( "foo.txt" ) );
+            byte[] bytes = "c1".getBytes(StandardCharsets.UTF_8);
+            len = bytes.length;
+            jos.write( bytes );
+            jos.closeEntry();
+        }
+
+        ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars( new LinkedHashSet<>( Collections.singleton( innerJar ) ) );
+        shadeRequest.setFilters( new ArrayList<Filter>() );
+        shadeRequest.setRelocators( new ArrayList<Relocator>() );
+        shadeRequest.setResourceTransformers( new ArrayList<ResourceTransformer>() );
+        File shadedFile = temporaryFolder.newFile( "shaded.jar" );
+        shadeRequest.setUberJar( shadedFile );
+
+        DefaultShader shader = newShader();
+        shader.shade( shadeRequest );
+
+        JarFile shadedJarFile = new JarFile( shadedFile );
+        JarEntry entry = shadedJarFile.getJarEntry( "foo.txt" );
+
+        //After shading, entry compression method should not be changed.
+        Assert.assertEquals( entry.getSize(), len );
+
+        temporaryFolder.delete();
+    }
+
     private void writeEntryWithoutCompression( String entryName, byte[] entryBytes, JarOutputStream jos ) throws IOException
     {
         final JarEntry entry = new JarEntry( entryName );
