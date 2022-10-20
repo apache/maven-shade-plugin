@@ -19,18 +19,25 @@ package org.apache.maven.plugins.shade.filter;
  * under the License.
  */
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.jar.JarOutputStream;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -52,6 +59,7 @@ public class MinijarFilterTest
 
     private File outputDirectory;
     private File emptyFile;
+    private File jarFile;
     private Log log;
     private ArgumentCaptor<CharSequence> logCaptor;
 
@@ -61,6 +69,8 @@ public class MinijarFilterTest
     {
         this.outputDirectory = tempFolder.newFolder();
         this.emptyFile = tempFolder.newFile();
+        this.jarFile = tempFolder.newFile();
+        new JarOutputStream( new FileOutputStream( this.jarFile ) ).close();
         this.log = mock(Log.class);
         logCaptor = ArgumentCaptor.forClass(CharSequence.class);
     }
@@ -186,15 +196,14 @@ public class MinijarFilterTest
     @Test
     public void removeServicesShouldIgnoreDirectories() throws Exception {
         String classPathElementToIgnore = tempFolder.newFolder().getAbsolutePath();
-        MavenProject mockedProject = mockProject( outputDirectory, emptyFile, classPathElementToIgnore );
+        MavenProject mockedProject = mockProject( outputDirectory, jarFile, classPathElementToIgnore );
 
         new MinijarFilter(mockedProject, log);
 
-        verify(log, times(1)).warn(
-            "Not a JAR file candidate. Ignoring classpath element '" + classPathElementToIgnore
-                    + "' (" + new java.io.FileNotFoundException( classPathElementToIgnore + " (Is a directory)" )
-                    + ")."
-        );
+        verify( log, times( 1 ) ).warn( logCaptor.capture() );
+
+        assertThat( logCaptor.getValue().toString(), startsWith(
+                "Not a JAR file candidate. Ignoring classpath element '" + classPathElementToIgnore + "' (" ) );
     }
 
 }
