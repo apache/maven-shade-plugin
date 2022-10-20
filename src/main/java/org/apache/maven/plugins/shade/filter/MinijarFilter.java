@@ -129,11 +129,17 @@ public class MinijarFilter
             neededClasses.removeAll( removable );
             try
             {
+                // getRuntimeClasspathElements returns a list of
+                //  - the build output directory
+                //  - all the paths to the dependencies' jars
+                // We thereby need to ignore the build directory because we don't want
+                // to remove anything from it, as it's the starting point of the
+                // minification process.
                 for ( final String fileName : project.getRuntimeClasspathElements() )
                 {
-                    if ( new File( fileName ).isDirectory() )
+                    // Ignore the build directory from this project
+                    if ( fileName.equals( project.getBuild().getOutputDirectory() ) )
                     {
-                        log.debug( "Not a JAR file candidate. Ignoring classpath element '" + fileName + "'." );
                         continue;
                     }
                     if ( removeServicesFromJar( cp, neededClasses, fileName ) )
@@ -184,7 +190,7 @@ public class MinijarFilter
         }
         catch ( final IOException e )
         {
-            log.warn( e.getMessage() );
+            log.warn( "Not a JAR file candidate. Ignoring classpath element '" + fileName + "' (" + e + ")." );
         }
         return repeatScan;
     }

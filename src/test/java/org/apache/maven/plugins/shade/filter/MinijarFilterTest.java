@@ -30,13 +30,12 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.apache.maven.model.Build;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.Before;
@@ -51,6 +50,7 @@ public class MinijarFilterTest
     @Rule
     public TemporaryFolder tempFolder = TemporaryFolder.builder().assureDeletion().build();
 
+    private File outputDirectory;
     private File emptyFile;
     private Log log;
     private ArgumentCaptor<CharSequence> logCaptor;
@@ -59,6 +59,7 @@ public class MinijarFilterTest
     public void init()
         throws IOException
     {
+        this.outputDirectory = tempFolder.newFolder();
         this.emptyFile = tempFolder.newFile();
         this.log = mock(Log.class);
         logCaptor = ArgumentCaptor.forClass(CharSequence.class);
@@ -73,7 +74,7 @@ public class MinijarFilterTest
     {
         assumeFalse( "Expected to run under JDK8+", System.getProperty("java.version").startsWith("1.7") );
 
-        MavenProject mavenProject = mockProject( emptyFile );
+        MavenProject mavenProject = mockProject( outputDirectory, emptyFile );
 
         MinijarFilter mf = new MinijarFilter( mavenProject, log );
 
@@ -90,7 +91,7 @@ public class MinijarFilterTest
         throws IOException
     {
         // project with pom packaging and no artifact.
-        MavenProject mavenProject = mockProject( null );
+        MavenProject mavenProject = mockProject( outputDirectory, null );
         mavenProject.setPackaging( "pom" );
 
         MinijarFilter mf = new MinijarFilter( mavenProject, log );
@@ -106,7 +107,7 @@ public class MinijarFilterTest
 
     }
 
-    private MavenProject mockProject( File file, String... classPathElements )
+    private MavenProject mockProject( File outputDirectory, File file, String... classPathElements )
     {
         MavenProject mavenProject = mock( MavenProject.class );
 
@@ -130,8 +131,19 @@ public class MinijarFilterTest
 
         when( mavenProject.getArtifact().getFile() ).thenReturn( file );
 
+        Build build = new Build();
+        build.setOutputDirectory( outputDirectory.toString() );
+
+        List<String> classpath = new ArrayList<>();
+        classpath.add( outputDirectory.toString() );
+        if ( file != null )
+        {
+            classpath.add(file.toString());
+        }
+        classpath.addAll( Arrays.asList( classPathElements ) );
+        when( mavenProject.getBuild() ).thenReturn( build );
         try {
-            when(mavenProject.getRuntimeClasspathElements()).thenReturn(Arrays.asList(classPathElements));
+            when(mavenProject.getRuntimeClasspathElements()).thenReturn(classpath);
         } catch (DependencyResolutionRequiredException e) {
             fail("Encountered unexpected exception: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
@@ -173,14 +185,15 @@ public class MinijarFilterTest
      */
     @Test
     public void removeServicesShouldIgnoreDirectories() throws Exception {
-        String classPathElementToIgnore = tempFolder.getRoot().getAbsolutePath();
-        MavenProject mockedProject = mockProject(emptyFile, classPathElementToIgnore);
+        String classPathElementToIgnore = tempFolder.newFolder().getAbsolutePath();
+        MavenProject mockedProject = mockProject( outputDirectory, emptyFile, classPathElementToIgnore );
 
         new MinijarFilter(mockedProject, log);
 
-        verify(log, never()).warn(logCaptor.capture());
-        verify(log, times(1)).debug(
-            "Not a JAR file candidate. Ignoring classpath element '" + classPathElementToIgnore + "'."
+        verify(log, times(1)).warn(
+            "Not a JAR file candidate. Ignoring classpath element '" + classPathElementToIgnore
+                    + "' (" + new java.io.FileNotFoundException( classPathElementToIgnore + " (Is a directory)" )
+                    + ")."
         );
     }
 
