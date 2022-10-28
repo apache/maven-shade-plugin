@@ -785,7 +785,7 @@ public class ShadeMojo
         {
             getLog().warn( "Skipping empty test jar " + artifactId + "." );
         }
-        for ( String artifactId : emptyTestArtifacts )
+        for ( String artifactId : emptyTestSourceArtifacts )
         {
             getLog().warn( "Skipping empty test source jar " + artifactId + "." );
         }
