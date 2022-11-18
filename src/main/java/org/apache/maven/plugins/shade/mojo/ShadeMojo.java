@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1150,7 +1151,7 @@ public class ShadeMojo
                 if ( generateUniqueDependencyReducedPom )
                 {
                     dependencyReducedPomLocation =
-                        File.createTempFile( "dependency-reduced-pom-", ".xml", project.getBasedir() );
+                            Files.createTempFile( project.getBasedir().toPath(), "dependency-reduced-pom-", ".xml" ).toFile();
                     project.getProperties().setProperty( "maven.shade.dependency-reduced-pom",
                                                          dependencyReducedPomLocation.getAbsolutePath() );
                 }

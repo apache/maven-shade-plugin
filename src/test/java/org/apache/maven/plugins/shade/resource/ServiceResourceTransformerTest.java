@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,7 +66,7 @@ public class ServiceResourceTransformerTest {
         xformer.processResource( contentResource, contentStream, relocators, 0 );
         contentStream.close();
 
-        File tempJar = File.createTempFile("shade.", ".jar");
+        File tempJar = Files.createTempFile( "shade.", ".jar" ).toFile();
         tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream( tempJar );
         try ( JarOutputStream jos = new JarOutputStream( fos ) ) {
@@ -109,7 +110,7 @@ public class ServiceResourceTransformerTest {
             xformer.processResource(contentResourceShaded, contentStream, relocators, 0);
         }
 
-        File tempJar = File.createTempFile("shade.", ".jar");
+        File tempJar = Files.createTempFile( "shade.", ".jar" ).toFile();
         tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream( tempJar );
         try ( JarOutputStream jos = new JarOutputStream( fos ) ) {
@@ -145,7 +146,7 @@ public class ServiceResourceTransformerTest {
         xformer.processResource( contentResource, contentStream, relocators, 0 );
         contentStream.close();
 
-        File tempJar = File.createTempFile("shade.", ".jar");
+        File tempJar = Files.createTempFile( "shade.", ".jar" ).toFile();
         tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream( tempJar );
         try ( JarOutputStream jos = new JarOutputStream( fos ) ) {
@@ -188,7 +189,7 @@ public class ServiceResourceTransformerTest {
         xformer.processResource( contentResource, contentStream, relocators, 0 );
         contentStream.close();
 
-        File tempJar = File.createTempFile("shade.", ".jar");
+        File tempJar = Files.createTempFile( "shade.", ".jar" ).toFile();
         tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream( tempJar );
         try ( JarOutputStream jos = new JarOutputStream( fos ) ) {

@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.jar.JarFile;
@@ -75,7 +76,7 @@ public class GroovyResourceTransformerTest
     private static Properties transform( GroovyResourceTransformer transformer )
         throws Exception
     {
-        File tempJar = File.createTempFile( "shade.", ".jar" );
+        File tempJar = Files.createTempFile( "shade.", ".jar" ).toFile();
         tempJar.deleteOnExit();
 
         try ( FileOutputStream fos = new FileOutputStream( tempJar );
