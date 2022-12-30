@@ -378,9 +378,9 @@ public class DefaultShader
 
     private void showOverlappingWarning()
     {
-        logger.warn( "maven-shade-plugin has detected that some class files are" );
+        logger.warn( "maven-shade-plugin has detected that some files are" );
         logger.warn( "present in two or more JARs. When this happens, only one" );
-        logger.warn( "single version of the class is copied to the uber jar." );
+        logger.warn( "single version of the file is copied to the uber jar." );
         logger.warn( "Usually this is not harmful and you can skip these warnings," );
         logger.warn( "otherwise try to manually exclude artifacts based on" );
         logger.warn( "mvn dependency:tree -Ddetail=true and the above output." );
