@@ -90,6 +90,9 @@
     <contributor>
       <name>Torsten Curdt</name>
     </contributor>
+    <contributor>
+      <name>Niels Basjes</name>
+    </contributor>
   </contributors>
 
   <dependencyManagement>

@@ -50,9 +50,9 @@ mvn package
         </configuration>
         <executions>
           <execution>
-            <phase>package</phase>
             <goals>
-              <goal>shade</goal>
+              <goal>clean</goal> <!-- runs by default in the `clean` phase -->
+              <goal>shade</goal> <!-- runs by default in the `package` phase -->
             </goals>
           </execution>
         </executions>

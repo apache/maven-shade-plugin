@@ -30,7 +30,10 @@ ${project.name}
 
 * Goals Overview
 
-  The Shade Plugin has a single goal:
+  The Shade Plugin has two goals:
+
+  * {{{./clean-mojo.html}shade:clean}} is bound to the <<<clean>>> phase and
+  is used to remove the intermediate files created by {{shade:shade}}.
 
   * {{{./shade-mojo.html}shade:shade}} is bound to the <<<package>>> phase and
   is used to create a shaded jar.
