@@ -21,6 +21,7 @@ package org.apache.maven.plugins.shade.mojo;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Exclusion;
@@ -54,8 +55,6 @@ import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.artifact.ArtifactType;
-import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
@@ -842,12 +841,15 @@ public class ShadeMojo
 
     private File resolveArtifactForClassifier( Artifact artifact, String classifier )
     {
-        ArtifactType artifactType = session.getRepositorySession().getArtifactTypeRegistry().get( artifact.getType() );
-        org.eclipse.aether.artifact.DefaultArtifact coordinate = new DefaultArtifact( artifact.getGroupId(),
-                artifact.getArtifactId(), classifier, artifactType.getExtension(), artifact.getVersion(),
-                null, artifactType );
-        ArtifactRequest request = new ArtifactRequest(
-                coordinate, RepositoryUtils.toRepos( project.getRemoteArtifactRepositories() ), "shade" );
+        org.eclipse.aether.artifact.Artifact coordinate = RepositoryUtils.toArtifact(
+                new DefaultArtifact( artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersionRange(),
+                        artifact.getScope(), artifact.getType(), classifier, artifact.getArtifactHandler(),
+                        artifact.isOptional()
+                )
+        );
+
+        ArtifactRequest request = new ArtifactRequest( coordinate,
+                RepositoryUtils.toRepos( project.getRemoteArtifactRepositories() ), "shade" );
 
         Artifact resolvedArtifact;
         try
