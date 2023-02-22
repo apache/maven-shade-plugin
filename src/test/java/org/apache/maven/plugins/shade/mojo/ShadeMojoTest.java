@@ -21,6 +21,8 @@ package org.apache.maven.plugins.shade.mojo;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +33,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +42,10 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.versioning.VersionRange;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.plugins.shade.ShadeRequest;
 import org.apache.maven.plugins.shade.Shader;
 import org.apache.maven.plugins.shade.filter.Filter;
@@ -49,20 +55,22 @@ import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.shared.transfer.artifact.ArtifactCoordinate;
-import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
-import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResult;
+import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.ContainerConfiguration;
 import org.codehaus.plexus.PlexusConstants;
-import org.codehaus.plexus.PlexusTestCase;
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
+import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResult;
 
 /**
  * @author Jason van Zyl
  * @author Mauro Talevi
  */
 public class ShadeMojoTest
-    extends PlexusTestCase
+        extends AbstractMojoTestCase
 {
     @Override
     protected void customizeContainerConfiguration(final ContainerConfiguration configuration) {
@@ -174,72 +182,39 @@ public class ShadeMojoTest
     public void testShadeWithFilter()
         throws Exception
     {
-        ShadeMojo mojo = new ShadeMojo();
-
-        // set createSourcesJar = true
-        Field createSourcesJar = ShadeMojo.class.getDeclaredField( "createSourcesJar" );
-        createSourcesJar.setAccessible( true );
-        createSourcesJar.set( mojo, Boolean.TRUE );
-
-        // configure artifactResolver (mocked) for mojo
-        ArtifactResolver mockArtifactResolver = new ArtifactResolver()
-        {
-            @Override
-            public ArtifactResult resolveArtifact( ProjectBuildingRequest req, final Artifact art )
-            {
-                return new ArtifactResult()
-                {
-
-                    @Override
-                    public Artifact getArtifact()
-                    {
-                        art.setResolved( true );
-                        String fileName = art.getArtifactId() + "-" + art.getVersion()
-                            + ( art.getClassifier() != null ? "-" + art.getClassifier() : "" ) + ".jar";
-                        art.setFile( new File( fileName ) );
-                        return art;
-                    }
-                };
-            }
-
-            @Override
-            public ArtifactResult resolveArtifact( ProjectBuildingRequest req, final ArtifactCoordinate coordinate )
-            {
-                return new ArtifactResult()
-                {
-
-                    @Override
-                    public Artifact getArtifact()
-                    {
-                        Artifact art = mock( Artifact.class );
-                        when( art.getGroupId() ).thenReturn( coordinate.getGroupId() );
-                        when( art.getArtifactId() ).thenReturn( coordinate.getArtifactId() );
-                        when( art.getType() ).thenReturn( coordinate.getExtension() );
-                        when( art.getClassifier() ).thenReturn( coordinate.getClassifier() );
-                        when( art.isResolved() ).thenReturn( true );
-                        String fileName = coordinate.getArtifactId() + "-" + coordinate.getVersion()
-                            + ( coordinate.getClassifier() != null ? "-" + coordinate.getClassifier() : "" ) + ".jar";
-                        when( art.getFile() ).thenReturn( new File( fileName ) );
-                        return art;
-                    }
-                };
-            }
-        };
-        Field artifactResolverField = ShadeMojo.class.getDeclaredField( "artifactResolver" );
-        artifactResolverField.setAccessible( true );
-        artifactResolverField.set( mojo, mockArtifactResolver );
-
         // create and configure MavenProject
         MavenProject project = new MavenProject();
         ArtifactHandler artifactHandler = lookup( ArtifactHandler.class );
         Artifact artifact = new DefaultArtifact( "org.apache.myfaces.core", "myfaces-impl",
-                                                 VersionRange.createFromVersion( "2.0.1-SNAPSHOT" ), "compile", "jar",
-                                                 null, artifactHandler );
-        artifact = mockArtifactResolver.resolveArtifact( null, artifact ).getArtifact(); // setFile and setResolved
+                VersionRange.createFromVersion( "2.0.1-SNAPSHOT" ), "compile", "jar",
+                null, artifactHandler );
+        artifact.setFile( new File("myfaces-impl-2.0.1-SNAPSHOT.jar") );
         project.setArtifact( artifact );
-        Field projectField = ShadeMojo.class.getDeclaredField( "project" );
-        projectField.setAccessible( true );
-        projectField.set( mojo, project );
+
+        ShadeMojo mojo = (ShadeMojo) lookupConfiguredMojo( project, "shade" );
+
+        DefaultRepositorySystemSession repositorySystemSession = MavenRepositorySystemUtils.newSession();
+        repositorySystemSession.setLocalRepositoryManager( new SimpleLocalRepositoryManagerFactory()
+                .newInstance( repositorySystemSession, new LocalRepository( new File( "target/local-repo/" ) ) ) );
+        MavenSession mavenSession = new MavenSession( getContainer(), repositorySystemSession, mock(
+                MavenExecutionRequest.class), mock( MavenExecutionResult.class) );
+
+        setVariableValueToObject( mojo, "session", mavenSession );
+
+        // set createSourcesJar = true
+        setVariableValueToObject( mojo, "createSourcesJar", true );
+
+        RepositorySystem repositorySystem = mock( RepositorySystem.class );
+        setVariableValueToObject( mojo, "repositorySystem", repositorySystem );
+
+        ArtifactResult artifactResult = new ArtifactResult( new ArtifactRequest( mock(
+                org.eclipse.aether.artifact.Artifact.class ), Collections.emptyList(), "" ) );
+        org.eclipse.aether.artifact.Artifact result = new org.eclipse.aether.artifact.DefaultArtifact(
+                "org.apache.myfaces.core:myfaces-impl:jar:sources:2.0.1-SNAPSHOT" )
+                .setFile( new File("myfaces-impl-2.0.1-SNAPSHOT-sources.jar") );
+        artifactResult.setArtifact( result );
+        when( repositorySystem.resolveArtifact( eq(mavenSession.getRepositorySession()), any( ArtifactRequest.class) ) )
+                .thenReturn( artifactResult );
 
         // create and configure the ArchiveFilter
         ArchiveFilter archiveFilter = new ArchiveFilter();
@@ -251,10 +226,6 @@ public class ShadeMojoTest
         Field filtersField = ShadeMojo.class.getDeclaredField( "filters" );
         filtersField.setAccessible( true );
         filtersField.set( mojo, new ArchiveFilter[]{ archiveFilter } );
-
-        Field sessionField = ShadeMojo.class.getDeclaredField( "session" );
-        sessionField.setAccessible( true );
-        sessionField.set( mojo, mock( MavenSession.class ) );
 
         // invoke getFilters()
         Method getFilters = ShadeMojo.class.getDeclaredMethod( "getFilters" );
