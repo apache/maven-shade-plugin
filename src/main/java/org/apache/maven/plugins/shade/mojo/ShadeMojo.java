@@ -19,15 +19,15 @@ package org.apache.maven.plugins.shade.mojo;
  * under the License.
  */
 
+import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -52,19 +52,19 @@ import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilderException;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
-import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
-import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
-import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -103,42 +103,6 @@ public class ShadeMojo
      */
     @Parameter( defaultValue = "${project}", readonly = true, required = true )
     private MavenProject project;
-
-    @Component
-    private MavenProjectHelper projectHelper;
-
-    @Component( hint = "default", role = org.apache.maven.plugins.shade.Shader.class )
-    private Shader shader;
-
-    /**
-     * The dependency graph builder to use.
-     */
-    @Component
-    private DependencyGraphBuilder dependencyGraphBuilder;
-
-    /**
-     * ProjectBuilder, needed to create projects from the artifacts.
-     */
-    @Component
-    private ProjectBuilder projectBuilder;
-
-    /**
-     * Remote repositories which will be searched for source attachments.
-     */
-    @Parameter( readonly = true, required = true, defaultValue = "${project.remoteArtifactRepositories}" )
-    protected List<ArtifactRepository> remoteArtifactRepositories;
-
-    /**
-     * Local maven repository.
-     */
-    @Parameter( readonly = true, required = true, defaultValue = "${localRepository}" )
-    protected ArtifactRepository localRepository;
-
-    /**
-     * Artifact resolver, needed to download source jars for inclusion in classpath.
-     */
-    @Component
-    protected ArtifactResolver artifactResolver;
 
     /**
      * Artifacts to include/exclude from the final artifact. Artifacts are denoted by composite identifiers of the
@@ -390,21 +354,43 @@ public class ShadeMojo
     private boolean shadeTestJar;
 
     /**
+     * When true, skips the execution of this MOJO.
+     * @since 3.3.0
+     */
+    @Parameter( defaultValue = "false" )
+    private boolean skip;
+
+    @Inject
+    private MavenProjectHelper projectHelper;
+
+    @Inject
+    private Shader shader;
+
+    @Inject
+    private RepositorySystem repositorySystem;
+
+    /**
+     * The dependency graph builder to use.
+     */
+    @Inject
+    private DependencyGraphBuilder dependencyGraphBuilder;
+
+    /**
+     * ProjectBuilder, needed to create projects from the artifacts.
+     */
+    @Inject
+    private ProjectBuilder projectBuilder;
+
+    /**
      * All the present Shaders.
      */
     @Inject
     private Map<String, Shader> shaders;
 
     /**
-     * When true, skips the execution of this MOJO.
-     * @since 3.3.0
-     */
-    @Parameter( defaultValue = "false" )
-    private boolean skip;
-    
-    /**
      * @throws MojoExecutionException in case of an error.
      */
+    @Override
     public void execute()
         throws MojoExecutionException
     {
@@ -846,8 +832,8 @@ public class ShadeMojo
     private void copyFiles( File source, File target )
         throws IOException
     {
-        try ( InputStream in = new FileInputStream( source );
-              OutputStream out = new FileOutputStream( target ) )
+        try ( InputStream in = Files.newInputStream( source.toPath() );
+              OutputStream out = Files.newOutputStream( target.toPath() ) )
         {
             IOUtil.copy( in, out );
         }
@@ -855,20 +841,23 @@ public class ShadeMojo
 
     private File resolveArtifactForClassifier( Artifact artifact, String classifier )
     {
-        DefaultArtifactCoordinate coordinate = new DefaultArtifactCoordinate();
-        coordinate.setGroupId( artifact.getGroupId() );
-        coordinate.setArtifactId( artifact.getArtifactId() );
-        coordinate.setVersion( artifact.getVersion() );
-        coordinate.setExtension( "jar" );
-        coordinate.setClassifier( classifier );
+        org.eclipse.aether.artifact.Artifact coordinate = RepositoryUtils.toArtifact(
+                new DefaultArtifact( artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersionRange(),
+                        artifact.getScope(), artifact.getType(), classifier, artifact.getArtifactHandler(),
+                        artifact.isOptional()
+                )
+        );
+
+        ArtifactRequest request = new ArtifactRequest( coordinate,
+                RepositoryUtils.toRepos( project.getRemoteArtifactRepositories() ), "shade" );
 
         Artifact resolvedArtifact;
         try
         {
-            resolvedArtifact =
-                artifactResolver.resolveArtifact( session.getProjectBuildingRequest(), coordinate ).getArtifact();
+            ArtifactResult result = repositorySystem.resolveArtifact( session.getRepositorySession(), request );
+            resolvedArtifact = RepositoryUtils.toArtifact( result.getArtifact() );
         }
-        catch ( ArtifactResolverException e )
+        catch ( ArtifactResolutionException e )
         {
             getLog().warn( "Could not get " + classifier + " for " + artifact );
             return null;
@@ -1216,8 +1205,8 @@ public class ShadeMojo
 
                 ProjectBuildingRequest projectBuildingRequest =
                     new DefaultProjectBuildingRequest( session.getProjectBuildingRequest() );
-                projectBuildingRequest.setLocalRepository( localRepository );
-                projectBuildingRequest.setRemoteRepositories( remoteArtifactRepositories );
+                projectBuildingRequest.setLocalRepository( session.getLocalRepository() );
+                projectBuildingRequest.setRemoteRepositories( project.getRemoteArtifactRepositories() );
 
                 ProjectBuildingResult result = projectBuilder.build( f, projectBuildingRequest );
 
