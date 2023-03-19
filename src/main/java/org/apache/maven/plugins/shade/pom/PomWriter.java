@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.pom;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.pom;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.pom;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -31,47 +30,42 @@ import org.jdom2.output.Format;
 /**
  * @author Jason van Zyl
  */
-public class PomWriter
-{
-    public static void write( Writer w, Model newModel )
-        throws IOException
-    {
-        write( w, newModel, false );
+public class PomWriter {
+    public static void write(Writer w, Model newModel) throws IOException {
+        write(w, newModel, false);
     }
 
-    public static void write( Writer w, Model newModel, boolean namespaceDeclaration )
-        throws IOException
-    {
-        Element root = new Element( "project" );
+    public static void write(Writer w, Model newModel, boolean namespaceDeclaration) throws IOException {
+        Element root = new Element("project");
 
-        if ( namespaceDeclaration )
-        {
+        if (namespaceDeclaration) {
             String modelVersion = newModel.getModelVersion();
 
-            Namespace pomNamespace = Namespace.getNamespace( "", "http://maven.apache.org/POM/" + modelVersion );
+            Namespace pomNamespace = Namespace.getNamespace("", "http://maven.apache.org/POM/" + modelVersion);
 
-            root.setNamespace( pomNamespace );
+            root.setNamespace(pomNamespace);
 
-            Namespace xsiNamespace = Namespace.getNamespace( "xsi", "http://www.w3.org/2001/XMLSchema-instance" );
+            Namespace xsiNamespace = Namespace.getNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
 
-            root.addNamespaceDeclaration( xsiNamespace );
+            root.addNamespaceDeclaration(xsiNamespace);
 
-            if ( root.getAttribute( "schemaLocation", xsiNamespace ) == null )
-            {
-                root.setAttribute( "schemaLocation",
-                                   "http://maven.apache.org/POM/" + modelVersion + " http://maven.apache.org/maven-v"
-                                       + modelVersion.replace( '.', '_' ) + ".xsd", xsiNamespace );
+            if (root.getAttribute("schemaLocation", xsiNamespace) == null) {
+                root.setAttribute(
+                        "schemaLocation",
+                        "http://maven.apache.org/POM/" + modelVersion + " http://maven.apache.org/maven-v"
+                                + modelVersion.replace('.', '_') + ".xsd",
+                        xsiNamespace);
             }
         }
 
-        Document doc = new Document( root );
+        Document doc = new Document(root);
 
         MavenJDOMWriter writer = new MavenJDOMWriter();
 
         String encoding = newModel.getModelEncoding() != null ? newModel.getModelEncoding() : "UTF-8";
 
-        Format format = Format.getPrettyFormat().setEncoding( encoding );
+        Format format = Format.getPrettyFormat().setEncoding(encoding);
 
-        writer.write( newModel, doc, w, format );
+        writer.write(newModel, doc, w, format);
     }
 }

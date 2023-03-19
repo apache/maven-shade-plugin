@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,9 +42,7 @@ import org.xml.sax.SAXException;
 /**
  * Appends multiple occurrences of some XML file.
  */
-public class XmlAppendingTransformer
-    extends AbstractCompatibilityTransformer
-{
+public class XmlAppendingTransformer extends AbstractCompatibilityTransformer {
     public static final String XSI_NS = "http://www.w3.org/2001/XMLSchema-instance";
 
     boolean ignoreDtd = true;
@@ -56,86 +53,68 @@ public class XmlAppendingTransformer
 
     private long time = Long.MIN_VALUE;
 
-    public boolean canTransformResource( String r )
-    {
-        return resource != null && resource.equalsIgnoreCase( r );
+    public boolean canTransformResource(String r) {
+        return resource != null && resource.equalsIgnoreCase(r);
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException
-    {
+    public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
+            throws IOException {
         Document r;
-        try
-        {
-            SAXBuilder builder = new SAXBuilder( false );
-            builder.setExpandEntities( false );
-            if ( ignoreDtd )
-            {
-                builder.setEntityResolver( new EntityResolver()
-                {
-                    public InputSource resolveEntity( String publicId, String systemId )
-                        throws SAXException, IOException
-                    {
-                        return new InputSource( new StringReader( "" ) );
+        try {
+            SAXBuilder builder = new SAXBuilder(false);
+            builder.setExpandEntities(false);
+            if (ignoreDtd) {
+                builder.setEntityResolver(new EntityResolver() {
+                    public InputSource resolveEntity(String publicId, String systemId)
+                            throws SAXException, IOException {
+                        return new InputSource(new StringReader(""));
                     }
-                } );
+                });
             }
-            r = builder.build( is );
-        }
-        catch ( JDOMException e )
-        {
-            throw new RuntimeException( "Error processing resource " + resource + ": " + e.getMessage(), e );
+            r = builder.build(is);
+        } catch (JDOMException e) {
+            throw new RuntimeException("Error processing resource " + resource + ": " + e.getMessage(), e);
         }
 
-        if ( doc == null )
-        {
+        if (doc == null) {
             doc = r;
-        }
-        else
-        {
+        } else {
             Element root = r.getRootElement();
 
-            for ( Iterator<Attribute> itr = root.getAttributes().iterator(); itr.hasNext(); )
-            {
+            for (Iterator<Attribute> itr = root.getAttributes().iterator(); itr.hasNext(); ) {
                 Attribute a = itr.next();
                 itr.remove();
 
                 Element mergedEl = doc.getRootElement();
-                Attribute mergedAtt = mergedEl.getAttribute( a.getName(), a.getNamespace() );
-                if ( mergedAtt == null )
-                {
-                    mergedEl.setAttribute( a );
+                Attribute mergedAtt = mergedEl.getAttribute(a.getName(), a.getNamespace());
+                if (mergedAtt == null) {
+                    mergedEl.setAttribute(a);
                 }
             }
 
-            for ( Iterator<Element> itr = root.getChildren().iterator(); itr.hasNext(); )
-            {
+            for (Iterator<Element> itr = root.getChildren().iterator(); itr.hasNext(); ) {
                 Content n = itr.next();
                 itr.remove();
 
-                doc.getRootElement().addContent( n );
+                doc.getRootElement().addContent(n);
             }
         }
 
-        if ( time > this.time )
-        {
-            this.time = time;        
+        if (time > this.time) {
+            this.time = time;
         }
     }
 
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return doc != null;
     }
 
-    public void modifyOutputStream( JarOutputStream jos )
-        throws IOException
-    {
-        JarEntry jarEntry = new JarEntry( resource );
-        jarEntry.setTime( time );
-        jos.putNextEntry( jarEntry );
+    public void modifyOutputStream(JarOutputStream jos) throws IOException {
+        JarEntry jarEntry = new JarEntry(resource);
+        jarEntry.setTime(time);
+        jos.putNextEntry(jarEntry);
 
-        new XMLOutputter( Format.getPrettyFormat() ).output( doc, jos );
+        new XMLOutputter(Format.getPrettyFormat()).output(doc, jos);
 
         doc = null;
     }

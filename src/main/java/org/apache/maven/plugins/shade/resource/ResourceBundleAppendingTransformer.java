@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,15 +33,13 @@ import org.codehaus.plexus.util.IOUtil;
 
 /**
  * An appending transformer for resource bundles
- * 
+ *
  * @author Robert Scholte
  * @since 3.0.0
  */
-public class ResourceBundleAppendingTransformer
-    extends AbstractCompatibilityTransformer
-{
-    private Map<String, ByteArrayOutputStream>  dataMap = new HashMap<>();
-    
+public class ResourceBundleAppendingTransformer extends AbstractCompatibilityTransformer {
+    private Map<String, ByteArrayOutputStream> dataMap = new HashMap<>();
+
     private Pattern resourceBundlePattern;
 
     private long time = Long.MIN_VALUE;
@@ -51,52 +48,42 @@ public class ResourceBundleAppendingTransformer
      * the base name of the resource bundle, a fully qualified class name
      * @param basename The basename.
      */
-    public void setBasename( String basename )
-    {
-        resourceBundlePattern = Pattern.compile( basename + "(_[a-zA-Z]+){0,3}\\.properties" );
+    public void setBasename(String basename) {
+        resourceBundlePattern = Pattern.compile(basename + "(_[a-zA-Z]+){0,3}\\.properties");
     }
 
-    public boolean canTransformResource( String r )
-    {
-        return resourceBundlePattern != null && resourceBundlePattern.matcher( r ).matches();
+    public boolean canTransformResource(String r) {
+        return resourceBundlePattern != null && resourceBundlePattern.matcher(r).matches();
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException
-    {
-        ByteArrayOutputStream data = dataMap.get( resource );
-        if ( data == null )
-        {
+    public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
+            throws IOException {
+        ByteArrayOutputStream data = dataMap.get(resource);
+        if (data == null) {
             data = new ByteArrayOutputStream();
-            dataMap.put( resource, data );
+            dataMap.put(resource, data);
         }
-        
-        IOUtil.copy( is, data );
-        data.write( '\n' );
 
-        if ( time > this.time )
-        {
-            this.time = time;        
+        IOUtil.copy(is, data);
+        data.write('\n');
+
+        if (time > this.time) {
+            this.time = time;
         }
     }
 
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return !dataMap.isEmpty();
     }
 
-    public void modifyOutputStream( JarOutputStream jos )
-        throws IOException
-    {
-        for ( Map.Entry<String, ByteArrayOutputStream> dataEntry : dataMap.entrySet() )
-        {
-            JarEntry jarEntry = new JarEntry( dataEntry.getKey() );
-            jarEntry.setTime( time );
-            jos.putNextEntry( jarEntry );
+    public void modifyOutputStream(JarOutputStream jos) throws IOException {
+        for (Map.Entry<String, ByteArrayOutputStream> dataEntry : dataMap.entrySet()) {
+            JarEntry jarEntry = new JarEntry(dataEntry.getKey());
+            jarEntry.setTime(time);
+            jos.putNextEntry(jarEntry);
 
-            jos.write( dataEntry.getValue().toByteArray() );
+            jos.write(dataEntry.getValue().toByteArray());
             dataEntry.getValue().reset();
         }
     }
-
 }

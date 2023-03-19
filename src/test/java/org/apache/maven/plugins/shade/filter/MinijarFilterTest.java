@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.filter;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,19 +16,9 @@ package org.apache.maven.plugins.shade.filter;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+package org.apache.maven.plugins.shade.filter;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -52,11 +40,19 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 
-public class MinijarFilterTest
-{
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+public class MinijarFilterTest {
 
     @Rule
-    public TemporaryFolder tempFolder = TemporaryFolder.builder().assureDeletion().build();
+    public TemporaryFolder tempFolder =
+            TemporaryFolder.builder().assureDeletion().build();
 
     private File outputDirectory;
     private File emptyFile;
@@ -65,9 +61,7 @@ public class MinijarFilterTest
     private ArgumentCaptor<CharSequence> logCaptor;
 
     @Before
-    public void init()
-        throws IOException
-    {
+    public void init() throws IOException {
         this.outputDirectory = tempFolder.newFolder();
         this.emptyFile = tempFolder.newFile();
         this.jarFile = tempFolder.newFile();
@@ -80,79 +74,73 @@ public class MinijarFilterTest
      * This test will fail on JDK 7 because jdependency needs at least JDK 8.
      */
     @Test
-    public void testWithMockProject()
-        throws IOException
-    {
-        assumeFalse( "Expected to run under JDK8+", System.getProperty("java.version").startsWith("1.7") );
+    public void testWithMockProject() throws IOException {
+        assumeFalse(
+                "Expected to run under JDK8+",
+                System.getProperty("java.version").startsWith("1.7"));
 
-        MavenProject mavenProject = mockProject( outputDirectory, emptyFile );
+        MavenProject mavenProject = mockProject(outputDirectory, emptyFile);
 
-        MinijarFilter mf = new MinijarFilter( mavenProject, log );
+        MinijarFilter mf = new MinijarFilter(mavenProject, log);
 
         mf.finished();
 
-        verify( log, times( 1 ) ).info( logCaptor.capture() );
+        verify(log, times(1)).info(logCaptor.capture());
 
-        assertEquals( "Minimized 0 -> 0", logCaptor.getValue() );
-
+        assertEquals("Minimized 0 -> 0", logCaptor.getValue());
     }
 
     @Test
-    public void testWithPomProject()
-        throws IOException
-    {
+    public void testWithPomProject() throws IOException {
         // project with pom packaging and no artifact.
-        MavenProject mavenProject = mockProject( outputDirectory, null );
-        mavenProject.setPackaging( "pom" );
+        MavenProject mavenProject = mockProject(outputDirectory, null);
+        mavenProject.setPackaging("pom");
 
-        MinijarFilter mf = new MinijarFilter( mavenProject, log );
+        MinijarFilter mf = new MinijarFilter(mavenProject, log);
 
         mf.finished();
 
-        verify( log, times( 1 ) ).info( logCaptor.capture() );
+        verify(log, times(1)).info(logCaptor.capture());
 
         // verify no access to project's artifacts
-        verify( mavenProject, times( 0 ) ).getArtifacts();
+        verify(mavenProject, times(0)).getArtifacts();
 
-        assertEquals( "Minimized 0 -> 0", logCaptor.getValue() );
-
+        assertEquals("Minimized 0 -> 0", logCaptor.getValue());
     }
 
-    private MavenProject mockProject( File outputDirectory, File file, String... classPathElements )
-    {
-        MavenProject mavenProject = mock( MavenProject.class );
+    private MavenProject mockProject(File outputDirectory, File file, String... classPathElements) {
+        MavenProject mavenProject = mock(MavenProject.class);
 
-        Artifact artifact = mock( Artifact.class );
-        when( artifact.getGroupId() ).thenReturn( "com" );
-        when( artifact.getArtifactId() ).thenReturn( "aid" );
-        when( artifact.getVersion() ).thenReturn( "1.9" );
-        when( artifact.getClassifier() ).thenReturn( "classifier1" );
-        when( artifact.getScope() ).thenReturn( Artifact.SCOPE_COMPILE );
+        Artifact artifact = mock(Artifact.class);
+        when(artifact.getGroupId()).thenReturn("com");
+        when(artifact.getArtifactId()).thenReturn("aid");
+        when(artifact.getVersion()).thenReturn("1.9");
+        when(artifact.getClassifier()).thenReturn("classifier1");
+        when(artifact.getScope()).thenReturn(Artifact.SCOPE_COMPILE);
 
-        when( mavenProject.getArtifact() ).thenReturn( artifact );
+        when(mavenProject.getArtifact()).thenReturn(artifact);
 
         DefaultArtifact dependencyArtifact =
-            new DefaultArtifact( "dep.com", "dep.aid", "1.0", "compile", "jar", "classifier2", null );
-        dependencyArtifact.setFile( file );
+                new DefaultArtifact("dep.com", "dep.aid", "1.0", "compile", "jar", "classifier2", null);
+        dependencyArtifact.setFile(file);
 
         Set<Artifact> artifacts = new TreeSet<>();
-        artifacts.add( dependencyArtifact );
+        artifacts.add(dependencyArtifact);
 
-        when( mavenProject.getArtifacts() ).thenReturn( artifacts );
+        when(mavenProject.getArtifacts()).thenReturn(artifacts);
 
-        when( mavenProject.getArtifact().getFile() ).thenReturn( file );
+        when(mavenProject.getArtifact().getFile()).thenReturn(file);
 
         Build build = new Build();
-        build.setOutputDirectory( outputDirectory.toString() );
+        build.setOutputDirectory(outputDirectory.toString());
 
         List<String> classpath = new ArrayList<>();
-        classpath.add( outputDirectory.toString() );
-        if ( file != null )
-        {
+        classpath.add(outputDirectory.toString());
+        if (file != null) {
             classpath.add(file.toString());
         }
-        classpath.addAll( Arrays.asList( classPathElements ) );
-        when( mavenProject.getBuild() ).thenReturn( build );
+        classpath.addAll(Arrays.asList(classPathElements));
+        when(mavenProject.getBuild()).thenReturn(build);
         try {
             when(mavenProject.getRuntimeClasspathElements()).thenReturn(classpath);
         } catch (DependencyResolutionRequiredException e) {
@@ -163,29 +151,24 @@ public class MinijarFilterTest
     }
 
     @Test
-    public void finsishedShouldProduceMessageForClassesTotalNonZero()
-    {
-        MinijarFilter m = new MinijarFilter( 1, 50, log );
+    public void finsishedShouldProduceMessageForClassesTotalNonZero() {
+        MinijarFilter m = new MinijarFilter(1, 50, log);
 
         m.finished();
 
-        verify( log, times( 1 ) ).info( logCaptor.capture() );
+        verify(log, times(1)).info(logCaptor.capture());
 
-        assertEquals( "Minimized 51 -> 1 (1%)", logCaptor.getValue() );
-
+        assertEquals("Minimized 51 -> 1 (1%)", logCaptor.getValue());
     }
 
     @Test
-    public void finishedShouldProduceMessageForClassesTotalZero()
-    {
-        MinijarFilter m = new MinijarFilter( 0, 0, log );
+    public void finishedShouldProduceMessageForClassesTotalZero() {
+        MinijarFilter m = new MinijarFilter(0, 0, log);
 
         m.finished();
 
-        verify( log, times( 1 ) ).info( logCaptor.capture() );
+        verify(log, times(1)).info(logCaptor.capture());
 
-        assertEquals( "Minimized 0 -> 0", logCaptor.getValue() );
-
+        assertEquals("Minimized 0 -> 0", logCaptor.getValue());
     }
-
 }

@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.mojo;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.mojo;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.mojo;
 
 import java.util.List;
 
@@ -25,8 +24,7 @@ import java.util.List;
  * @author Jason van Zyl
  * @author Mauro Talevi
  */
-public class PackageRelocation
-{
+public class PackageRelocation {
     private String pattern;
 
     private String shadedPattern;
@@ -37,28 +35,23 @@ public class PackageRelocation
 
     private boolean rawString;
 
-    public String getPattern()
-    {
+    public String getPattern() {
         return pattern;
     }
 
-    public String getShadedPattern()
-    {
+    public String getShadedPattern() {
         return shadedPattern;
     }
 
-    public List<String> getIncludes()
-    {
+    public List<String> getIncludes() {
         return includes;
     }
 
-    public List<String> getExcludes()
-    {
+    public List<String> getExcludes() {
         return excludes;
     }
 
-    public boolean isRawString()
-    {
+    public boolean isRawString() {
         return rawString;
     }
 }

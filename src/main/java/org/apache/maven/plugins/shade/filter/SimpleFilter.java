@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.filter;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,15 +16,15 @@ package org.apache.maven.plugins.shade.filter;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.codehaus.plexus.util.SelectorUtils;
+package org.apache.maven.plugins.shade.filter;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.maven.plugins.shade.mojo.ArchiveFilter;
+import org.codehaus.plexus.util.SelectorUtils;
 
 /**
  * @author David Blevins
@@ -35,9 +33,7 @@ import org.apache.maven.plugins.shade.mojo.ArchiveFilter;
  * @author kama
  *
  */
-public class SimpleFilter
-    implements Filter
-{
+public class SimpleFilter implements Filter {
 
     private Set<File> jars;
 
@@ -54,18 +50,16 @@ public class SimpleFilter
      * @param excludes set of excludes.
      */
     @Deprecated
-    public SimpleFilter( Set<File> jars, Set<String> includes, Set<String> excludes )
-    {
-        this( jars, includes, excludes, true );
+    public SimpleFilter(Set<File> jars, Set<String> includes, Set<String> excludes) {
+        this(jars, includes, excludes, true);
     }
 
     /**
      * @param jars set of {@link File}s.
      * @param archiveFilter set of {@link ArchiveFilter}s.
      */
-    public SimpleFilter( final Set<File> jars, final ArchiveFilter archiveFilter )
-    {
-        this( jars, archiveFilter.getIncludes(), archiveFilter.getExcludes(), archiveFilter.getExcludeDefaults() );
+    public SimpleFilter(final Set<File> jars, final ArchiveFilter archiveFilter) {
+        this(jars, archiveFilter.getIncludes(), archiveFilter.getExcludes(), archiveFilter.getExcludeDefaults());
     }
 
     /**
@@ -74,72 +68,63 @@ public class SimpleFilter
      * @param excludes set of excludes.
      * @param excludeDefaults whether to exclude default includes once includes are provided explicitly.
      */
-    private SimpleFilter( final Set<File> jars, final Set<String> includes, final Set<String> excludes,
-      final boolean excludeDefaults )
-    {
-        this.jars = ( jars != null ) ? Collections.<File>unmodifiableSet( jars ) : Collections.<File>emptySet();
-        this.includes = normalizePatterns( includes );
-        this.excludes = normalizePatterns( excludes );
+    private SimpleFilter(
+            final Set<File> jars,
+            final Set<String> includes,
+            final Set<String> excludes,
+            final boolean excludeDefaults) {
+        this.jars = (jars != null) ? Collections.<File>unmodifiableSet(jars) : Collections.<File>emptySet();
+        this.includes = normalizePatterns(includes);
+        this.excludes = normalizePatterns(excludes);
         this.excludeDefaults = excludeDefaults;
     }
 
     /** {@inheritDoc} */
-    public boolean canFilter( File jar )
-    {
-        return jars.contains( jar );
+    public boolean canFilter(File jar) {
+        return jars.contains(jar);
     }
 
     /** {@inheritDoc} */
-    public boolean isFiltered( String classFile )
-    {
-        String path = normalizePath( classFile );
+    public boolean isFiltered(String classFile) {
+        String path = normalizePath(classFile);
 
-        return !( ( !excludeDefaults || isIncluded( path ) ) && !isExcluded( path ) );
+        return !((!excludeDefaults || isIncluded(path)) && !isExcluded(path));
     }
 
     /**
      * @param classFile The class file.
      * @return true if included false otherwise.
      */
-    public boolean isSpecificallyIncluded( String classFile )
-    {
-        if ( includes == null || includes.isEmpty() )
-        {
+    public boolean isSpecificallyIncluded(String classFile) {
+        if (includes == null || includes.isEmpty()) {
             return false;
         }
 
-        String path = normalizePath( classFile );
+        String path = normalizePath(classFile);
 
-        return isIncluded( path );
+        return isIncluded(path);
     }
 
-    private boolean isIncluded( String classFile )
-    {
-        if ( includes == null || includes.isEmpty() )
-        {
+    private boolean isIncluded(String classFile) {
+        if (includes == null || includes.isEmpty()) {
             return true;
         }
 
-        return matchPaths( includes, classFile );
+        return matchPaths(includes, classFile);
     }
 
-    private boolean isExcluded( String classFile )
-    {
-        if ( excludes == null || excludes.isEmpty() )
-        {
+    private boolean isExcluded(String classFile) {
+        if (excludes == null || excludes.isEmpty()) {
             return false;
         }
 
-        return matchPaths( excludes, classFile );
+        return matchPaths(excludes, classFile);
     }
 
-    private boolean matchPaths( Set<String> patterns, String classFile )
-    {
-        for ( String pattern : patterns )
-        {
+    private boolean matchPaths(Set<String> patterns, String classFile) {
+        for (String pattern : patterns) {
 
-            if ( SelectorUtils.matchPath( pattern, classFile ) )
-            {
+            if (SelectorUtils.matchPath(pattern, classFile)) {
                 return true;
             }
         }
@@ -147,27 +132,22 @@ public class SimpleFilter
         return false;
     }
 
-    private String normalizePath( String path )
-    {
-        return ( path != null ) ? path.replace( File.separatorChar == '/' ? '\\' : '/', File.separatorChar ) : null;
+    private String normalizePath(String path) {
+        return (path != null) ? path.replace(File.separatorChar == '/' ? '\\' : '/', File.separatorChar) : null;
     }
 
-    private Set<String> normalizePatterns( Set<String> patterns )
-    {
+    private Set<String> normalizePatterns(Set<String> patterns) {
         Set<String> result = new HashSet<>();
 
-        if ( patterns != null )
-        {
-            for ( String pattern : patterns )
-            {
-                pattern = normalizePath( pattern );
+        if (patterns != null) {
+            for (String pattern : patterns) {
+                pattern = normalizePath(pattern);
 
-                if ( pattern.endsWith( File.separator ) )
-                {
+                if (pattern.endsWith(File.separator)) {
                     pattern += "**";
                 }
 
-                result.add( pattern );
+                result.add(pattern);
             }
         }
 
@@ -175,7 +155,5 @@ public class SimpleFilter
     }
 
     /** {@inheritDoc} */
-    public void finished()
-    {
-    }
+    public void finished() {}
 }

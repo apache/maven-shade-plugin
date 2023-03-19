@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,9 +36,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  *
  * @since 3.3.0
  */
-public class SisuIndexResourceTransformer
-    extends AbstractCompatibilityTransformer
-{
+public class SisuIndexResourceTransformer extends AbstractCompatibilityTransformer {
     private static final String SISU_INDEX_PATH = "META-INF/sisu/javax.inject.Named";
 
     private final ArrayList<String> indexEntries = new ArrayList<>();
@@ -47,52 +44,42 @@ public class SisuIndexResourceTransformer
     private long time = Long.MIN_VALUE;
 
     @Override
-    public boolean canTransformResource( final String resource )
-    {
-        return resource.equals( SISU_INDEX_PATH );
+    public boolean canTransformResource(final String resource) {
+        return resource.equals(SISU_INDEX_PATH);
     }
 
     @Override
-    public void processResource( final String resource,
-                                 final InputStream is,
-                                 final List<Relocator> relocators,
-                                 long time ) throws IOException
-    {
-        Scanner scanner = new Scanner( is, StandardCharsets.UTF_8.name() );
-        while ( scanner.hasNextLine() )
-        {
+    public void processResource(
+            final String resource, final InputStream is, final List<Relocator> relocators, long time)
+            throws IOException {
+        Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name());
+        while (scanner.hasNextLine()) {
             String relContent = scanner.nextLine();
-            for ( Relocator relocator : relocators )
-            {
-                if ( relocator.canRelocateClass( relContent ) )
-                {
-                    relContent = relocator.applyToSourceContent( relContent );
+            for (Relocator relocator : relocators) {
+                if (relocator.canRelocateClass(relContent)) {
+                    relContent = relocator.applyToSourceContent(relContent);
                 }
             }
-            indexEntries.add( relContent );
+            indexEntries.add(relContent);
         }
 
-        if ( time > this.time )
-        {
-            this.time = time;        
+        if (time > this.time) {
+            this.time = time;
         }
     }
 
     @Override
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return !indexEntries.isEmpty();
     }
 
     @Override
-    public void modifyOutputStream( final JarOutputStream jos )
-        throws IOException
-    {
-        JarEntry jarEntry = new JarEntry( SISU_INDEX_PATH );
-        jarEntry.setTime( time );
-        jos.putNextEntry( jarEntry );
-        IOUtils.writeLines( indexEntries, "\n", jos, StandardCharsets.UTF_8 );
+    public void modifyOutputStream(final JarOutputStream jos) throws IOException {
+        JarEntry jarEntry = new JarEntry(SISU_INDEX_PATH);
+        jarEntry.setTime(time);
+        jos.putNextEntry(jarEntry);
+        IOUtils.writeLines(indexEntries, "\n", jos, StandardCharsets.UTF_8);
         jos.flush();
         indexEntries.clear();
-   }
+    }
 }

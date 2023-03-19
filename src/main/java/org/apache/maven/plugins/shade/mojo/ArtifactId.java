@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.mojo;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.mojo;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.mojo;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
@@ -26,8 +25,7 @@ import org.codehaus.plexus.util.SelectorUtils;
 /**
  * @author Benjamin Bentmann
  */
-class ArtifactId
-{
+class ArtifactId {
 
     private final String groupId;
 
@@ -37,81 +35,65 @@ class ArtifactId
 
     private final String classifier;
 
-    ArtifactId( Dependency dependency )
-    {
-        this( dependency.getGroupId(), dependency.getArtifactId(), dependency.getType(), dependency.getClassifier() );
+    ArtifactId(Dependency dependency) {
+        this(dependency.getGroupId(), dependency.getArtifactId(), dependency.getType(), dependency.getClassifier());
     }
 
-    ArtifactId( Artifact artifact )
-    {
-        this( artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), artifact.getClassifier() );
+    ArtifactId(Artifact artifact) {
+        this(artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), artifact.getClassifier());
     }
 
-    ArtifactId( String groupId, String artifactId, String type, String classifier )
-    {
-        this.groupId = ( groupId != null ) ? groupId : "";
-        this.artifactId = ( artifactId != null ) ? artifactId : "";
-        this.type = ( type != null ) ? type : "";
-        this.classifier = ( classifier != null ) ? classifier : "";
+    ArtifactId(String groupId, String artifactId, String type, String classifier) {
+        this.groupId = (groupId != null) ? groupId : "";
+        this.artifactId = (artifactId != null) ? artifactId : "";
+        this.type = (type != null) ? type : "";
+        this.classifier = (classifier != null) ? classifier : "";
     }
 
-    ArtifactId( String id )
-    {
+    ArtifactId(String id) {
         String[] tokens = new String[0];
-        if ( id != null && id.length() > 0 )
-        {
-            tokens = id.split( ":", -1 );
+        if (id != null && id.length() > 0) {
+            tokens = id.split(":", -1);
         }
-        groupId = ( tokens.length > 0 ) ? tokens[0] : "";
-        artifactId = ( tokens.length > 1 ) ? tokens[1] : "*";
-        type = ( tokens.length > 3 ) ? tokens[2] : "*";
-        classifier = ( tokens.length > 3 ) ? tokens[3] : ( ( tokens.length > 2 ) ? tokens[2] : "*" );
+        groupId = (tokens.length > 0) ? tokens[0] : "";
+        artifactId = (tokens.length > 1) ? tokens[1] : "*";
+        type = (tokens.length > 3) ? tokens[2] : "*";
+        classifier = (tokens.length > 3) ? tokens[3] : ((tokens.length > 2) ? tokens[2] : "*");
     }
 
-    public String getGroupId()
-    {
+    public String getGroupId() {
         return groupId;
     }
 
-    public String getArtifactId()
-    {
+    public String getArtifactId() {
         return artifactId;
     }
 
-    public String getType()
-    {
+    public String getType() {
         return type;
     }
 
-    public String getClassifier()
-    {
+    public String getClassifier() {
         return classifier;
     }
 
-    public boolean matches( ArtifactId pattern )
-    {
-        if ( pattern == null )
-        {
+    public boolean matches(ArtifactId pattern) {
+        if (pattern == null) {
             return false;
         }
-        if ( !match( getGroupId(), pattern.getGroupId() ) )
-        {
+        if (!match(getGroupId(), pattern.getGroupId())) {
             return false;
         }
-        if ( !match( getArtifactId(), pattern.getArtifactId() ) )
-        {
+        if (!match(getArtifactId(), pattern.getArtifactId())) {
             return false;
         }
-        if ( !match( getType(), pattern.getType() ) )
-        {
+        if (!match(getType(), pattern.getType())) {
             return false;
         }
-        return match( getClassifier(), pattern.getClassifier() );
+        return match(getClassifier(), pattern.getClassifier());
     }
 
-    private boolean match( String str, String pattern )
-    {
-        return SelectorUtils.match( pattern, str );
+    private boolean match(String str, String pattern) {
+        return SelectorUtils.match(pattern, str);
     }
-
 }

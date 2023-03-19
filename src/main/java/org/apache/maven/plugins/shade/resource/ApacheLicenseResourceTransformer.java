@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,36 +28,29 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 /**
  * Prevents duplicate copies of the license
  */
-public class ApacheLicenseResourceTransformer
-    extends AbstractCompatibilityTransformer
-{
+public class ApacheLicenseResourceTransformer extends AbstractCompatibilityTransformer {
     private static final String LICENSE_PATH = "META-INF/LICENSE";
 
     private static final String LICENSE_TXT_PATH = "META-INF/LICENSE.txt";
-    
+
     private static final String LICENSE_MD_PATH = "META-INF/LICENSE.md";
 
-    public boolean canTransformResource( String resource )
-    {
-        return LICENSE_PATH.equalsIgnoreCase( resource )
-            || LICENSE_TXT_PATH.regionMatches( true, 0, resource, 0, LICENSE_TXT_PATH.length() )
-            || LICENSE_MD_PATH.regionMatches( true, 0, resource, 0, LICENSE_MD_PATH.length() );
+    public boolean canTransformResource(String resource) {
+        return LICENSE_PATH.equalsIgnoreCase(resource)
+                || LICENSE_TXT_PATH.regionMatches(true, 0, resource, 0, LICENSE_TXT_PATH.length())
+                || LICENSE_MD_PATH.regionMatches(true, 0, resource, 0, LICENSE_MD_PATH.length());
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException
-    {
+    public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
+            throws IOException {
         // no op
     }
 
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return false;
     }
 
-    public void modifyOutputStream( JarOutputStream os )
-        throws IOException
-    {
+    public void modifyOutputStream(JarOutputStream os) throws IOException {
         // no op
     }
 }

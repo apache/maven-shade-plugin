@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,12 +16,12 @@ package org.apache.maven.plugins.shade;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade;
 
 /**
  * @author Jason van Zyl
  */
-public class ShadingResult
-{
+public class ShadingResult {
     // no op
     // olamy: what this class ??
 }

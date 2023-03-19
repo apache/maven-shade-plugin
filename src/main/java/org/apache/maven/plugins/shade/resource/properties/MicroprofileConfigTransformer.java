@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource.properties;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,16 +16,15 @@ package org.apache.maven.plugins.shade.resource.properties;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource.properties;
 
 /**
  * Enables to merge Microprofile Config configuration files properly respecting their ordinal.
  *
  * @since 3.2.2
  */
-public class MicroprofileConfigTransformer extends PropertiesTransformer
-{
-    public MicroprofileConfigTransformer()
-    {
-        super( null, "config_ordinal", 1000, false );
+public class MicroprofileConfigTransformer extends PropertiesTransformer {
+    public MicroprofileConfigTransformer() {
+        super(null, "config_ordinal", 1000, false);
     }
 }

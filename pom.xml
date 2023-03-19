@@ -1,5 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -18,13 +17,12 @@
   specific language governing permissions and limitations
   under the License.
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>maven-plugins</artifactId>
     <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-plugins</artifactId>
     <version>39</version>
     <relativePath />
   </parent>
@@ -34,10 +32,26 @@
   <packaging>maven-plugin</packaging>
 
   <name>Apache Maven Shade Plugin</name>
-  <description>
-    Repackages the project classes together with their dependencies into a single uber-jar, optionally renaming classes
-    or removing unused classes.
-  </description>
+  <description>Repackages the project classes together with their dependencies into a single uber-jar, optionally renaming classes
+    or removing unused classes.</description>
+
+  <contributors>
+    <contributor>
+      <name>Trask Stalnaker</name>
+    </contributor>
+    <contributor>
+      <name>Anthony Dahanne</name>
+    </contributor>
+    <contributor>
+      <name>Fabiano Cipriano de Oliveira</name>
+    </contributor>
+    <contributor>
+      <name>Markus Karg</name>
+    </contributor>
+    <contributor>
+      <name>Torsten Curdt</name>
+    </contributor>
+  </contributors>
 
   <prerequisites>
     <maven>${mavenVersion}</maven>
@@ -46,8 +60,8 @@
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-shade-plugin.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven-shade-plugin.git</developerConnection>
-    <url>https://github.com/apache/maven-shade-plugin/tree/${project.scm.tag}</url>
     <tag>HEAD</tag>
+    <url>https://github.com/apache/maven-shade-plugin/tree/${project.scm.tag}</url>
   </scm>
   <issueManagement>
     <system>jira</system>
@@ -73,24 +87,6 @@
     <slf4j.version>1.7.32</slf4j.version>
     <project.build.outputTimestamp>2022-10-21T20:02:58Z</project.build.outputTimestamp>
   </properties>
-
-  <contributors>
-    <contributor>
-      <name>Trask Stalnaker</name>
-    </contributor>
-    <contributor>
-      <name>Anthony Dahanne</name>
-    </contributor>
-    <contributor>
-      <name>Fabiano Cipriano de Oliveira</name>
-    </contributor>
-    <contributor>
-      <name>Markus Karg</name>
-    </contributor>
-    <contributor>
-      <name>Torsten Curdt</name>
-    </contributor>
-  </contributors>
 
   <dependencyManagement>
     <dependencies>
@@ -280,7 +276,7 @@
               <exclude>src/it/projects/MSHADE-182/src/main/resources/META-INF/services/relocateme.Service</exclude>
               <exclude>src/it/projects/MSHADE-390-sisu-index/**</exclude>
             </excludes>
-         </configuration>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -362,6 +358,16 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>mrm-maven-plugin</artifactId>
             <version>1.5.0</version>
+            <configuration>
+              <repositories>
+                <mockRepo>
+                  <source>src/it/mrm/repository</source>
+                  <cloneTo>target/mock-repo</cloneTo>
+                  <!-- due to on the fly created jars -->
+                </mockRepo>
+                <proxyRepo />
+              </repositories>
+            </configuration>
             <executions>
               <execution>
                 <goals>
@@ -370,15 +376,6 @@
                 </goals>
               </execution>
             </executions>
-            <configuration>
-              <repositories>
-                <mockRepo>
-                  <source>src/it/mrm/repository</source>
-                  <cloneTo>target/mock-repo</cloneTo> <!-- due to on the fly created jars -->
-                </mockRepo>
-                <proxyRepo />
-              </repositories>
-            </configuration>
           </plugin>
         </plugins>
       </build>

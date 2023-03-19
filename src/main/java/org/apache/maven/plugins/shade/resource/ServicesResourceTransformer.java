@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,74 +40,60 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  * META-INF/services/org.apache.maven.project.ProjectBuilder resource packaged into the resultant JAR produced by the
  * shading process.
  */
-public class ServicesResourceTransformer
-        extends AbstractCompatibilityTransformer
-{
+public class ServicesResourceTransformer extends AbstractCompatibilityTransformer {
     private static final String SERVICES_PATH = "META-INF/services";
 
     private final Map<String, Set<String>> serviceEntries = new HashMap<>();
 
     private long time = Long.MIN_VALUE;
 
-    public boolean canTransformResource( String resource )
-    {
-        return resource.startsWith( SERVICES_PATH );
+    public boolean canTransformResource(String resource) {
+        return resource.startsWith(SERVICES_PATH);
     }
 
-    public void processResource( String resource, InputStream is, final List<Relocator> relocators, long time )
-            throws IOException
-    {
-        resource = resource.substring( SERVICES_PATH.length() + 1 );
-        for ( Relocator relocator : relocators )
-        {
-            if ( relocator.canRelocateClass( resource ) )
-            {
-                resource = relocator.relocateClass( resource );
+    public void processResource(String resource, InputStream is, final List<Relocator> relocators, long time)
+            throws IOException {
+        resource = resource.substring(SERVICES_PATH.length() + 1);
+        for (Relocator relocator : relocators) {
+            if (relocator.canRelocateClass(resource)) {
+                resource = relocator.relocateClass(resource);
                 break;
             }
         }
         resource = SERVICES_PATH + '/' + resource;
 
-        Set<String> out = serviceEntries.computeIfAbsent( resource, k -> new LinkedHashSet<>() );
+        Set<String> out = serviceEntries.computeIfAbsent(resource, k -> new LinkedHashSet<>());
 
-        Scanner scanner = new Scanner( is, StandardCharsets.UTF_8.name() );
-        while ( scanner.hasNextLine() )
-        {
+        Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name());
+        while (scanner.hasNextLine()) {
             String relContent = scanner.nextLine();
-            for ( Relocator relocator : relocators )
-            {
-                if ( relocator.canRelocateClass( relContent ) )
-                {
-                    relContent = relocator.applyToSourceContent( relContent );
+            for (Relocator relocator : relocators) {
+                if (relocator.canRelocateClass(relContent)) {
+                    relContent = relocator.applyToSourceContent(relContent);
                 }
             }
-            out.add( relContent );
+            out.add(relContent);
         }
 
-        if ( time > this.time )
-        {
+        if (time > this.time) {
             this.time = time;
         }
     }
 
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return !serviceEntries.isEmpty();
     }
 
-    public void modifyOutputStream( JarOutputStream jos )
-            throws IOException
-    {
-        for ( Map.Entry<String, Set<String>> entry : serviceEntries.entrySet() )
-        {
+    public void modifyOutputStream(JarOutputStream jos) throws IOException {
+        for (Map.Entry<String, Set<String>> entry : serviceEntries.entrySet()) {
             String key = entry.getKey();
             Set<String> data = entry.getValue();
 
-            JarEntry jarEntry = new JarEntry( key );
-            jarEntry.setTime( time );
-            jos.putNextEntry( jarEntry );
+            JarEntry jarEntry = new JarEntry(key);
+            jarEntry.setTime(time);
+            jos.putNextEntry(jarEntry);
 
-            IOUtils.writeLines( data, "\n", jos, StandardCharsets.UTF_8 );
+            IOUtils.writeLines(data, "\n", jos, StandardCharsets.UTF_8);
             jos.flush();
             data.clear();
         }

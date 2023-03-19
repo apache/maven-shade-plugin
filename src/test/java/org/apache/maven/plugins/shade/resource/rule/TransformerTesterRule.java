@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource.rule;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -9,7 +7,7 @@ package org.apache.maven.plugins.shade.resource.rule;
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -18,12 +16,7 @@ package org.apache.maven.plugins.shade.resource.rule;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+package org.apache.maven.plugins.shade.resource.rule;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -51,42 +44,36 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-public class TransformerTesterRule
-    implements TestRule
-{
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+public class TransformerTesterRule implements TestRule {
     @Override
-    public Statement apply( final Statement base, final Description description )
-    {
-        return new Statement()
-        {
+    public Statement apply(final Statement base, final Description description) {
+        return new Statement() {
             @Override
-            public void evaluate() throws Throwable
-            {
-                final TransformerTest spec = description.getAnnotation( TransformerTest.class );
-                if ( spec == null )
-                {
+            public void evaluate() throws Throwable {
+                final TransformerTest spec = description.getAnnotation(TransformerTest.class);
+                if (spec == null) {
                     base.evaluate();
                     return;
                 }
 
                 final Map<String, String> jar;
-                try
-                {
-                    final ReproducibleResourceTransformer transformer = createTransformer( spec );
-                    visit( spec, transformer );
-                    jar = captureOutput( transformer );
-                }
-                catch ( final Exception ex )
-                {
-                    if ( Exception.class.isAssignableFrom( spec.expectedException() ) )
-                    {
+                try {
+                    final ReproducibleResourceTransformer transformer = createTransformer(spec);
+                    visit(spec, transformer);
+                    jar = captureOutput(transformer);
+                } catch (final Exception ex) {
+                    if (Exception.class.isAssignableFrom(spec.expectedException())) {
                         assertTrue(
                                 ex.getClass().getName(),
-                                spec.expectedException().isAssignableFrom( ex.getClass() ) );
+                                spec.expectedException().isAssignableFrom(ex.getClass()));
                         return;
-                    }
-                    else
-                    {
+                    } else {
                         throw ex;
                     }
                 }
@@ -95,88 +82,74 @@ public class TransformerTesterRule
         };
     }
 
-    private void asserts( final TransformerTest spec, final Map<String, String> jar)
-    {
-        if ( spec.strictMatch() && jar.size() != spec.expected().length )
-        {
-            fail( "Strict match test failed: " + jar );
+    private void asserts(final TransformerTest spec, final Map<String, String> jar) {
+        if (spec.strictMatch() && jar.size() != spec.expected().length) {
+            fail("Strict match test failed: " + jar);
         }
-        for ( final Resource expected : spec.expected() )
-        {
-            final String content = jar.get( expected.path() );
-            assertNotNull( expected.path(), content );
+        for (final Resource expected : spec.expected()) {
+            final String content = jar.get(expected.path());
+            assertNotNull(expected.path(), content);
             assertTrue(
                     expected.path() + ", expected=" + expected.content() + ", actual=" + content,
-                    content.replace( System.lineSeparator(), "\n" ) .matches( expected.content() ) );
+                    content.replace(System.lineSeparator(), "\n").matches(expected.content()));
         }
     }
 
-    private Map<String, String> captureOutput( final ReproducibleResourceTransformer transformer )
-        throws IOException
-    {
+    private Map<String, String> captureOutput(final ReproducibleResourceTransformer transformer) throws IOException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try ( final JarOutputStream jar = new JarOutputStream( out ) )
-        {
-            transformer.modifyOutputStream( jar );
+        try (final JarOutputStream jar = new JarOutputStream(out)) {
+            transformer.modifyOutputStream(jar);
         }
 
         final Map<String, String> created = new HashMap<>();
-        try ( final JarInputStream jar = new JarInputStream( new ByteArrayInputStream( out.toByteArray() ) ) )
-        {
+        try (final JarInputStream jar = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
             JarEntry entry;
-            while ( ( entry = jar.getNextJarEntry() ) != null )
-            {
-                created.put( entry.getName(), read( jar ) );
+            while ((entry = jar.getNextJarEntry()) != null) {
+                created.put(entry.getName(), read(jar));
             }
         }
         return created;
     }
 
-    private void visit( final TransformerTest spec, final ReproducibleResourceTransformer transformer )
-        throws IOException
-    {
-        for ( final Resource resource : spec.visited() )
-        {
-            if ( transformer.canTransformResource( resource.path() ) )
-            {
+    private void visit(final TransformerTest spec, final ReproducibleResourceTransformer transformer)
+            throws IOException {
+        for (final Resource resource : spec.visited()) {
+            if (transformer.canTransformResource(resource.path())) {
                 transformer.processResource(
                         resource.path(),
-                        new ByteArrayInputStream( resource.content().getBytes(StandardCharsets.UTF_8) ),
-                        Collections.<Relocator>emptyList(), 0 );
+                        new ByteArrayInputStream(resource.content().getBytes(StandardCharsets.UTF_8)),
+                        Collections.<Relocator>emptyList(),
+                        0);
             }
         }
     }
 
-    private String read(final JarInputStream jar) throws IOException
-    {
+    private String read(final JarInputStream jar) throws IOException {
         final StringBuilder builder = new StringBuilder();
         final byte[] buffer = new byte[512];
         int read;
-        while ( (read = jar.read(buffer) ) >= 0 )
-        {
-            builder.append( new String( buffer, 0, read ) );
+        while ((read = jar.read(buffer)) >= 0) {
+            builder.append(new String(buffer, 0, read));
         }
         return builder.toString();
     }
 
-    private ReproducibleResourceTransformer createTransformer(final TransformerTest spec)
-    {
+    private ReproducibleResourceTransformer createTransformer(final TransformerTest spec) {
         final ConverterLookup lookup = new DefaultConverterLookup();
-        try
-        {
-            final ConfigurationConverter converter = lookup.lookupConverterForType( spec.transformer() );
-            final PlexusConfiguration configuration = new DefaultPlexusConfiguration( "configuration" );
-            for ( final Property property : spec.configuration() )
-            {
-                configuration.addChild( property.name(), property.value() );
+        try {
+            final ConfigurationConverter converter = lookup.lookupConverterForType(spec.transformer());
+            final PlexusConfiguration configuration = new DefaultPlexusConfiguration("configuration");
+            for (final Property property : spec.configuration()) {
+                configuration.addChild(property.name(), property.value());
             }
-            return ReproducibleResourceTransformer.class.cast(
-                    converter.fromConfiguration( lookup, configuration,  spec.transformer(), spec.transformer(),
-                        Thread.currentThread().getContextClassLoader(),
-                        new DefaultExpressionEvaluator() ) );
-        }
-        catch (final ComponentConfigurationException e)
-        {
+            return ReproducibleResourceTransformer.class.cast(converter.fromConfiguration(
+                    lookup,
+                    configuration,
+                    spec.transformer(),
+                    spec.transformer(),
+                    Thread.currentThread().getContextClassLoader(),
+                    new DefaultExpressionEvaluator()));
+        } catch (final ComponentConfigurationException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -186,8 +159,7 @@ public class TransformerTesterRule
      */
     @Target(METHOD)
     @Retention(RUNTIME)
-    public @interface TransformerTest
-    {
+    public @interface TransformerTest {
         /**
          * @return the list of resource the transformer will process.
          */
@@ -221,17 +193,17 @@ public class TransformerTesterRule
 
     @Target(METHOD)
     @Retention(RUNTIME)
-    public @interface Property
-    {
+    public @interface Property {
         String name();
+
         String value();
     }
 
     @Target(METHOD)
     @Retention(RUNTIME)
-    public @interface Resource
-    {
+    public @interface Resource {
         String path();
+
         String content();
     }
 }
