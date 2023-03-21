@@ -82,8 +82,8 @@ start the first line of a commit with '(doc)' instead of a ticket number.
 Developer Tips
 --------------
 
-If you machine is big enough and you want to parallelise the IT execution to validate the build
-before a PR you can set the concurrency in MAVEN_OPTS:
+If your machine is sufficiently powerful and you want to parallelise the IT execution to validate the build
+before a PR you can set the concurrency in `MAVEN_OPTS`:
 
 ````
 MAVEN_OPTS=-Dinvoker.parallelThreads=2 mvn verify -Prun-its
@@ -104,7 +104,7 @@ Additional Resources
 + [General GitHub documentation](https://help.github.com/)
 + [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
 + [Apache Maven Twitter Account](https://twitter.com/ASFMavenProject)
-+ #Maven IRC channel on freenode.org
++ [Slack channel for regular contributors](https://infra.apache.org/slack.html)
 
 [jira]: https://issues.apache.org/jira/projects/MSHADE/
 [license]: https://www.apache.org/licenses/LICENSE-2.0
