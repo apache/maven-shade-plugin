@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.pom;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,12 +16,12 @@ package org.apache.maven.plugins.shade.pom;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.pom;
 
 /**
  * Separate class for counter.
  */
-public class Counter
-{
+public class Counter {
 
     // --------------------------/
     // - Class/Member Variables -/
@@ -43,8 +41,7 @@ public class Counter
     // - Constructors -/
     // ----------------/
 
-    public Counter( int depthLevel )
-    {
+    public Counter(int depthLevel) {
         level = depthLevel;
     } // -- org.apache.maven.model.io.jdom.Counter(int)
 
@@ -55,8 +52,7 @@ public class Counter
     /**
      * Method getCurrentIndex
      */
-    public int getCurrentIndex()
-    {
+    public int getCurrentIndex() {
         return currentIndex;
     } // -- int getCurrentIndex()
 
@@ -64,17 +60,14 @@ public class Counter
      * Method getDepth
      * @return {@link #level}
      */
-    public int getDepth()
-    {
+    public int getDepth() {
         return level;
     } // -- int getDepth()
 
     /**
      * Method increaseCount
      */
-    public void increaseCount()
-    {
+    public void increaseCount() {
         currentIndex = currentIndex + 1;
     } // -- void increaseCount()
-
 }

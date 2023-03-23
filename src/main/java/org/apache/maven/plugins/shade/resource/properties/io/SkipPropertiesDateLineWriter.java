@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource.properties.io;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource.properties.io;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource.properties.io;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -26,72 +25,59 @@ import java.io.Writer;
 /**
  * Simple buffered writer skipping its first write(String) call.
  */
-public class SkipPropertiesDateLineWriter extends BufferedWriter
-{
+public class SkipPropertiesDateLineWriter extends BufferedWriter {
     private State currentState = State.MUST_SKIP_DATE_COMMENT;
 
-    public SkipPropertiesDateLineWriter( Writer out )
-    {
-        super( out );
+    public SkipPropertiesDateLineWriter(Writer out) {
+        super(out);
     }
 
     @Override
-    public void write( String str ) throws IOException
-    {
-        if ( currentState.shouldSkip( str ) )
-        {
+    public void write(String str) throws IOException {
+        if (currentState.shouldSkip(str)) {
             currentState = currentState.next();
             return;
         }
-        super.write( str );
+        super.write(str);
     }
 
-    private enum State
-    {
-        MUST_SKIP_DATE_COMMENT
-        {
+    private enum State {
+        MUST_SKIP_DATE_COMMENT {
             @Override
-            boolean shouldSkip( String content )
-            {
-                return content.length() > 1 && content.startsWith( "#" ) && !content.startsWith( "# " );
+            boolean shouldSkip(String content) {
+                return content.length() > 1 && content.startsWith("#") && !content.startsWith("# ");
             }
 
             @Override
-            State next()
-            {
+            State next() {
                 return SKIPPED_DATE_COMMENT;
             }
         },
-        SKIPPED_DATE_COMMENT
-        {
+        SKIPPED_DATE_COMMENT {
             @Override
-            boolean shouldSkip( String content )
-            {
+            boolean shouldSkip(String content) {
                 return content.trim().isEmpty();
             }
 
             @Override
-            State next()
-            {
+            State next() {
                 return DONE;
             }
         },
-        DONE
-        {
+        DONE {
             @Override
-            boolean shouldSkip( String content )
-            {
+            boolean shouldSkip(String content) {
                 return false;
             }
 
             @Override
-            State next()
-            {
-                throw new UnsupportedOperationException( "done is a terminal state" );
+            State next() {
+                throw new UnsupportedOperationException("done is a terminal state");
             }
         };
 
-        abstract boolean shouldSkip( String content );
+        abstract boolean shouldSkip(String content);
+
         abstract State next();
     }
 }

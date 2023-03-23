@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,155 +38,125 @@ import org.codehaus.plexus.util.xml.Xpp3DomWriter;
 
 /**
  * A resource processor that aggregates Maven <code>plugin.xml</code> files.
- * 
+ *
  * @author Robert Scholte
  * @since 3.0
  */
-public class PluginXmlResourceTransformer
-    extends AbstractCompatibilityTransformer
-{
+public class PluginXmlResourceTransformer extends AbstractCompatibilityTransformer {
     private List<Xpp3Dom> mojos = new ArrayList<>();
 
     private long time = Long.MIN_VALUE;
 
     public static final String PLUGIN_XML_PATH = "META-INF/maven/plugin.xml";
 
-    public boolean canTransformResource( String resource )
-    {
-        return PLUGIN_XML_PATH.equals( resource );
+    public boolean canTransformResource(String resource) {
+        return PLUGIN_XML_PATH.equals(resource);
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException
-    {
+    public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
+            throws IOException {
         Xpp3Dom newDom;
 
-        try
-        {
-            BufferedInputStream bis = new BufferedInputStream( is )
-            {
-                public void close()
-                    throws IOException
-                {
+        try {
+            BufferedInputStream bis = new BufferedInputStream(is) {
+                public void close() throws IOException {
                     // leave ZIP open
                 }
             };
 
-            Reader reader = ReaderFactory.newXmlReader( bis );
+            Reader reader = ReaderFactory.newXmlReader(bis);
 
-            newDom = Xpp3DomBuilder.build( reader );
-        }
-        catch ( Exception e )
-        {
-            throw new IOException( "Error parsing plugin.xml in " + is, e );
+            newDom = Xpp3DomBuilder.build(reader);
+        } catch (Exception e) {
+            throw new IOException("Error parsing plugin.xml in " + is, e);
         }
 
         // Only try to merge in mojos if there are some elements in the plugin
-        if ( newDom.getChild( "mojos" ) == null )
-        {
+        if (newDom.getChild("mojos") == null) {
             return;
         }
 
-        if ( time > this.time )
-        {
-            this.time = time;        
+        if (time > this.time) {
+            this.time = time;
         }
 
-        for ( Xpp3Dom mojo : newDom.getChild( "mojos" ).getChildren( "mojo" ) )
-        {
+        for (Xpp3Dom mojo : newDom.getChild("mojos").getChildren("mojo")) {
 
-            String impl = getValue( mojo, "implementation" );
-            impl = getRelocatedClass( impl, relocators );
-            setValue( mojo, "implementation", impl );
+            String impl = getValue(mojo, "implementation");
+            impl = getRelocatedClass(impl, relocators);
+            setValue(mojo, "implementation", impl);
 
-            Xpp3Dom parameters = mojo.getChild( "parameters" );
-            if ( parameters != null )
-            {
-                for ( Xpp3Dom parameter : parameters.getChildren() )
-                {
-                    String type = getValue( parameter, "type" );
-                    type = getRelocatedClass( type, relocators );
-                    setValue( parameter, "type", type );
+            Xpp3Dom parameters = mojo.getChild("parameters");
+            if (parameters != null) {
+                for (Xpp3Dom parameter : parameters.getChildren()) {
+                    String type = getValue(parameter, "type");
+                    type = getRelocatedClass(type, relocators);
+                    setValue(parameter, "type", type);
                 }
             }
 
-            Xpp3Dom configuration = mojo.getChild( "configuration" );
-            if ( configuration != null )
-            {
-                for ( Xpp3Dom configurationEntry : configuration.getChildren() )
-                {
-                    String implementation = getAttribute( configurationEntry, "implementation" );
-                    implementation = getRelocatedClass( implementation, relocators );
-                    setAttribute( configurationEntry, "implementation", implementation );
+            Xpp3Dom configuration = mojo.getChild("configuration");
+            if (configuration != null) {
+                for (Xpp3Dom configurationEntry : configuration.getChildren()) {
+                    String implementation = getAttribute(configurationEntry, "implementation");
+                    implementation = getRelocatedClass(implementation, relocators);
+                    setAttribute(configurationEntry, "implementation", implementation);
                 }
             }
 
-            Xpp3Dom requirements = mojo.getChild( "requirements" );
-            if ( requirements != null && requirements.getChildCount() > 0 )
-            {
-                for ( Xpp3Dom requirement : requirements.getChildren() )
-                {
-                    String requiredRole = getValue( requirement, "role" );
-                    requiredRole = getRelocatedClass( requiredRole, relocators );
-                    setValue( requirement, "role", requiredRole );
+            Xpp3Dom requirements = mojo.getChild("requirements");
+            if (requirements != null && requirements.getChildCount() > 0) {
+                for (Xpp3Dom requirement : requirements.getChildren()) {
+                    String requiredRole = getValue(requirement, "role");
+                    requiredRole = getRelocatedClass(requiredRole, relocators);
+                    setValue(requirement, "role", requiredRole);
                 }
             }
-            mojos.add( mojo );
+            mojos.add(mojo);
         }
     }
 
-    public void modifyOutputStream( JarOutputStream jos )
-        throws IOException
-    {
+    public void modifyOutputStream(JarOutputStream jos) throws IOException {
         byte[] data = getTransformedResource();
 
-        JarEntry jarEntry = new JarEntry( PLUGIN_XML_PATH );
-        jarEntry.setTime( time );
-        jos.putNextEntry( jarEntry );
+        JarEntry jarEntry = new JarEntry(PLUGIN_XML_PATH);
+        jarEntry.setTime(time);
+        jos.putNextEntry(jarEntry);
 
-        jos.write( data );
+        jos.write(data);
 
         mojos.clear();
     }
 
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return !mojos.isEmpty();
     }
 
-    byte[] getTransformedResource()
-        throws IOException
-    {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream( 1024 * 4 );
+    byte[] getTransformedResource() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(1024 * 4);
 
-        try ( Writer writer = WriterFactory.newXmlWriter( baos ) )
-        {
-            Xpp3Dom dom = new Xpp3Dom( "plugin" );
+        try (Writer writer = WriterFactory.newXmlWriter(baos)) {
+            Xpp3Dom dom = new Xpp3Dom("plugin");
 
-            Xpp3Dom componentDom = new Xpp3Dom( "mojos" );
+            Xpp3Dom componentDom = new Xpp3Dom("mojos");
 
-            dom.addChild( componentDom );
+            dom.addChild(componentDom);
 
-            for ( Xpp3Dom mojo : mojos )
-            {
-                componentDom.addChild( mojo );
+            for (Xpp3Dom mojo : mojos) {
+                componentDom.addChild(mojo);
             }
 
-            Xpp3DomWriter.write( writer, dom );
+            Xpp3DomWriter.write(writer, dom);
         }
 
         return baos.toByteArray();
     }
 
-    private String getRelocatedClass( String className, List<Relocator> relocators )
-    {
-        if ( className != null && className.length() > 0 && relocators != null )
-        {
-            for ( Relocator relocator : relocators )
-            {
-                if ( relocator.canRelocateClass( className ) )
-                {
-                    return relocator.relocateClass( className );
+    private String getRelocatedClass(String className, List<Relocator> relocators) {
+        if (className != null && className.length() > 0 && relocators != null) {
+            for (Relocator relocator : relocators) {
+                if (relocator.canRelocateClass(className)) {
+                    return relocator.relocateClass(className);
                 }
             }
         }
@@ -195,40 +164,33 @@ public class PluginXmlResourceTransformer
         return className;
     }
 
-    private static String getValue( Xpp3Dom dom, String element )
-    {
-        Xpp3Dom child = dom.getChild( element );
+    private static String getValue(Xpp3Dom dom, String element) {
+        Xpp3Dom child = dom.getChild(element);
 
-        return ( child != null && child.getValue() != null ) ? child.getValue() : "";
+        return (child != null && child.getValue() != null) ? child.getValue() : "";
     }
 
-    private static void setValue( Xpp3Dom dom, String element, String value )
-    {
-        Xpp3Dom child = dom.getChild( element );
+    private static void setValue(Xpp3Dom dom, String element, String value) {
+        Xpp3Dom child = dom.getChild(element);
 
-        if ( child == null || value == null || value.length() <= 0 )
-        {
+        if (child == null || value == null || value.length() <= 0) {
             return;
         }
 
-        child.setValue( value );
+        child.setValue(value);
     }
 
-    private static String getAttribute( Xpp3Dom dom, String attribute )
-    {
-        return ( dom.getAttribute( attribute ) != null ) ? dom.getAttribute( attribute ) : "";
+    private static String getAttribute(Xpp3Dom dom, String attribute) {
+        return (dom.getAttribute(attribute) != null) ? dom.getAttribute(attribute) : "";
     }
 
-    private static void setAttribute( Xpp3Dom dom, String attribute, String value )
-    {
-        String attr = dom.getAttribute( attribute );
+    private static void setAttribute(Xpp3Dom dom, String attribute, String value) {
+        String attr = dom.getAttribute(attribute);
 
-        if ( attr == null || value == null || value.length() <= 0 )
-        {
+        if (attr == null || value == null || value.length() <= 0) {
             return;
         }
 
-        dom.setAttribute( attribute, value );
+        dom.setAttribute(attribute, value);
     }
-
 }

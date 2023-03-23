@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource.properties;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource.properties;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource.properties;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,44 +36,36 @@ import java.util.Set;
  *
  * IMPORTANT: this only overrides methods used across JVM in store() so ordering is not guaranteed for other cases.
  */
-public class SortedProperties extends Properties
-{
+public class SortedProperties extends Properties {
     @Override
-    public Set<Map.Entry<Object, Object>> entrySet()
-    {
-        final List<Map.Entry<Object, Object>> entries = new ArrayList<>( super.entrySet() );
-        Collections.sort( entries, new Comparator<Map.Entry<Object, Object>>()
-        {
+    public Set<Map.Entry<Object, Object>> entrySet() {
+        final List<Map.Entry<Object, Object>> entries = new ArrayList<>(super.entrySet());
+        Collections.sort(entries, new Comparator<Map.Entry<Object, Object>>() {
             @Override
-            public int compare( Map.Entry<Object, Object> o1, Map.Entry<Object, Object> o2 )
-            {
-                return String.valueOf( o1.getKey() ).compareTo( String.valueOf( o2.getKey() ) );
+            public int compare(Map.Entry<Object, Object> o1, Map.Entry<Object, Object> o2) {
+                return String.valueOf(o1.getKey()).compareTo(String.valueOf(o2.getKey()));
             }
-        } );
-        return new LinkedHashSet<>( entries );
+        });
+        return new LinkedHashSet<>(entries);
     }
 
     @Override
     public synchronized Enumeration<Object> keys() // ensure it is sorted to be deterministic
-    {
-        final List<String> keys = new LinkedList<>();
-        for ( Object k : super.keySet() )
-        {
-            keys.add( (String) k );
-        }
-        Collections.sort( keys );
-        final Iterator<String> it = keys.iterator();
-        return new Enumeration<Object>()
-        {
-            @Override
-            public boolean hasMoreElements()
             {
+        final List<String> keys = new LinkedList<>();
+        for (Object k : super.keySet()) {
+            keys.add((String) k);
+        }
+        Collections.sort(keys);
+        final Iterator<String> it = keys.iterator();
+        return new Enumeration<Object>() {
+            @Override
+            public boolean hasMoreElements() {
                 return it.hasNext();
             }
 
             @Override
-            public Object nextElement()
-            {
+            public Object nextElement() {
                 return it.next();
             }
         };

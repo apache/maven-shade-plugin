@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,39 +16,33 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.codehaus.plexus.util.StringUtils;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 
+import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.codehaus.plexus.util.StringUtils;
+
 /**
  * A resource processor that prevents the inclusion of an arbitrary
  * resource into the shaded JAR.
  */
-public class DontIncludeResourceTransformer
-    extends AbstractCompatibilityTransformer
-{
+public class DontIncludeResourceTransformer extends AbstractCompatibilityTransformer {
     String resource;
-    
+
     List<String> resources;
 
-    public boolean canTransformResource( String r )
-    {
-        if ( StringUtils.isNotEmpty( resource ) && r.endsWith( resource ) )
-        {
+    public boolean canTransformResource(String r) {
+        if (StringUtils.isNotEmpty(resource) && r.endsWith(resource)) {
             return true;
         }
-        
-        if ( resources != null )
-        {
-            for ( String resourceEnd : resources )
-            {
-                if ( r.endsWith( resourceEnd ) )
-                {
+
+        if (resources != null) {
+            for (String resourceEnd : resources) {
+                if (r.endsWith(resourceEnd)) {
                     return true;
                 }
             }
@@ -59,20 +51,16 @@ public class DontIncludeResourceTransformer
         return false;
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException
-    {
+    public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
+            throws IOException {
         // no op
     }
 
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return false;
     }
 
-    public void modifyOutputStream( JarOutputStream os )
-        throws IOException
-    {
+    public void modifyOutputStream(JarOutputStream os) throws IOException {
         // no op
     }
 }

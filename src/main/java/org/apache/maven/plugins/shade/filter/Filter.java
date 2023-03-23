@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.filter;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,25 +16,25 @@ package org.apache.maven.plugins.shade.filter;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.filter;
 
 import java.io.File;
 
 /**
  * @author David Blevins
  */
-public interface Filter
-{
+public interface Filter {
     /**
      * @param jar The jar file.
      * @return true if we can filter false otherwise.
      */
-    boolean canFilter( File jar );
+    boolean canFilter(File jar);
 
     /**
      * @param classFile The classFile.
      * @return true if the file has been filtered false otherwise.
      */
-    boolean isFiltered( String classFile );
+    boolean isFiltered(String classFile);
 
     /**
      * If we are finished.

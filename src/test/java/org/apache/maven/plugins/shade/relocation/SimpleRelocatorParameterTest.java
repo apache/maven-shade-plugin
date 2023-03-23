@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.relocation;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -9,7 +7,7 @@ package org.apache.maven.plugins.shade.relocation;
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -18,37 +16,32 @@ package org.apache.maven.plugins.shade.relocation;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.junit.Test;
+package org.apache.maven.plugins.shade.relocation;
 
 import java.util.Collections;
 
+import org.junit.Test;
+
 import static org.junit.Assert.fail;
 
-public class SimpleRelocatorParameterTest
-{
+public class SimpleRelocatorParameterTest {
 
     @Test
-    public void testThatNullPatternInConstructorShouldNotThrowNullPointerException()
-    {
-        constructThenFailOnNullPointerException( null, "" );
+    public void testThatNullPatternInConstructorShouldNotThrowNullPointerException() {
+        constructThenFailOnNullPointerException(null, "");
     }
 
     @Test
-    public void testThatNullShadedPatternInConstructorShouldNotThrowNullPointerException()
-    {
-        constructThenFailOnNullPointerException( "", null );
+    public void testThatNullShadedPatternInConstructorShouldNotThrowNullPointerException() {
+        constructThenFailOnNullPointerException("", null);
     }
 
-    private void constructThenFailOnNullPointerException( String pattern, String shadedPattern )
-    {
-        try
-        {
-            new SimpleRelocator( pattern, shadedPattern, Collections.<String> emptyList(), Collections.<String> emptyList() );
-        }
-        catch ( NullPointerException e )
-        {
-            fail( "Constructor should not throw null pointer exceptions" );
+    private void constructThenFailOnNullPointerException(String pattern, String shadedPattern) {
+        try {
+            new SimpleRelocator(
+                    pattern, shadedPattern, Collections.<String>emptyList(), Collections.<String>emptyList());
+        } catch (NullPointerException e) {
+            fail("Constructor should not throw null pointer exceptions");
         }
     }
 }

@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -9,7 +7,7 @@ package org.apache.maven.plugins.shade.resource;
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
 
 import java.util.Locale;
 
@@ -29,37 +28,32 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Test for {@link ApacheLicenseResourceTransformer}.
- * 
+ *
  * @author Benjamin Bentmann
  */
-public class ApacheLicenseResourceTransformerTest
-{
+public class ApacheLicenseResourceTransformerTest {
 
     private ApacheLicenseResourceTransformer transformer;
 
-    static
-    {
+    static {
         /*
          * NOTE: The Turkish locale has an usual case transformation for the letters "I" and "i", making it a prime
          * choice to test for improper case-less string comparisions.
          */
-        Locale.setDefault( new Locale( "tr" ) );
+        Locale.setDefault(new Locale("tr"));
     }
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         transformer = new ApacheLicenseResourceTransformer();
     }
 
     @Test
-    public void testCanTransformResource()
-    {
-        assertTrue( transformer.canTransformResource( "META-INF/LICENSE" ) );
-        assertTrue( transformer.canTransformResource( "META-INF/LICENSE.TXT" ) );
-        assertTrue( transformer.canTransformResource( "META-INF/LICENSE.md" ) );
-        assertTrue( transformer.canTransformResource( "META-INF/License.txt" ) );
-        assertFalse( transformer.canTransformResource( "META-INF/MANIFEST.MF" ) );
+    public void testCanTransformResource() {
+        assertTrue(transformer.canTransformResource("META-INF/LICENSE"));
+        assertTrue(transformer.canTransformResource("META-INF/LICENSE.TXT"));
+        assertTrue(transformer.canTransformResource("META-INF/LICENSE.md"));
+        assertTrue(transformer.canTransformResource("META-INF/License.txt"));
+        assertFalse(transformer.canTransformResource("META-INF/MANIFEST.MF"));
     }
-
 }

@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,22 +16,19 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import org.apache.maven.plugins.shade.relocation.Relocator;
+
 /**
  * An abstract class to implement once the old non-reproducible ResourceTransformer API.
  */
-abstract class AbstractCompatibilityTransformer
-    implements ReproducibleResourceTransformer
-{
-    public final void processResource( String resource, InputStream is, List<Relocator> relocators )
-        throws IOException
-    {
-        processResource( resource, is, relocators, 0 );
+abstract class AbstractCompatibilityTransformer implements ReproducibleResourceTransformer {
+    public final void processResource(String resource, InputStream is, List<Relocator> relocators) throws IOException {
+        processResource(resource, is, relocators, 0);
     }
 }

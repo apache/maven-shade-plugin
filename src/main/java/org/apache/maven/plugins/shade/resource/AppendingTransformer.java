@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,9 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.codehaus.plexus.util.IOUtil;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,47 +25,42 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.codehaus.plexus.util.IOUtil;
+
 /**
  * A resource processor that appends content for a resource, separated by a newline.
  */
-public class AppendingTransformer
-    extends AbstractCompatibilityTransformer
-{
+public class AppendingTransformer extends AbstractCompatibilityTransformer {
     String resource;
 
     ByteArrayOutputStream data = new ByteArrayOutputStream();
 
     private long time = Long.MIN_VALUE;
 
-    public boolean canTransformResource( String r )
-    {
-        return resource != null && resource.equalsIgnoreCase( r );
+    public boolean canTransformResource(String r) {
+        return resource != null && resource.equalsIgnoreCase(r);
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException
-    {
-        IOUtil.copy( is, data );
-        data.write( '\n' );
-        if ( time > this.time )
-        {
-            this.time = time;        
+    public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
+            throws IOException {
+        IOUtil.copy(is, data);
+        data.write('\n');
+        if (time > this.time) {
+            this.time = time;
         }
     }
 
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return data.size() > 0;
     }
 
-    public void modifyOutputStream( JarOutputStream jos )
-        throws IOException
-    {
-        JarEntry jarEntry = new JarEntry( resource );
-        jarEntry.setTime( time );
-        jos.putNextEntry( jarEntry );
+    public void modifyOutputStream(JarOutputStream jos) throws IOException {
+        JarEntry jarEntry = new JarEntry(resource);
+        jarEntry.setTime(time);
+        jos.putNextEntry(jarEntry);
 
-        jos.write( data.toByteArray() );
+        jos.write(data.toByteArray());
         data.reset();
     }
 }

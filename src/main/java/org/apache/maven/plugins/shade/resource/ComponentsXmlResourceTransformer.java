@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,13 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.codehaus.plexus.util.ReaderFactory;
-import org.codehaus.plexus.util.WriterFactory;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
-import org.codehaus.plexus.util.xml.Xpp3DomWriter;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,156 +30,135 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.codehaus.plexus.util.ReaderFactory;
+import org.codehaus.plexus.util.WriterFactory;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
+import org.codehaus.plexus.util.xml.Xpp3DomWriter;
+
 /**
  * A resource processor that aggregates plexus <code>components.xml</code> files.
  */
-public class ComponentsXmlResourceTransformer
-    extends AbstractCompatibilityTransformer
-{
+public class ComponentsXmlResourceTransformer extends AbstractCompatibilityTransformer {
     private Map<String, Xpp3Dom> components = new LinkedHashMap<>();
 
     private long time = Long.MIN_VALUE;
 
     public static final String COMPONENTS_XML_PATH = "META-INF/plexus/components.xml";
 
-    public boolean canTransformResource( String resource )
-    {
-        return COMPONENTS_XML_PATH.equals( resource );
+    public boolean canTransformResource(String resource) {
+        return COMPONENTS_XML_PATH.equals(resource);
     }
 
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException
-    {
+    public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
+            throws IOException {
         Xpp3Dom newDom;
 
-        try
-        {
-            BufferedInputStream bis = new BufferedInputStream( is )
-            {
-                public void close()
-                    throws IOException
-                {
+        try {
+            BufferedInputStream bis = new BufferedInputStream(is) {
+                public void close() throws IOException {
                     // leave ZIP open
                 }
             };
 
-            Reader reader = ReaderFactory.newXmlReader( bis );
+            Reader reader = ReaderFactory.newXmlReader(bis);
 
-            newDom = Xpp3DomBuilder.build( reader );
-        }
-        catch ( Exception e )
-        {
-            throw new IOException( "Error parsing components.xml in " + is, e );
+            newDom = Xpp3DomBuilder.build(reader);
+        } catch (Exception e) {
+            throw new IOException("Error parsing components.xml in " + is, e);
         }
 
         // Only try to merge in components if there are some elements in the component-set
-        if ( newDom.getChild( "components" ) == null )
-        {
+        if (newDom.getChild("components") == null) {
             return;
         }
 
-        Xpp3Dom[] children = newDom.getChild( "components" ).getChildren( "component" );
+        Xpp3Dom[] children = newDom.getChild("components").getChildren("component");
 
-        for ( Xpp3Dom component : children )
-        {
-            String role = getValue( component, "role" );
-            role = getRelocatedClass( role, relocators );
-            setValue( component, "role", role );
+        for (Xpp3Dom component : children) {
+            String role = getValue(component, "role");
+            role = getRelocatedClass(role, relocators);
+            setValue(component, "role", role);
 
-            String roleHint = getValue( component, "role-hint" );
+            String roleHint = getValue(component, "role-hint");
 
-            String impl = getValue( component, "implementation" );
-            impl = getRelocatedClass( impl, relocators );
-            setValue( component, "implementation", impl );
+            String impl = getValue(component, "implementation");
+            impl = getRelocatedClass(impl, relocators);
+            setValue(component, "implementation", impl);
 
             String key = role + ':' + roleHint;
-            if ( components.containsKey( key ) )
-            {
+            if (components.containsKey(key)) {
                 // TODO: use the tools in Plexus to merge these properly. For now, I just need an all-or-nothing
                 // configuration carry over
 
-                Xpp3Dom dom = components.get( key );
-                if ( dom.getChild( "configuration" ) != null )
-                {
-                    component.addChild( dom.getChild( "configuration" ) );
+                Xpp3Dom dom = components.get(key);
+                if (dom.getChild("configuration") != null) {
+                    component.addChild(dom.getChild("configuration"));
                 }
             }
 
-            Xpp3Dom requirements = component.getChild( "requirements" );
-            if ( requirements != null && requirements.getChildCount() > 0 )
-            {
-                for ( int r = requirements.getChildCount() - 1; r >= 0; r-- )
-                {
-                    Xpp3Dom requirement = requirements.getChild( r );
+            Xpp3Dom requirements = component.getChild("requirements");
+            if (requirements != null && requirements.getChildCount() > 0) {
+                for (int r = requirements.getChildCount() - 1; r >= 0; r--) {
+                    Xpp3Dom requirement = requirements.getChild(r);
 
-                    String requiredRole = getValue( requirement, "role" );
-                    requiredRole = getRelocatedClass( requiredRole, relocators );
-                    setValue( requirement, "role", requiredRole );
+                    String requiredRole = getValue(requirement, "role");
+                    requiredRole = getRelocatedClass(requiredRole, relocators);
+                    setValue(requirement, "role", requiredRole);
                 }
             }
 
-            components.put( key, component );
+            components.put(key, component);
         }
 
-        if ( time > this.time )
-        {
-            this.time = time;        
+        if (time > this.time) {
+            this.time = time;
         }
     }
 
-    public void modifyOutputStream( JarOutputStream jos )
-        throws IOException
-    {
-        JarEntry jarEntry = new JarEntry( COMPONENTS_XML_PATH );
-        jarEntry.setTime( time );
+    public void modifyOutputStream(JarOutputStream jos) throws IOException {
+        JarEntry jarEntry = new JarEntry(COMPONENTS_XML_PATH);
+        jarEntry.setTime(time);
 
         byte[] data = getTransformedResource();
 
-        jos.putNextEntry( jarEntry );
+        jos.putNextEntry(jarEntry);
 
-        jos.write( data );
+        jos.write(data);
 
         components.clear();
     }
 
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return !components.isEmpty();
     }
 
-    byte[] getTransformedResource()
-        throws IOException
-    {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream( 1024 * 4 );
+    byte[] getTransformedResource() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(1024 * 4);
 
-        try ( Writer writer = WriterFactory.newXmlWriter( baos ) )
-        {
-            Xpp3Dom dom = new Xpp3Dom( "component-set" );
+        try (Writer writer = WriterFactory.newXmlWriter(baos)) {
+            Xpp3Dom dom = new Xpp3Dom("component-set");
 
-            Xpp3Dom componentDom = new Xpp3Dom( "components" );
+            Xpp3Dom componentDom = new Xpp3Dom("components");
 
-            dom.addChild( componentDom );
+            dom.addChild(componentDom);
 
-            for ( Xpp3Dom component : components.values() )
-            {
-                componentDom.addChild( component );
+            for (Xpp3Dom component : components.values()) {
+                componentDom.addChild(component);
             }
 
-            Xpp3DomWriter.write( writer, dom );
+            Xpp3DomWriter.write(writer, dom);
         }
 
         return baos.toByteArray();
     }
 
-    private String getRelocatedClass( String className, List<Relocator> relocators )
-    {
-        if ( className != null && className.length() > 0 && relocators != null )
-        {
-            for ( Relocator relocator : relocators )
-            {
-                if ( relocator.canRelocateClass( className ) )
-                {
-                    return relocator.relocateClass( className );
+    private String getRelocatedClass(String className, List<Relocator> relocators) {
+        if (className != null && className.length() > 0 && relocators != null) {
+            for (Relocator relocator : relocators) {
+                if (relocator.canRelocateClass(className)) {
+                    return relocator.relocateClass(className);
                 }
             }
         }
@@ -195,23 +166,19 @@ public class ComponentsXmlResourceTransformer
         return className;
     }
 
-    private static String getValue( Xpp3Dom dom, String element )
-    {
-        Xpp3Dom child = dom.getChild( element );
+    private static String getValue(Xpp3Dom dom, String element) {
+        Xpp3Dom child = dom.getChild(element);
 
-        return ( child != null && child.getValue() != null ) ? child.getValue() : "";
+        return (child != null && child.getValue() != null) ? child.getValue() : "";
     }
 
-    private static void setValue( Xpp3Dom dom, String element, String value )
-    {
-        Xpp3Dom child = dom.getChild( element );
+    private static void setValue(Xpp3Dom dom, String element, String value) {
+        Xpp3Dom child = dom.getChild(element);
 
-        if ( child == null || value == null || value.length() <= 0 )
-        {
+        if (child == null || value == null || value.length() <= 0) {
             return;
         }
 
-        child.setValue( value );
+        child.setValue(value);
     }
-
 }

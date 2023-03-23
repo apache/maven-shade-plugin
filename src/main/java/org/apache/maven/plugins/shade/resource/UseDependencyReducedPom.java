@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,24 +16,21 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.project.MavenProject;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.maven.project.MavenProject;
+
 /**
  * Manually creates the resource processors needed to remove the original pom.xml and inject
  * the dependency-reduced-pom.xml in its place in the shaded JAR.
  */
-public class UseDependencyReducedPom
-{
+public class UseDependencyReducedPom {
     public static List<ResourceTransformer> createPomReplaceTransformers(
-            MavenProject project,
-            File dependencyReducedPomLocation
-    )
-    {
+            MavenProject project, File dependencyReducedPomLocation) {
         String pomInFinalJarFilename =
                 "META-INF/maven/" + project.getGroupId() + "/" + project.getArtifactId() + "/pom.xml";
 
@@ -43,12 +38,12 @@ public class UseDependencyReducedPom
 
         DontIncludeResourceTransformer removePom = new DontIncludeResourceTransformer();
         removePom.resource = pomInFinalJarFilename;
-        resourceTransformers.add( removePom );
+        resourceTransformers.add(removePom);
 
         IncludeResourceTransformer insertDependencyReducedPom = new IncludeResourceTransformer();
         insertDependencyReducedPom.file = dependencyReducedPomLocation;
         insertDependencyReducedPom.resource = pomInFinalJarFilename;
-        resourceTransformers.add( insertDependencyReducedPom );
+        resourceTransformers.add(insertDependencyReducedPom);
 
         return resourceTransformers;
     }

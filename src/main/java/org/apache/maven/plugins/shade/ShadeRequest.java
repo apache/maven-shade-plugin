@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,21 +16,21 @@ package org.apache.maven.plugins.shade;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.filter.Filter;
-import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+package org.apache.maven.plugins.shade;
 
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.plugins.shade.filter.Filter;
+import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+
 /**
  * Parameter object used to pass multitude of args to Shader.shade()
  * @since 2.0
  */
-public class ShadeRequest
-{
+public class ShadeRequest {
 
     private Set<File> jars;
 
@@ -46,8 +44,7 @@ public class ShadeRequest
 
     private boolean shadeSourcesContent;
 
-    public Set<File> getJars()
-    {
+    public Set<File> getJars() {
         return jars;
     }
 
@@ -56,13 +53,11 @@ public class ShadeRequest
      *
      * @param jars The jars.
      */
-    public void setJars( Set<File> jars )
-    {
+    public void setJars(Set<File> jars) {
         this.jars = jars;
     }
 
-    public File getUberJar()
-    {
+    public File getUberJar() {
         return uberJar;
     }
 
@@ -71,13 +66,11 @@ public class ShadeRequest
      *
      * @param uberJar The ueberJar file.
      */
-    public void setUberJar( File uberJar )
-    {
+    public void setUberJar(File uberJar) {
         this.uberJar = uberJar;
     }
 
-    public List<Filter> getFilters()
-    {
+    public List<Filter> getFilters() {
         return filters;
     }
 
@@ -86,13 +79,11 @@ public class ShadeRequest
      *
      * @param filters The filters
      */
-    public void setFilters( List<Filter> filters )
-    {
+    public void setFilters(List<Filter> filters) {
         this.filters = filters;
     }
 
-    public List<Relocator> getRelocators()
-    {
+    public List<Relocator> getRelocators() {
         return relocators;
     }
 
@@ -101,13 +92,11 @@ public class ShadeRequest
      *
      * @param relocators The relocators.
      */
-    public void setRelocators( List<Relocator> relocators )
-    {
+    public void setRelocators(List<Relocator> relocators) {
         this.relocators = relocators;
     }
 
-    public List<ResourceTransformer> getResourceTransformers()
-    {
+    public List<ResourceTransformer> getResourceTransformers() {
         return resourceTransformers;
     }
 
@@ -116,13 +105,11 @@ public class ShadeRequest
      *
      * @param resourceTransformers List of resourceTransformers.
      */
-    public void setResourceTransformers( List<ResourceTransformer> resourceTransformers )
-    {
+    public void setResourceTransformers(List<ResourceTransformer> resourceTransformers) {
         this.resourceTransformers = resourceTransformers;
     }
 
-    public boolean isShadeSourcesContent()
-    {
+    public boolean isShadeSourcesContent() {
         return shadeSourcesContent;
     }
 
@@ -133,8 +120,7 @@ public class ShadeRequest
      *
      * @param shadeSourcesContent {@code true} or {@code false}.
      */
-    public void setShadeSourcesContent( boolean shadeSourcesContent )
-    {
+    public void setShadeSourcesContent(boolean shadeSourcesContent) {
         this.shadeSourcesContent = shadeSourcesContent;
     }
 }

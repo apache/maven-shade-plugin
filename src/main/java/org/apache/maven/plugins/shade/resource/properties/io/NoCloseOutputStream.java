@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource.properties.io;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade.resource.properties.io;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource.properties.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,42 +25,35 @@ import java.io.OutputStream;
  * Simple output stream replacing close call by a simpe flush.
  * Useful for output streams nesting streams (like jar output streams) and using a stream encoder.
  */
-public class NoCloseOutputStream extends OutputStream
-{
+public class NoCloseOutputStream extends OutputStream {
     private final OutputStream delegate;
 
-    public NoCloseOutputStream( OutputStream delegate )
-    {
+    public NoCloseOutputStream(OutputStream delegate) {
         this.delegate = delegate;
     }
 
     @Override
-    public void write( int b ) throws IOException
-    {
-        delegate.write( b );
+    public void write(int b) throws IOException {
+        delegate.write(b);
     }
 
     @Override
-    public void write( byte[] b ) throws IOException
-    {
-        delegate.write( b );
+    public void write(byte[] b) throws IOException {
+        delegate.write(b);
     }
 
     @Override
-    public void write( byte[] b, int off, int len ) throws IOException
-    {
-        delegate.write( b, off, len );
+    public void write(byte[] b, int off, int len) throws IOException {
+        delegate.write(b, off, len);
     }
 
     @Override
-    public void flush() throws IOException
-    {
+    public void flush() throws IOException {
         delegate.flush();
     }
 
     @Override
-    public void close() throws IOException
-    {
+    public void close() throws IOException {
         delegate.flush();
     }
 }
