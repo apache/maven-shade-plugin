@@ -83,7 +83,7 @@
     <javaVersion>8</javaVersion>
     <sisu.version>0.3.5</sisu.version>
     <currentVersion>${project.version}</currentVersion>
-    <asmVersion>9.4</asmVersion>
+    <asmVersion>9.5</asmVersion>
     <slf4j.version>1.7.32</slf4j.version>
     <project.build.outputTimestamp>2022-10-21T20:02:58Z</project.build.outputTimestamp>
   </properties>
