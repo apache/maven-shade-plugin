@@ -262,13 +262,13 @@ public class MinijarFilter implements Filter {
             log.warn(dependency.getFile()
                     + " could not be unpacked/read for minimization; dependency is probably malformed.");
             IOException ioe = new IOException(
-                    "Dependency " + dependency.toString() + " in file " + dependency.getFile()
+                    "Dependency " + dependency + " in file " + dependency.getFile()
                             + " could not be unpacked. File is probably corrupt",
                     e);
             throw ioe;
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             // trap ArrayIndexOutOfBoundsExceptions caused by malformed dependency classes (MSHADE-107)
-            log.warn(dependency.toString()
+            log.warn(dependency
                     + " could not be analyzed for minimization; dependency is probably malformed.");
         }
 
@@ -350,3 +350,7 @@ public class MinijarFilter implements Filter {
         }
     }
 }
+
+
+
+
