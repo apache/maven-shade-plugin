@@ -350,7 +350,3 @@ public class MinijarFilter implements Filter {
         }
     }
 }
-
-
-
-
