@@ -19,6 +19,8 @@
 
 package com.example;
 
+import org.codehaus.plexus.util.StringUtils;
+
 public class Main
 {
     public static void main( String[] args ) {
@@ -26,6 +28,6 @@ public class Main
     }
 
     public static boolean isEmpty( String input ) {
-        return input == null || input.isEmpty();
+        return StringUtils.isEmpty( input );
     }
 }
