@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.jar.JarOutputStream;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.codehaus.plexus.util.StringUtils;
 
 /**
  * A resource processor that prevents the inclusion of an arbitrary
@@ -36,7 +35,7 @@ public class DontIncludeResourceTransformer extends AbstractCompatibilityTransfo
     List<String> resources;
 
     public boolean canTransformResource(String r) {
-        if (StringUtils.isNotEmpty(resource) && r.endsWith(resource)) {
+        if ((resource != null && !resource.isEmpty()) && r.endsWith(resource)) {
             return true;
         }
 
