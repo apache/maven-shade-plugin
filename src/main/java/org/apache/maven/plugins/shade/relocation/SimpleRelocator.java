@@ -40,13 +40,17 @@ public class SimpleRelocator implements Relocator {
      * Match <ul>
      *     <li>certain Java keywords + space</li>
      *     <li>beginning of Javadoc link + optional line breaks and continuations with '*'</li>
+     *     <li>(opening curly brace / opening parenthesis / comma / equals / semicolon) + space</li>
+     *     <li>(closing curly brace / closing multi-line comment) + space</li>
      * </ul>
      * at end of string
      */
-    private static final Pattern RX_ENDS_WITH_JAVA_KEYWORD =
-            Pattern.compile("\\b(import|package|public|protected|private|static|final|synchronized|abstract|volatile) $"
+    private static final Pattern RX_ENDS_WITH_JAVA_KEYWORD = Pattern.compile(
+            "\\b(import|package|public|protected|private|static|final|synchronized|abstract|volatile|extends|implements|throws) $"
                     + "|"
-                    + "\\{@link( \\*)* $");
+                    + "\\{@link( \\*)* $"
+                    + "|"
+                    + "([{}(=;,]|\\*/) $");
 
     private final String pattern;
 
@@ -217,7 +221,7 @@ public class SimpleRelocator implements Relocator {
         // Usually shading makes package names a bit longer, so make buffer 10% bigger than original source
         StringBuilder shadedSourceContent = new StringBuilder(sourceContent.length() * 11 / 10);
         boolean isFirstSnippet = true;
-        // Make sure that search pattern starts at word boundary and we look for literal ".", not regex jokers
+        // Make sure that search pattern starts at word boundary and that we look for literal ".", not regex jokers
         String[] snippets = sourceContent.split("\\b" + patternFrom.replace(".", "[.]") + "\\b");
         for (int i = 0, snippetsLength = snippets.length; i < snippetsLength; i++) {
             String snippet = snippets[i];
