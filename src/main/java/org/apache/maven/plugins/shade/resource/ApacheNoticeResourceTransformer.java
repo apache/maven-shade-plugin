@@ -36,7 +36,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.codehaus.plexus.util.StringUtils;
 
 /**
  * Merges <code>META-INF/NOTICE.TXT</code> files.
@@ -106,7 +105,7 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
         }
 
         BufferedReader reader;
-        if (StringUtils.isNotEmpty(encoding)) {
+        if (encoding != null && !encoding.isEmpty()) {
             reader = new BufferedReader(new InputStreamReader(is, encoding));
         } else {
             reader = new BufferedReader(new InputStreamReader(is));
@@ -178,7 +177,7 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
         jos.putNextEntry(jarEntry);
 
         Writer writer;
-        if (StringUtils.isNotEmpty(encoding)) {
+        if (encoding != null && !encoding.isEmpty()) {
             writer = new OutputStreamWriter(jos, encoding);
         } else {
             writer = new OutputStreamWriter(jos);
