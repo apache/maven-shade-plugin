@@ -268,8 +268,7 @@ public class MinijarFilter implements Filter {
             throw ioe;
         } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
             // trap ArrayIndexOutOfBoundsExceptions caused by malformed dependency classes (MSHADE-107)
-            log.warn(dependency
-                    + " could not be analyzed for minimization; dependency is probably malformed.");
+            log.warn(dependency + " could not be analyzed for minimization; dependency is probably malformed.");
         }
 
         return clazzpathUnit;
