@@ -101,10 +101,9 @@
         <version>${sisu.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.sonatype.sisu</groupId>
-        <artifactId>sisu-guice</artifactId>
-        <version>3.2.6</version>
-        <classifier>no_aop</classifier>
+        <groupId>com.google.inject</groupId>
+        <artifactId>guice</artifactId>
+        <version>5.1.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -207,9 +206,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.sonatype.sisu</groupId>
-      <artifactId>sisu-guice</artifactId>
-      <classifier>no_aop</classifier>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
