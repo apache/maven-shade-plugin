@@ -1057,8 +1057,9 @@ public class ShadeMojo extends AbstractMojo {
                 model.setDependencies(dependencies);
 
                 if (generateUniqueDependencyReducedPom) {
-                    dependencyReducedPomLocation =
-                            File.createTempFile("dependency-reduced-pom-", ".xml", project.getBasedir());
+                    dependencyReducedPomLocation = Files.createTempFile(
+                                    project.getBasedir().toPath(), "dependency-reduced-pom-", ".xml")
+                            .toFile();
                     project.getProperties()
                             .setProperty(
                                     "maven.shade.dependency-reduced-pom",
