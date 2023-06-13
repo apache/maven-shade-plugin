@@ -23,14 +23,13 @@ String[] wanted =
 {
     "Main.class",
     "junit/framework/TestCase.class",
-    "junit/swingui/icons/error.gif",
-    "junit/awtui/TestRunner.class",
+    "junit/runner/logo.gif",
+    "junit/framework/Assert.class",
     "org/jdom2/Document.class"
 };
 
 String[] unwanted =
 {
-    "junit/swingui/TestRunner.class",
     "junit/textui/TestRunner.class",
     "org/objectweb/asm/Type.class"
 };
