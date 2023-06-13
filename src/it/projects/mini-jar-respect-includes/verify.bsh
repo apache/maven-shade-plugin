@@ -31,7 +31,6 @@ String[] wanted =
 String[] unwanted =
 {
     "junit/textui/TestRunner.class",
-    "junit/textui/TestRunner.class",
     "org/objectweb/asm/Type.class"
 };
 
