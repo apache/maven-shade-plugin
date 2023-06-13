@@ -36,13 +36,13 @@ under the License.
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.2</version>
+      <version>4.13.2</version>
     </dependency>
 
     <dependency>
       <groupId>org.jdom</groupId>
-      <artifactId>jdom</artifactId>
-      <version>2.0.2</version>
+      <artifactId>jdom2</artifactId>
+      <version>2.0.6.1</version>
     </dependency>
     
     <dependency>
@@ -86,7 +86,7 @@ under the License.
                 </filter>
                 <!-- make sure that include patterns only affect their specified artifacts -->
                 <filter>
-                  <artifact>org.jdom:jdom</artifact>
+                  <artifact>org.jdom:jdom2</artifact>
                   <includes>
                     <include>**</include>
                   </includes>
