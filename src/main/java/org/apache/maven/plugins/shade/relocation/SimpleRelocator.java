@@ -222,7 +222,7 @@ public class SimpleRelocator implements Relocator {
         StringBuilder shadedSourceContent = new StringBuilder(sourceContent.length() * 11 / 10);
         boolean isFirstSnippet = true;
         // Make sure that search pattern starts at word boundary and that we look for literal ".", not regex jokers
-        String[] snippets = sourceContent.split("\\b" + patternFrom.replace(".", "[.]") + "\\b");
+        String[] snippets = sourceContent.split("\\b" + patternFrom.replace(".", "[.]"));
         for (int i = 0, snippetsLength = snippets.length; i < snippetsLength; i++) {
             String snippet = snippets[i];
             String previousSnippet = isFirstSnippet ? "" : snippets[i - 1];
