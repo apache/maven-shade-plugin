@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import groovy.xml.XmlSlurper
+
 def shadedJar = new File( basedir, "app/target/mshade-135-1.0.jar")
 def pluginXml = new URL( "jar:" + shadedJar.toURL() + "!/META-INF/maven/plugin.xml" )
 def plugin = new XmlSlurper().parse( pluginXml.openStream() );

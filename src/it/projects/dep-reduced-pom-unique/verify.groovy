@@ -19,6 +19,7 @@
 
 import java.io.*;
 import java.util.Properties;
+import groovy.xml.XmlParser
 
 def drps = basedir.listFiles( { dir, file -> file ==~ "dependency-reduced-.*\\.xml" } as FilenameFilter )
 
