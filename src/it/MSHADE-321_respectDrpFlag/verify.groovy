@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import groovy.xml.XmlParser
 
 File jarRenamedFile = new File(basedir, "target/shade_321.jar")
 assert jarRenamedFile.isFile()
