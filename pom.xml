@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-plugins</artifactId>
-    <version>39</version>
+    <version>40</version>
     <relativePath />
   </parent>
 
@@ -348,8 +348,8 @@
               <repositories>
                 <mockRepo>
                   <source>src/it/mrm/repository</source>
-                  <cloneTo>target/mock-repo</cloneTo>
                   <!-- due to on the fly created jars -->
+                  <cloneTo>target/mock-repo</cloneTo>
                 </mockRepo>
                 <proxyRepo />
               </repositories>
