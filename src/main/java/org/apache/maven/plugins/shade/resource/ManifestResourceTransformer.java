@@ -112,6 +112,13 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
             if (time > this.time) {
                 this.time = time;
             }
+        } else {
+            // If any of the included jars is "Multi-Release" (JEP-238) then so is the end result
+            String multiRelease = new Manifest(is).getMainAttributes().getValue("Multi-Release");
+
+            if ("true".equals(multiRelease)) {
+                manifest.getMainAttributes().putValue("Multi-Release", "true");
+            }
         }
     }
 

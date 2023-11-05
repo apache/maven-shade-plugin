@@ -70,6 +70,7 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vafer.jdependency.Clazz;
 
 /**
  * @author Jason van Zyl
@@ -593,8 +594,13 @@ public class DefaultShader implements Shader {
             renamedClass = originalClass;
         }
 
-        // Need to take the .class off for remapping evaluation
-        String mappedName = packageMapper.map(name.substring(0, name.indexOf('.')), true, false);
+        String mappedName;
+        if (Clazz.isMultiReleaseClassFile(name)) {
+            mappedName = packageMapper.map(name, true, false); // .substring(0, name.indexOf('.'));
+        } else {
+            // Need to take the .class off for remapping evaluation
+            mappedName = packageMapper.map(name.substring(0, name.indexOf('.')), true, false);
+        }
 
         try {
             // Now we put it back on so the class file is written out with the right extension.
@@ -728,11 +734,19 @@ public class DefaultShader implements Shader {
             String prefix = "";
             String suffix = "";
 
-            Matcher m = CLASS_PATTERN.matcher(entityName);
-            if (m.matches()) {
-                prefix = m.group(1) + "L";
-                suffix = ";";
-                entityName = m.group(2);
+            boolean isMultiReleaseClassFile = Clazz.isMultiReleaseClassFile(entityName);
+
+            if (isMultiReleaseClassFile) {
+                Clazz.ParsedFileName parsedFileName = Clazz.parseClassFileName(entityName);
+                prefix = "META-INF/versions/" + parsedFileName.forJava + "/";
+                entityName = parsedFileName.className.replace(".", "/");
+            } else {
+                Matcher m = CLASS_PATTERN.matcher(entityName);
+                if (m.matches()) {
+                    prefix = m.group(1) + "L";
+                    suffix = ";";
+                    entityName = m.group(2);
+                }
             }
 
             for (Relocator r : relocators) {
