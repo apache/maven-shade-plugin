@@ -18,41 +18,6 @@
  */
 package org.apache.maven.plugins.shade;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PushbackInputStream;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -70,6 +35,24 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 
 /**
  * @author Jason van Zyl
@@ -208,12 +191,23 @@ public class DefaultShader implements Shader {
             MultiValuedMap<String, File> duplicates,
             DefaultPackageMapper packageMapper)
             throws IOException {
+
+        Path targetDir = Paths.get("", "target");
+
         for (File jar : shadeRequest.getJars()) {
 
             logger.debug("Processing JAR " + jar);
 
+            File dir = Files.createDirectories(targetDir.resolve(jar.getName().replace(".jar", ""))).toFile();
+            Unzipper.unzip(jar, dir);
+
+            List<String> packagesToProtect = ChronicleScanner.scanPackages(dir);
+
+            logger.warn("Guarded directories:\n" + String.join("\n", packagesToProtect));
+            //TODO: JNI call to encrypt the directories
+
             List<Filter> jarFilters = getFilters(jar, shadeRequest.getFilters());
-            if (jar.isDirectory()) {
+            if (dir.isDirectory()) {
                 shadeDir(
                         shadeRequest,
                         resources,
@@ -221,12 +215,12 @@ public class DefaultShader implements Shader {
                         packageMapper,
                         jos,
                         duplicates,
-                        jar,
-                        jar,
+                        dir,
+                        dir,
                         "",
                         jarFilters);
             } else {
-                shadeJar(shadeRequest, resources, transformers, packageMapper, jos, duplicates, jar, jarFilters);
+                shadeJar(shadeRequest, resources, transformers, packageMapper, jos, duplicates, dir, jarFilters);
             }
         }
     }
@@ -792,7 +786,7 @@ public class DefaultShader implements Shader {
             this.packageMapper = packageMapper;
 
             // use this to enrich relocators impl with "remapped" logic
-            LazyInitRemapper.class.cast(remapper).relocators = this;
+            ((LazyInitRemapper) remapper).relocators = this;
         }
 
         @Override
