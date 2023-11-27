@@ -37,7 +37,7 @@ public class SimpleRelocatorTest {
 
     @Test
     public void testNoNpeRelocateClass() {
-        new SimpleRelocator("foo", "bar", null, null, true).relocateClass("foo");
+        new SimpleRelocator("foo", "bar", null, null, true, false).relocateClass("foo");
     }
 
     @Test
@@ -100,10 +100,10 @@ public class SimpleRelocatorTest {
     public void testCanRelocateRawString() {
         SimpleRelocator relocator;
 
-        relocator = new SimpleRelocator("org/foo", null, null, null, true);
+        relocator = new SimpleRelocator("org/foo", null, null, null, true, false);
         assertTrue(relocator.canRelocatePath("(I)org/foo/bar/Class;"));
 
-        relocator = new SimpleRelocator("^META-INF/org.foo.xml$", null, null, null, true);
+        relocator = new SimpleRelocator("^META-INF/org.foo.xml$", null, null, null, true, false);
         assertTrue(relocator.canRelocatePath("META-INF/org.foo.xml"));
     }
 
@@ -161,10 +161,11 @@ public class SimpleRelocatorTest {
     public void testRelocateRawString() {
         SimpleRelocator relocator;
 
-        relocator = new SimpleRelocator("Lorg/foo", "Lhidden/org/foo", null, null, true);
+        relocator = new SimpleRelocator("Lorg/foo", "Lhidden/org/foo", null, null, true, false);
         assertEquals("(I)Lhidden/org/foo/bar/Class;", relocator.relocatePath("(I)Lorg/foo/bar/Class;"));
 
-        relocator = new SimpleRelocator("^META-INF/org.foo.xml$", "META-INF/hidden.org.foo.xml", null, null, true);
+        relocator =
+                new SimpleRelocator("^META-INF/org.foo.xml$", "META-INF/hidden.org.foo.xml", null, null, true, false);
         assertEquals("META-INF/hidden.org.foo.xml", relocator.relocatePath("META-INF/org.foo.xml"));
     }
 
@@ -256,7 +257,8 @@ public class SimpleRelocatorTest {
                 "com.acme.maven",
                 Arrays.asList("foo.bar", "zot.baz"),
                 Arrays.asList("irrelevant.exclude", "org.apache.maven.exclude1", "org.apache.maven.sub.exclude2"),
-                true);
+                true,
+                false);
         assertEquals(sourceFile, relocator.applyToSourceContent(sourceFile));
     }
 
