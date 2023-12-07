@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-plugins</artifactId>
-    <version>40</version>
+    <version>41</version>
     <relativePath />
   </parent>
 
@@ -327,7 +327,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
-            <version>3.6.0</version>
             <configuration>
               <goals>
                 <goal>package</goal>
@@ -362,45 +361,6 @@
                 </goals>
               </execution>
             </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <!-- TODO remove with parent pom or spotless plugin update https://github.com/diffplug/spotless/issues/1774 -->
-    <profile>
-      <id>java11+</id>
-      <activation>
-        <jdk>[11,)</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>2.39.0</version>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>java21+</id>
-      <activation>
-        <jdk>[21,)</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <configuration>
-              <java>
-                <palantirJavaFormat>
-                  <version>2.35.0</version>
-                </palantirJavaFormat>
-              </java>
-            </configuration>
           </plugin>
         </plugins>
       </build>
