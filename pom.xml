@@ -79,7 +79,7 @@
   </distributionManagement>
 
   <properties>
-    <mavenVersion>3.2.5</mavenVersion>
+    <mavenVersion>3.8.1</mavenVersion>
     <javaVersion>8</javaVersion>
     <sisu.version>0.3.5</sisu.version>
     <currentVersion>${project.version}</currentVersion>
