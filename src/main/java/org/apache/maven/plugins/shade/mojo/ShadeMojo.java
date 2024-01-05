@@ -39,6 +39,7 @@ import java.util.Set;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Exclusion;
@@ -808,7 +809,9 @@ public class ShadeMojo extends AbstractMojo {
         org.eclipse.aether.artifact.Artifact coordinate = RepositoryUtils.toArtifact(new DefaultArtifact(
                 artifact.getGroupId(),
                 artifact.getArtifactId(),
-                artifact.getVersionRange(),
+                artifact.getVersionRange() == null
+                        ? VersionRange.createFromVersion(artifact.getVersion())
+                        : artifact.getVersionRange(),
                 artifact.getScope(),
                 artifact.getType(),
                 classifier,
