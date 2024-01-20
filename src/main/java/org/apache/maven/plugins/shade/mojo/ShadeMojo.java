@@ -35,6 +35,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
@@ -1048,6 +1050,8 @@ public class ShadeMojo extends AbstractMojo {
         rewriteDependencyReducedPomIfWeHaveReduction(dependencies, modified, transitiveDeps, model);
     }
 
+    private static final Lock LOCK = new ReentrantLock();
+
     private void rewriteDependencyReducedPomIfWeHaveReduction(
             List<Dependency> dependencies, boolean modified, List<Dependency> transitiveDeps, Model model)
             throws IOException, ProjectBuildingException, DependencyGraphBuilderException {
@@ -1112,15 +1116,21 @@ public class ShadeMojo extends AbstractMojo {
                     w.close();
                 }
 
-                ProjectBuildingRequest projectBuildingRequest =
-                        new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
-                projectBuildingRequest.setLocalRepository(session.getLocalRepository());
-                projectBuildingRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
+                // Lock critical section to fix MSHADE-467
+                try {
+                    LOCK.lock();
+                    ProjectBuildingRequest projectBuildingRequest =
+                            new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
+                    projectBuildingRequest.setLocalRepository(session.getLocalRepository());
+                    projectBuildingRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
 
-                ProjectBuildingResult result = projectBuilder.build(f, projectBuildingRequest);
+                    ProjectBuildingResult result = projectBuilder.build(f, projectBuildingRequest);
 
-                getLog().debug("updateExcludesInDeps()");
-                modified = updateExcludesInDeps(result.getProject(), dependencies, transitiveDeps);
+                    getLog().debug("updateExcludesInDeps()");
+                    modified = updateExcludesInDeps(result.getProject(), dependencies, transitiveDeps);
+                } finally {
+                    LOCK.unlock();
+                }
             }
 
             project.setFile(dependencyReducedPomLocation);
