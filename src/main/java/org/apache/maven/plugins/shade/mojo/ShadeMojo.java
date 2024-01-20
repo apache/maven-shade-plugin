@@ -35,8 +35,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
@@ -1050,8 +1048,6 @@ public class ShadeMojo extends AbstractMojo {
         rewriteDependencyReducedPomIfWeHaveReduction(dependencies, modified, transitiveDeps, model);
     }
 
-    private static final Lock LOCK = new ReentrantLock();
-
     private void rewriteDependencyReducedPomIfWeHaveReduction(
             List<Dependency> dependencies, boolean modified, List<Dependency> transitiveDeps, Model model)
             throws IOException, ProjectBuildingException, DependencyGraphBuilderException {
@@ -1116,9 +1112,7 @@ public class ShadeMojo extends AbstractMojo {
                     w.close();
                 }
 
-                // Lock critical section to fix MSHADE-467
-                try {
-                    LOCK.lock();
+                synchronized (session.getProjectBuildingRequest()) { // Lock critical section to fix MSHADE-467
                     ProjectBuildingRequest projectBuildingRequest =
                             new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
                     projectBuildingRequest.setLocalRepository(session.getLocalRepository());
@@ -1128,8 +1122,6 @@ public class ShadeMojo extends AbstractMojo {
 
                     getLog().debug("updateExcludesInDeps()");
                     modified = updateExcludesInDeps(result.getProject(), dependencies, transitiveDeps);
-                } finally {
-                    LOCK.unlock();
                 }
             }
 
