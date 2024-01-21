@@ -43,6 +43,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -55,6 +56,9 @@ import java.util.zip.ZipException;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
+import org.apache.commons.compress.archivers.zip.ExtraFieldUtils;
+import org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp;
+import org.apache.commons.compress.archivers.zip.ZipExtraField;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
@@ -87,6 +91,25 @@ public class DefaultShader implements Shader {
 
     public DefaultShader(final Logger logger) {
         this.logger = Objects.requireNonNull(logger);
+    }
+
+    // workaround for MSHADE-420
+    private long getTime(ZipEntry entry) {
+        if (entry.getExtra() != null) {
+            try {
+                ZipExtraField[] fields =
+                        ExtraFieldUtils.parse(entry.getExtra(), true, ExtraFieldUtils.UnparseableExtraField.SKIP);
+                for (ZipExtraField field : fields) {
+                    if (X5455_ExtendedTimestamp.HEADER_ID.equals(field.getHeaderId())) {
+                        // extended timestamp extra field: need to translate UTC to local time for Reproducible Builds
+                        return entry.getTime() - TimeZone.getDefault().getRawOffset();
+                    }
+                }
+            } catch (ZipException ze) {
+                // ignore
+            }
+        }
+        return entry.getTime();
     }
 
     public void shade(ShadeRequest shadeRequest) throws IOException, MojoExecutionException {
@@ -332,7 +355,7 @@ public class DefaultShader implements Shader {
                                 }
                             },
                             name,
-                            entry.getTime(),
+                            getTime(entry),
                             entry.getMethod());
                 } catch (Exception e) {
                     throw new IOException(String.format("Problem shading JAR %s entry %s: %s", jar, name, e), e);
@@ -423,7 +446,7 @@ public class DefaultShader implements Shader {
                             resources.add(resource);
                             try (InputStream inputStream = jarFile.getInputStream(entry)) {
                                 manifestTransformer.processResource(
-                                        resource, inputStream, shadeRequest.getRelocators(), entry.getTime());
+                                        resource, inputStream, shadeRequest.getRelocators(), getTime(entry));
                             }
                             break;
                         }
