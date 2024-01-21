@@ -255,6 +255,11 @@
       <version>3.3.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.23.0</version>
+    </dependency>
   </dependencies>
 
   <build>
