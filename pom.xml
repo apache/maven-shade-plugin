@@ -300,6 +300,54 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-plugin-report-plugin</artifactId>
+          <configuration>
+            <requirementsHistories>
+              <requirementsHistory>
+                <version>3.5.1</version>
+                <maven>3.2.5</maven>
+                <jdk>8</jdk>
+              </requirementsHistory>
+              <requirementsHistory>
+                <version>from 3.4.0 to 3.5.0</version>
+                <maven>3.1.1</maven>
+                <jdk>8</jdk>
+              </requirementsHistory>
+              <requirementsHistory>
+                <version>3.3.0</version>
+                <maven>3.1.1</maven>
+                <jdk>7</jdk>
+              </requirementsHistory>
+              <requirementsHistory>
+                <version>from 3.2.0 to 3.2.4</version>
+                <maven>3.0</maven>
+                <jdk>7</jdk>
+              </requirementsHistory>
+              <requirementsHistory>
+                <version>from 3.0.0 to 3.1.1</version>
+                <maven>3.0</maven>
+                <jdk>6</jdk>
+              </requirementsHistory>
+              <requirementsHistory>
+                <version>from 2.0 to 2.4.3</version>
+                <maven>3.0</maven>
+                <jdk>5</jdk>
+              </requirementsHistory>
+              <requirementsHistory>
+                <version>from 1.5 to 1.7.1</version>
+                <maven>2.0.6</maven>
+                <jdk>5</jdk>
+              </requirementsHistory>
+              <requirementsHistory>
+                <version>up to 1.4</version>
+                <maven>2.0.6</maven>
+                <jdk>1.4</jdk>
+              </requirementsHistory>
+            </requirementsHistories>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
