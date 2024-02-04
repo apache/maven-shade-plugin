@@ -1,4 +1,4 @@
-target/
+**/target/
 .project
 .classpath
 .settings/
@@ -7,6 +7,7 @@ bin/
 # Intellij
 *.ipr
 *.iml
+**/*.iml
 .idea
 out/
 .DS_Store

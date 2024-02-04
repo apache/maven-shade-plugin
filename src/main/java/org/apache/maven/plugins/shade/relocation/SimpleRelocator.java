@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.codehaus.plexus.util.SelectorUtils;
+import org.vafer.jdependency.Clazz;
 
 /**
  * @author Jason van Zyl
@@ -180,7 +181,10 @@ public class SimpleRelocator implements Relocator {
         }
 
         if (path.endsWith(".class")) {
-            path = path.substring(0, path.length() - 6);
+            Clazz.ParsedFileName parsedFileName = Clazz.parseClassFileName(path);
+            if (parsedFileName != null && parsedFileName.className != null) {
+                path = parsedFileName.className.replace(".", "/");
+            }
         }
 
         // Allow for annoying option of an extra / on the front of a path. See MSHADE-119; comes from
