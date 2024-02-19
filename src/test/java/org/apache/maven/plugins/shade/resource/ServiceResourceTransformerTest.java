@@ -54,7 +54,7 @@ public class ServiceResourceTransformerTest {
                 new SimpleRelocator("org.foo", "borg.foo", null, Arrays.asList("org.foo.exclude.*"));
         relocators.add(relocator);
 
-        String content = "org.foo.Service\norg.foo.exclude.OtherService\n";
+        String content = "org.foo.Service\norg.foo.exclude.OtherService\norg.fooPart.exclude.OtherService\n";
         byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
         InputStream contentStream = new ByteArrayInputStream(contentBytes);
         String contentResource = "META-INF/services/org.foo.something.another";
@@ -76,7 +76,10 @@ public class ServiceResourceTransformerTest {
             assertNotNull(jarEntry);
             try (InputStream entryStream = jarFile.getInputStream(jarEntry)) {
                 String xformedContent = IOUtils.toString(entryStream, "utf-8");
-                assertEquals("borg.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE, xformedContent);
+                assertEquals(
+                        "borg.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE
+                                + "borg.fooPart.exclude.OtherService" + NEWLINE,
+                        xformedContent);
             } finally {
                 jarFile.close();
             }
