@@ -197,7 +197,7 @@ public class ShadeMojo extends AbstractMojo {
      * <p/>
      * If you like to change the name of the native artifact, you may use the &lt;build>&lt;finalName> setting. If this
      * is set to something different than &lt;build>&lt;finalName>, no file replacement will be performed, even if
-     * shadedArtifactAttached is being used.
+     * {@link #shadedArtifactAttached} is false.
      */
     @Parameter
     private String finalName;
@@ -217,10 +217,10 @@ public class ShadeMojo extends AbstractMojo {
     private String shadedGroupFilter;
 
     /**
-     * Defines whether the shaded artifact should be attached as classifier to the original artifact. If false, the
-     * shaded jar will be the main artifact of the project
+     * Defines whether the shaded artifact should be attached as classifier to the original artifact. If false (the
+     * default), the shaded jar will be the main artifact of the project.
      */
-    @Parameter
+    @Parameter(defaultValue = "false")
     private boolean shadedArtifactAttached;
 
     /**
@@ -265,14 +265,14 @@ public class ShadeMojo extends AbstractMojo {
     /**
      * When true, dependencies are kept in the pom but with scope 'provided'; when false, the dependency is removed.
      */
-    @Parameter
+    @Parameter(defaultValue = "false")
     private boolean keepDependenciesWithProvidedScope;
 
     /**
      * When true, transitive deps of removed dependencies are promoted to direct dependencies. This should allow the
      * drop in replacement of the removed deps with the new shaded jar and everything should still work.
      */
-    @Parameter
+    @Parameter(defaultValue = "false")
     private boolean promoteTransitiveDependencies;
 
     /**
@@ -284,13 +284,13 @@ public class ShadeMojo extends AbstractMojo {
     /**
      * When true, it will attempt to create a sources jar as well
      */
-    @Parameter
+    @Parameter(defaultValue = "false")
     private boolean createSourcesJar;
 
     /**
      * When true, it will attempt to create a test sources jar.
      */
-    @Parameter
+    @Parameter(defaultValue = "false")
     private boolean createTestSourcesJar;
 
     /**
@@ -321,7 +321,7 @@ public class ShadeMojo extends AbstractMojo {
      *
      * @since 1.4
      */
-    @Parameter
+    @Parameter(defaultValue = "false")
     private boolean minimizeJar;
 
     /**
