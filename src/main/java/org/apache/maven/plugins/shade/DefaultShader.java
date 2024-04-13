@@ -34,6 +34,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -43,7 +44,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -102,7 +102,9 @@ public class DefaultShader implements Shader {
                 for (ZipExtraField field : fields) {
                     if (X5455_ExtendedTimestamp.HEADER_ID.equals(field.getHeaderId())) {
                         // extended timestamp extra field: need to translate UTC to local time for Reproducible Builds
-                        return entry.getTime() - TimeZone.getDefault().getRawOffset();
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTimeInMillis(entry.getTime());
+                        return entry.getTime() - (cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET));
                     }
                 }
             } catch (ZipException ze) {
