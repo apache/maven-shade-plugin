@@ -197,7 +197,7 @@ public class ShadeMojo extends AbstractMojo {
      * <p/>
      * If you like to change the name of the native artifact, you may use the &lt;build>&lt;finalName> setting. If this
      * is set to something different than &lt;build>&lt;finalName>, no file replacement will be performed, even if
-     * {@link #shadedArtifactAttached} is false.
+     * shadedArtifactAttached is being used.
      */
     @Parameter
     private String finalName;
