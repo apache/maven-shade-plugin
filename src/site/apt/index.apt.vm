@@ -73,4 +73,6 @@ ${project.name}
 
   * {{{./examples/resource-transformers.html}Resource Transformers}}
 
+  * {{{./examples/use-shader-other-impl.html}Using another Shader implementation}}
+
   []
