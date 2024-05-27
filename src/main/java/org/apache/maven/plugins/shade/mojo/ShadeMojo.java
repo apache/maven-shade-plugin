@@ -393,6 +393,16 @@ public class ShadeMojo extends AbstractMojo {
     @Parameter(defaultValue = "false")
     private boolean skip;
 
+    /**
+     * Extra JAR files to process into shaded result. One can add here "extra JARs" to be processed into the resulting
+     * shaded JAR. The listed JAR files must exist. Extra JARs will be processed in same way as any other dependency
+     * (regarding relocation, filtering, resource transformers etc.).
+     *
+     * @since 3.6.0
+     */
+    @Parameter
+    private List<File> extraJars;
+
     @Inject
     private MavenProjectHelper projectHelper;
 
@@ -443,6 +453,17 @@ public class ShadeMojo extends AbstractMojo {
             }
 
             artifacts.add(project.getArtifact().getFile());
+
+            if (extraJars != null && !extraJars.isEmpty()) {
+                for (File extraJar : extraJars) {
+                    if (!Files.isRegularFile(extraJar.toPath())) {
+                        createErrorOutput();
+                        throw new MojoExecutionException("Failed to create shaded artifact, "
+                                + "extra JAR artifact does not exist: " + extraJar);
+                    }
+                    artifacts.add(extraJar);
+                }
+            }
 
             if (createSourcesJar) {
                 File file = shadedSourcesArtifactFile();
