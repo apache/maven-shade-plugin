@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -32,16 +31,19 @@ import java.io.OutputStreamWriter;
 import java.io.PushbackInputStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -54,8 +56,6 @@ import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.compress.archivers.zip.ExtraFieldUtils;
 import org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp;
 import org.apache.commons.compress.archivers.zip.ZipExtraField;
@@ -137,26 +137,26 @@ public class DefaultShader implements Shader {
             goThroughAllJarEntriesForManifestTransformer(shadeRequest, resources, manifestTransformer, out);
 
             // CHECKSTYLE_OFF: MagicNumber
-            MultiValuedMap<String, File> duplicates = new HashSetValuedHashMap<>(10000, 3);
+            Map<String, HashSet<File>> duplicates = new HashMap<>();
             // CHECKSTYLE_ON: MagicNumber
 
             shadeJars(shadeRequest, resources, transformers, out, duplicates, packageMapper);
 
             // CHECKSTYLE_OFF: MagicNumber
-            MultiValuedMap<Collection<File>, String> overlapping = new HashSetValuedHashMap<>(20, 15);
+            Map<Collection<File>, HashSet<String>> overlapping = new HashMap<>();
             // CHECKSTYLE_ON: MagicNumber
 
             for (String clazz : duplicates.keySet()) {
                 Collection<File> jarz = duplicates.get(clazz);
                 if (jarz.size() > 1) {
-                    overlapping.put(jarz, clazz);
+                    overlapping.computeIfAbsent(jarz, k -> new HashSet<>()).add(clazz);
                 }
             }
 
             // Log a summary of duplicates
             logSummaryOfDuplicates(overlapping);
 
-            if (overlapping.keySet().size() > 0) {
+            if (!overlapping.keySet().isEmpty()) {
                 showOverlappingWarning();
             }
 
@@ -230,7 +230,7 @@ public class DefaultShader implements Shader {
             Set<String> resources,
             List<ResourceTransformer> transformers,
             JarOutputStream jos,
-            MultiValuedMap<String, File> duplicates,
+            Map<String, HashSet<File>> duplicates,
             DefaultPackageMapper packageMapper)
             throws IOException {
         for (File jar : shadeRequest.getJars()) {
@@ -262,7 +262,7 @@ public class DefaultShader implements Shader {
             List<ResourceTransformer> transformers,
             DefaultPackageMapper packageMapper,
             JarOutputStream jos,
-            MultiValuedMap<String, File> duplicates,
+            Map<String, HashSet<File>> duplicates,
             File jar,
             File current,
             String prefix,
@@ -308,7 +308,7 @@ public class DefaultShader implements Shader {
                         new Callable<InputStream>() {
                             @Override
                             public InputStream call() throws Exception {
-                                return new FileInputStream(file);
+                                return Files.newInputStream(file.toPath());
                             }
                         },
                         name,
@@ -326,7 +326,7 @@ public class DefaultShader implements Shader {
             List<ResourceTransformer> transformers,
             DefaultPackageMapper packageMapper,
             JarOutputStream jos,
-            MultiValuedMap<String, File> duplicates,
+            Map<String, HashSet<File>> duplicates,
             File jar,
             List<Filter> jarFilters)
             throws IOException {
@@ -387,7 +387,7 @@ public class DefaultShader implements Shader {
             List<ResourceTransformer> transformers,
             DefaultPackageMapper packageMapper,
             JarOutputStream jos,
-            MultiValuedMap<String, File> duplicates,
+            Map<String, HashSet<File>> duplicates,
             File jar,
             Callable<InputStream> inputProvider,
             String name,
@@ -406,7 +406,7 @@ public class DefaultShader implements Shader {
                 }
             }
 
-            duplicates.put(name, jar);
+            duplicates.computeIfAbsent(name, k -> new HashSet<>()).add(jar);
             if (name.endsWith(".class")) {
                 addRemappedClass(jos, jar, name, time, in, packageMapper);
             } else if (shadeRequest.isShadeSourcesContent() && name.endsWith(".java")) {
@@ -426,7 +426,7 @@ public class DefaultShader implements Shader {
 
                     addResource(resources, jos, mappedName, inputProvider, time, method);
                 } else {
-                    duplicates.removeMapping(name, jar);
+                    duplicates.computeIfAbsent(name, k -> new HashSet<>()).remove(jar);
                 }
             }
         }
@@ -471,7 +471,7 @@ public class DefaultShader implements Shader {
         logger.warn("See https://maven.apache.org/plugins/maven-shade-plugin/");
     }
 
-    private void logSummaryOfDuplicates(MultiValuedMap<Collection<File>, String> overlapping) {
+    private void logSummaryOfDuplicates(Map<Collection<File>, HashSet<String>> overlapping) {
         for (Collection<File> jarz : overlapping.keySet()) {
             List<String> jarzS = new ArrayList<>();
 

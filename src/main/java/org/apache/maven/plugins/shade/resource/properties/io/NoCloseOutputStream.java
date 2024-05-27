@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Simple output stream replacing close call by a simpe flush.
+ * Simple output stream replacing close call by a simple flush.
  * Useful for output streams nesting streams (like jar output streams) and using a stream encoder.
  */
 public class NoCloseOutputStream extends OutputStream {
