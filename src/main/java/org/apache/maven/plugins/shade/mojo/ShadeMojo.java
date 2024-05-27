@@ -35,6 +35,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
@@ -1178,9 +1179,19 @@ public class ShadeMojo extends AbstractMojo {
     public boolean updateExcludesInDeps(
             MavenProject project, List<Dependency> dependencies, List<Dependency> transitiveDeps)
             throws DependencyCollectionException {
-        CollectRequest collectRequest = new CollectRequest(
-                new org.eclipse.aether.graph.Dependency(RepositoryUtils.toArtifact(project.getArtifact()), ""),
-                project.getRemoteProjectRepositories());
+        CollectRequest collectRequest = new CollectRequest();
+        collectRequest.setRootArtifact(RepositoryUtils.toArtifact(project.getArtifact()));
+        collectRequest.setRepositories(project.getRemoteProjectRepositories());
+        collectRequest.setDependencies(project.getDependencies().stream()
+                .map(d -> RepositoryUtils.toDependency(
+                        d, session.getRepositorySession().getArtifactTypeRegistry()))
+                .collect(Collectors.toList()));
+        if (project.getDependencyManagement() != null) {
+            collectRequest.setManagedDependencies(project.getDependencyManagement().getDependencies().stream()
+                    .map(d -> RepositoryUtils.toDependency(
+                            d, session.getRepositorySession().getArtifactTypeRegistry()))
+                    .collect(Collectors.toList()));
+        }
         CollectResult result = repositorySystem.collectDependencies(session.getRepositorySession(), collectRequest);
         boolean modified = false;
         if (result.getRoot() != null) {
