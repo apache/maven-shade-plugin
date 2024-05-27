@@ -1199,7 +1199,9 @@ public class ShadeMojo extends AbstractMojo {
                 String artifactId2 = getId(RepositoryUtils.toArtifact(n2.getArtifact()));
 
                 for (DependencyNode n3 : n2.getChildren()) {
+                    // stupid m-a Artifact that has no idea what it is: dependency or artifact?
                     Artifact artifact3 = RepositoryUtils.toArtifact(n3.getArtifact());
+                    artifact3.setScope(n3.getDependency().getScope());
                     String artifactId3 = getId(artifact3);
 
                     // check if it really isn't in the list of original dependencies. Maven
