@@ -67,12 +67,13 @@ import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
-import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
-import org.apache.maven.shared.dependency.graph.DependencyGraphBuilderException;
-import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.collection.CollectResult;
+import org.eclipse.aether.collection.DependencyCollectionException;
+import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
@@ -399,12 +400,6 @@ public class ShadeMojo extends AbstractMojo {
 
     @Inject
     private RepositorySystem repositorySystem;
-
-    /**
-     * The dependency graph builder to use.
-     */
-    @Inject
-    private DependencyGraphBuilder dependencyGraphBuilder;
 
     /**
      * ProjectBuilder, needed to create projects from the artifacts.
@@ -985,7 +980,7 @@ public class ShadeMojo extends AbstractMojo {
     // We need to find the direct dependencies that have been included in the uber JAR so that we can modify the
     // POM accordingly.
     private void createDependencyReducedPom(Set<String> artifactsToRemove)
-            throws IOException, DependencyGraphBuilderException, ProjectBuildingException {
+            throws IOException, ProjectBuildingException, DependencyCollectionException {
         List<Dependency> transitiveDeps = new ArrayList<>();
 
         // NOTE: By using the getArtifacts() we get the completely evaluated artifacts
@@ -1053,7 +1048,7 @@ public class ShadeMojo extends AbstractMojo {
 
     private void rewriteDependencyReducedPomIfWeHaveReduction(
             List<Dependency> dependencies, boolean modified, List<Dependency> transitiveDeps, Model model)
-            throws IOException, ProjectBuildingException, DependencyGraphBuilderException {
+            throws IOException, ProjectBuildingException, DependencyCollectionException {
         if (modified) {
             for (int loopCounter = 0; modified; loopCounter++) {
 
@@ -1182,18 +1177,18 @@ public class ShadeMojo extends AbstractMojo {
 
     public boolean updateExcludesInDeps(
             MavenProject project, List<Dependency> dependencies, List<Dependency> transitiveDeps)
-            throws DependencyGraphBuilderException {
-        MavenProject original = session.getProjectBuildingRequest().getProject();
-        try {
-            session.getProjectBuildingRequest().setProject(project);
-            DependencyNode node =
-                    dependencyGraphBuilder.buildDependencyGraph(session.getProjectBuildingRequest(), null);
-            boolean modified = false;
-            for (DependencyNode n2 : node.getChildren()) {
-                String artifactId2 = getId(n2.getArtifact());
+            throws DependencyCollectionException {
+        CollectRequest collectRequest = new CollectRequest(
+                new org.eclipse.aether.graph.Dependency(RepositoryUtils.toArtifact(project.getArtifact()), ""),
+                project.getRemoteProjectRepositories());
+        CollectResult result = repositorySystem.collectDependencies(session.getRepositorySession(), collectRequest);
+        boolean modified = false;
+        if (result.getRoot() != null) {
+            for (DependencyNode n2 : result.getRoot().getChildren()) {
+                String artifactId2 = getId(RepositoryUtils.toArtifact(n2.getArtifact()));
 
                 for (DependencyNode n3 : n2.getChildren()) {
-                    Artifact artifact3 = n3.getArtifact();
+                    Artifact artifact3 = RepositoryUtils.toArtifact(n3.getArtifact());
                     String artifactId3 = getId(artifact3);
 
                     // check if it really isn't in the list of original dependencies. Maven
@@ -1240,11 +1235,8 @@ public class ShadeMojo extends AbstractMojo {
                     }
                 }
             }
-            return modified;
-        } finally {
-            // restore it
-            session.getProjectBuildingRequest().setProject(original);
         }
+        return modified;
     }
 
     private boolean dependencyHasExclusion(Dependency dep, Artifact exclusionToCheck) {
