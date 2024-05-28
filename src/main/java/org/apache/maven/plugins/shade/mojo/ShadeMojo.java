@@ -396,9 +396,8 @@ public class ShadeMojo extends AbstractMojo {
      * Extra JAR files to infuse into shaded result. Accepts list of files that must exists. If any of specified
      * files does not exist (or is not a file), Mojo will fail.
      * <p>
-     * One can add here "extra JARs", to be worked into the resulting shaded JAR. The listed JAR files must exist.
-     * Extra JARs will be processed in same way as main JAR (if any): applied relocation, resource transformers
-     * but not filtering.
+     * Extra JARs will be processed in same way as main JAR (if any) is: applied relocation, resource transformers
+     * but <em>not filtering</em>.
      * <p>
      * Note: this feature should be used lightly, is not meant as ability to replace dependency hull! It is more
      * just a feature to be able to slightly "differentiate" shaded JAR from main only.
@@ -413,9 +412,8 @@ public class ShadeMojo extends AbstractMojo {
      * {@code <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>} that will be resolved. If any of them
      * cannot be resolved, Mojo will fail.
      * <p>
-     * One can add here "extra Artifacts" to be worked into the resulting shaded JAR. The artifacts will be resolved
-     * (not transitively), and will be processed in same way as dependency JARs (if any): regarding relocation,
-     * resource transformers and filtering.
+     * The artifacts will be resolved (not transitively), and will be processed in same way as dependency JARs
+     * are (if any): applied relocation, resource transformers and filtering.
      * <p>
      * Note: this feature should be used lightly, is not meant as ability to replace dependency hull! It is more
      * just a feature to be able to slightly "differentiate" shaded JAR from main only.
