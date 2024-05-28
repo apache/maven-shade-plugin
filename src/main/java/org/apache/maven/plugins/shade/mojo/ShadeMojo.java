@@ -477,9 +477,9 @@ public class ShadeMojo extends AbstractMojo {
             if (extraJars != null && !extraJars.isEmpty()) {
                 for (File extraJar : extraJars) {
                     if (!Files.isRegularFile(extraJar.toPath())) {
-                        createErrorOutput();
-                        throw new MojoExecutionException("Failed to create shaded artifact, "
-                                + "extra JAR artifact does not exist: " + extraJar);
+                        throw new MojoExecutionException(
+                                "Failed to create shaded artifact: parameter extraJars contains path " + extraJar
+                                        + " that is not a file (does not exist or is not a file)");
                     }
                     artifacts.add(extraJar);
                 }
@@ -745,7 +745,10 @@ public class ShadeMojo extends AbstractMojo {
                         artifact.setFile(resolved.getFile());
                     }
                 } catch (ArtifactResolutionException e) {
-                    throw new MojoExecutionException("Could not resolve artifact " + artifact.getId(), e);
+                    throw new MojoExecutionException(
+                            "Failed to create shaded artifact: parameter extraArtifacts contains artifact "
+                                    + artifact.getId() + " that is not resolvable",
+                            e);
                 }
             }
         }
