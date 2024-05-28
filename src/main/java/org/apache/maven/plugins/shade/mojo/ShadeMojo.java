@@ -923,7 +923,6 @@ public class ShadeMojo extends AbstractMojo {
             if (transformer == null) {
                 throw new MojoExecutionException(
                         "Failed to create shaded artifact: parameter transformers contains null (double-check XML attribute)");
-
             }
         }
         return Arrays.asList(transformers);
