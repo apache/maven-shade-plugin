@@ -915,11 +915,16 @@ public class ShadeMojo extends AbstractMojo {
         return relocators;
     }
 
-    private List<ResourceTransformer> getResourceTransformers() {
+    private List<ResourceTransformer> getResourceTransformers() throws MojoExecutionException {
         if (transformers == null) {
             return Collections.emptyList();
         }
-
+        for (ResourceTransformer transformer : transformers) {
+            if (transformer == null) {
+                throw new MojoExecutionException(
+                        "Failed to create shaded artifact: parameter transformers contains null (double-check XML attribute)");
+            }
+        }
         return Arrays.asList(transformers);
     }
 
