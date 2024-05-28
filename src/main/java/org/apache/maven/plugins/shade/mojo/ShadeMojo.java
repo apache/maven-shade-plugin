@@ -393,7 +393,8 @@ public class ShadeMojo extends AbstractMojo {
     private boolean skip;
 
     /**
-     * Extra JAR files to infuse into shaded result.
+     * Extra JAR files to infuse into shaded result. Accepts list of files that must exists. If any of specified
+     * files does not exist (or is not a file), Mojo will fail.
      * <p>
      * One can add here "extra JARs", to be worked into the resulting shaded JAR. The listed JAR files must exist.
      * Extra JARs will be processed in same way as main JAR (if any): applied relocation, resource transformers
@@ -408,7 +409,9 @@ public class ShadeMojo extends AbstractMojo {
     private List<File> extraJars;
 
     /**
-     * Extra Artifacts to infuse into shaded result.
+     * Extra Artifacts to infuse into shaded result. Accepts list of GAVs in form of
+     * {@code <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>} that will be resolved. If any of them
+     * cannot be resolved, Mojo will fail.
      * <p>
      * One can add here "extra Artifacts" to be worked into the resulting shaded JAR. The artifacts will be resolved
      * (not transitively), and will be processed in same way as dependency JARs (if any): regarding relocation,
