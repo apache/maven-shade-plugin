@@ -77,7 +77,6 @@ import org.eclipse.aether.collection.DependencyCollectionException;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
 
 import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomReplaceTransformers;
 
@@ -394,14 +393,34 @@ public class ShadeMojo extends AbstractMojo {
     private boolean skip;
 
     /**
-     * Extra JAR files to process into shaded result. One can add here "extra JARs" to be processed into the resulting
-     * shaded JAR. The listed JAR files must exist. Extra JARs will be processed in same way as any other dependency
-     * (regarding relocation, filtering, resource transformers etc.).
+     * Extra JAR files to infuse into shaded result.
+     * <p>
+     * One can add here "extra JARs", to be worked into the resulting shaded JAR. The listed JAR files must exist.
+     * Extra JARs will be processed in same way as main JAR (if any): applied relocation, resource transformers
+     * but not filtering.
+     * <p>
+     * Note: this feature should be used lightly, is not meant as ability to replace dependency hull! It is more
+     * just a feature to be able to slightly "differentiate" shaded JAR from main only.
      *
      * @since 3.6.0
      */
     @Parameter
     private List<File> extraJars;
+
+    /**
+     * Extra Artifacts to infuse into shaded result.
+     * <p>
+     * One can add here "extra Artifacts" to be worked into the resulting shaded JAR. The artifacts will be resolved
+     * (not transitively), and will be processed in same way as dependency JARs (if any): regarding relocation,
+     * resource transformers and filtering.
+     * <p>
+     * Note: this feature should be used lightly, is not meant as ability to replace dependency hull! It is more
+     * just a feature to be able to slightly "differentiate" shaded JAR from main only.
+     *
+     * @since 3.6.0
+     */
+    @Parameter
+    private List<String> extraArtifacts;
 
     @Inject
     private MavenProjectHelper projectHelper;
@@ -701,7 +720,8 @@ public class ShadeMojo extends AbstractMojo {
             Set<File> sourceArtifacts,
             Set<File> testArtifacts,
             Set<File> testSourceArtifacts,
-            ArtifactSelector artifactSelector) {
+            ArtifactSelector artifactSelector)
+            throws MojoExecutionException {
 
         List<String> excludedArtifacts = new ArrayList<>();
         List<String> pomArtifacts = new ArrayList<>();
@@ -709,7 +729,28 @@ public class ShadeMojo extends AbstractMojo {
         List<String> emptyTestArtifacts = new ArrayList<>();
         List<String> emptyTestSourceArtifacts = new ArrayList<>();
 
-        for (Artifact artifact : project.getArtifacts()) {
+        ArrayList<Artifact> processedArtifacts = new ArrayList<>();
+        if (extraArtifacts != null && !extraArtifacts.isEmpty()) {
+            processedArtifacts.addAll(extraArtifacts.stream()
+                    .map(org.eclipse.aether.artifact.DefaultArtifact::new)
+                    .map(RepositoryUtils::toArtifact)
+                    .collect(Collectors.toList()));
+
+            for (Artifact artifact : processedArtifacts) {
+                try {
+                    org.eclipse.aether.artifact.Artifact resolved =
+                            resolveArtifact(RepositoryUtils.toArtifact(artifact));
+                    if (resolved.getFile() != null) {
+                        artifact.setFile(resolved.getFile());
+                    }
+                } catch (ArtifactResolutionException e) {
+                    throw new MojoExecutionException("Could not resolve artifact " + artifact.getId(), e);
+                }
+            }
+        }
+        processedArtifacts.addAll(project.getArtifacts());
+
+        for (Artifact artifact : processedArtifacts) {
             if (!artifactSelector.isSelected(artifact)) {
                 excludedArtifacts.add(artifact.getId());
 
@@ -823,7 +864,7 @@ public class ShadeMojo extends AbstractMojo {
     }
 
     private File resolveArtifactForClassifier(Artifact artifact, String classifier) {
-        org.eclipse.aether.artifact.Artifact coordinate = RepositoryUtils.toArtifact(new DefaultArtifact(
+        Artifact toResolve = new DefaultArtifact(
                 artifact.getGroupId(),
                 artifact.getArtifactId(),
                 artifact.getVersionRange() == null
@@ -833,24 +874,26 @@ public class ShadeMojo extends AbstractMojo {
                 artifact.getType(),
                 classifier,
                 artifact.getArtifactHandler(),
-                artifact.isOptional()));
-
-        ArtifactRequest request = new ArtifactRequest(
-                coordinate, RepositoryUtils.toRepos(project.getRemoteArtifactRepositories()), "shade");
-
-        Artifact resolvedArtifact;
+                artifact.isOptional());
         try {
-            ArtifactResult result = repositorySystem.resolveArtifact(session.getRepositorySession(), request);
-            resolvedArtifact = RepositoryUtils.toArtifact(result.getArtifact());
+            org.eclipse.aether.artifact.Artifact resolved = resolveArtifact(RepositoryUtils.toArtifact(toResolve));
+            if (resolved.getFile() != null) {
+                return resolved.getFile();
+            }
+            return null;
         } catch (ArtifactResolutionException e) {
             getLog().warn("Could not get " + classifier + " for " + artifact);
             return null;
         }
+    }
 
-        if (resolvedArtifact.isResolved()) {
-            return resolvedArtifact.getFile();
-        }
-        return null;
+    private org.eclipse.aether.artifact.Artifact resolveArtifact(org.eclipse.aether.artifact.Artifact artifact)
+            throws ArtifactResolutionException {
+        return repositorySystem
+                .resolveArtifact(
+                        session.getRepositorySession(),
+                        new ArtifactRequest(artifact, project.getRemoteProjectRepositories(), "shade"))
+                .getArtifact();
     }
 
     private List<Relocator> getRelocators() {

@@ -46,7 +46,6 @@ under the License.
 
   <build>
     <plugins>
-      <!-- See extrajar IT: removed m-dep-p:copy so the file is not there -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -61,7 +60,7 @@ under the License.
             <configuration>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <extraJars>
-                <extraJar>${project.build.directory}/dependency/slf4j-simple.jar</extraJar>
+                <extraJar>${project.build.directory}/no-such-file.jar</extraJar>
               </extraJars>
             </configuration>
           </execution>

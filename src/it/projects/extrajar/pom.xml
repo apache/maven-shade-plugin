@@ -48,30 +48,6 @@ under the License.
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.6.1</version>
-        <executions>
-          <execution>
-            <id>copy-extra-jars</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <stripVersion>true</stripVersion>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.slf4j</groupId>
-                  <artifactId>slf4j-simple</artifactId>
-                  <version>${slf4j.version}</version>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>@project.version@</version>
         <executions>
@@ -83,9 +59,17 @@ under the License.
             </goals>
             <configuration>
               <shadedArtifactAttached>true</shadedArtifactAttached>
-              <extraJars>
-                <extraJar>${project.build.directory}/dependency/slf4j-simple.jar</extraJar>
-              </extraJars>
+              <extraArtifacts>
+                <extraArtifact>org.slf4j:slf4j-simple:${slf4j.version}</extraArtifact>
+              </extraArtifacts>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
