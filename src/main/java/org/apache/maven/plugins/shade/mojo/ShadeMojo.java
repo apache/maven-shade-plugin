@@ -316,8 +316,8 @@ public class ShadeMojo extends AbstractMojo {
      * When true, dependencies will be stripped down on the class level to only the transitive hull required for the
      * artifact. See also {@link #entryPoints}, if you wish to further optimize JAR minimization.
      * <p>
-     * <em>Note:</em> This feature requires Java 1.8 or higher due to its use of
-     * <a href="https://github.com/tcurdt/jdependency">jdependency</a>. Its accuracy therefore also depends on
+     * <em>Note:</em> This feature uses
+     * <a href="https://github.com/tcurdt/jdependency">jdependency</a>. Its accuracy therefore depends on
      * jdependency's limitations.
      *
      * @since 1.4
