@@ -28,6 +28,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  * An abstract class to implement once the old non-reproducible ResourceTransformer API.
  */
 abstract class AbstractCompatibilityTransformer implements ReproducibleResourceTransformer {
+    @Override
     public final void processResource(String resource, InputStream is, List<Relocator> relocators) throws IOException {
         processResource(resource, is, relocators, 0);
     }

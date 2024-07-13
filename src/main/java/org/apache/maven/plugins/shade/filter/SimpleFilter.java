@@ -80,11 +80,13 @@ public class SimpleFilter implements Filter {
     }
 
     /** {@inheritDoc} */
+    @Override
     public boolean canFilter(File jar) {
         return jars.contains(jar);
     }
 
     /** {@inheritDoc} */
+    @Override
     public boolean isFiltered(String classFile) {
         String path = normalizePath(classFile);
 
@@ -155,5 +157,6 @@ public class SimpleFilter implements Filter {
     }
 
     /** {@inheritDoc} */
+    @Override
     public void finished() {}
 }

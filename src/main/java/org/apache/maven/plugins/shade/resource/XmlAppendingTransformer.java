@@ -53,10 +53,12 @@ public class XmlAppendingTransformer extends AbstractCompatibilityTransformer {
 
     private long time = Long.MIN_VALUE;
 
+    @Override
     public boolean canTransformResource(String r) {
         return resource != null && resource.equalsIgnoreCase(r);
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         Document r;
@@ -65,6 +67,7 @@ public class XmlAppendingTransformer extends AbstractCompatibilityTransformer {
             builder.setExpandEntities(false);
             if (ignoreDtd) {
                 builder.setEntityResolver(new EntityResolver() {
+                    @Override
                     public InputSource resolveEntity(String publicId, String systemId)
                             throws SAXException, IOException {
                         return new InputSource(new StringReader(""));
@@ -105,10 +108,12 @@ public class XmlAppendingTransformer extends AbstractCompatibilityTransformer {
         }
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return doc != null;
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         JarEntry jarEntry = new JarEntry(resource);
         jarEntry.setTime(time);
