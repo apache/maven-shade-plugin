@@ -766,7 +766,7 @@ public class ShadeMojo extends AbstractMojo {
                 continue;
             }
 
-            getLog().info("Including " + artifact.getId() + " in the shaded jar.");
+            getLog().debug("Including " + artifact.getId() + " in the shaded jar.");
 
             artifacts.add(artifact.getFile());
             artifactIds.add(getId(artifact));
@@ -804,10 +804,10 @@ public class ShadeMojo extends AbstractMojo {
         }
 
         for (String artifactId : excludedArtifacts) {
-            getLog().info("Excluding " + artifactId + " from the shaded jar.");
+            getLog().debug("Excluding " + artifactId + " from the shaded jar.");
         }
         for (String artifactId : pomArtifacts) {
-            getLog().info("Skipping pom dependency " + artifactId + " in the shaded jar.");
+            getLog().debug("Skipping pom dependency " + artifactId + " in the shaded jar.");
         }
         for (String artifactId : emptySourceArtifacts) {
             getLog().warn("Skipping empty source jar " + artifactId + ".");
@@ -826,7 +826,7 @@ public class ShadeMojo extends AbstractMojo {
     }
 
     private void replaceFile(File oldFile, File newFile) throws MojoExecutionException {
-        getLog().info("Replacing " + oldFile + " with " + newFile);
+        getLog().debug("Replacing " + oldFile + " with " + newFile);
 
         File origFile = new File(outputDirectory, "original-" + oldFile.getName());
         if (oldFile.exists() && !oldFile.renameTo(origFile)) {
@@ -969,7 +969,7 @@ public class ShadeMojo extends AbstractMojo {
                 }
 
                 if (jars.isEmpty()) {
-                    getLog().info("No artifact matching filter " + filter.getArtifact());
+                    getLog().debug("No artifact matching filter " + filter.getArtifact());
 
                     continue;
                 }
