@@ -47,10 +47,12 @@ public class ServicesResourceTransformer extends AbstractCompatibilityTransforme
 
     private long time = Long.MIN_VALUE;
 
+    @Override
     public boolean canTransformResource(String resource) {
         return resource.startsWith(SERVICES_PATH);
     }
 
+    @Override
     public void processResource(String resource, InputStream is, final List<Relocator> relocators, long time)
             throws IOException {
         resource = resource.substring(SERVICES_PATH.length() + 1);
@@ -80,10 +82,12 @@ public class ServicesResourceTransformer extends AbstractCompatibilityTransforme
         }
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return !serviceEntries.isEmpty();
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         for (Map.Entry<String, Set<String>> entry : serviceEntries.entrySet()) {
             String key = entry.getKey();

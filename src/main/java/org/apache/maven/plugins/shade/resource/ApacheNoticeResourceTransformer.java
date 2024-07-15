@@ -79,12 +79,14 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
 
     private static final String NOTICE_MD_PATH = "META-INF/NOTICE.md";
 
+    @Override
     public boolean canTransformResource(String resource) {
         return NOTICE_PATH.equalsIgnoreCase(resource)
                 || NOTICE_TXT_PATH.equalsIgnoreCase(resource)
                 || NOTICE_MD_PATH.equalsIgnoreCase(resource);
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         if (entries.isEmpty()) {
@@ -167,10 +169,12 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
         }
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return true;
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         JarEntry jarEntry = new JarEntry(NOTICE_PATH);
         jarEntry.setTime(time);

@@ -34,6 +34,7 @@ public class DontIncludeResourceTransformer extends AbstractCompatibilityTransfo
 
     List<String> resources;
 
+    @Override
     public boolean canTransformResource(String r) {
         if ((resource != null && !resource.isEmpty()) && r.endsWith(resource)) {
             return true;
@@ -50,15 +51,18 @@ public class DontIncludeResourceTransformer extends AbstractCompatibilityTransfo
         return false;
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         // no op
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return false;
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream os) throws IOException {
         // no op
     }

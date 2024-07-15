@@ -40,10 +40,12 @@ public class IncludeResourceTransformer extends AbstractCompatibilityTransformer
 
     private long time = Long.MIN_VALUE;
 
+    @Override
     public boolean canTransformResource(String r) {
         return false;
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         if (time > this.time) {
@@ -51,10 +53,12 @@ public class IncludeResourceTransformer extends AbstractCompatibilityTransformer
         }
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return file != null && file.exists();
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         JarEntry jarEntry = new JarEntry(resource);
         jarEntry.setTime(time);

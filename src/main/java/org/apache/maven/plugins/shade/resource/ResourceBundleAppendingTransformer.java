@@ -52,10 +52,12 @@ public class ResourceBundleAppendingTransformer extends AbstractCompatibilityTra
         resourceBundlePattern = Pattern.compile(basename + "(_[a-zA-Z]+){0,3}\\.properties");
     }
 
+    @Override
     public boolean canTransformResource(String r) {
         return resourceBundlePattern != null && resourceBundlePattern.matcher(r).matches();
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         ByteArrayOutputStream data = dataMap.get(resource);
@@ -72,10 +74,12 @@ public class ResourceBundleAppendingTransformer extends AbstractCompatibilityTra
         }
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return !dataMap.isEmpty();
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         for (Map.Entry<String, ByteArrayOutputStream> dataEntry : dataMap.entrySet()) {
             JarEntry jarEntry = new JarEntry(dataEntry.getKey());

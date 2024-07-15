@@ -38,10 +38,12 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
 
     private long time = Long.MIN_VALUE;
 
+    @Override
     public boolean canTransformResource(String r) {
         return resource != null && resource.equalsIgnoreCase(r);
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         IOUtil.copy(is, data);
@@ -51,10 +53,12 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
         }
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return data.size() > 0;
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         JarEntry jarEntry = new JarEntry(resource);
         jarEntry.setTime(time);
