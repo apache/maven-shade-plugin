@@ -27,6 +27,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -40,6 +41,15 @@ public class ApacheNoticeResourceTransformerParameterTests {
     @Before
     public void setUp() {
         subject = new ApacheNoticeResourceTransformer();
+    }
+
+    @Test
+    public void testCanTransformResource() {
+        assertTrue(subject.canTransformResource("META-INF/NOTICE"));
+        assertTrue(subject.canTransformResource("META-INF/NOTICE.TXT"));
+        assertTrue(subject.canTransformResource("META-INF/NOTICE.md"));
+        assertTrue(subject.canTransformResource("META-INF/Notice.txt"));
+        assertTrue(subject.canTransformResource("META-INF/Notice.md"));
     }
 
     @Test

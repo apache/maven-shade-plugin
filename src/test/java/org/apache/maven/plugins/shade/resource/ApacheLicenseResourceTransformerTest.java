@@ -54,6 +54,7 @@ public class ApacheLicenseResourceTransformerTest {
         assertTrue(transformer.canTransformResource("META-INF/LICENSE.TXT"));
         assertTrue(transformer.canTransformResource("META-INF/LICENSE.md"));
         assertTrue(transformer.canTransformResource("META-INF/License.txt"));
+        assertTrue(transformer.canTransformResource("META-INF/License.md"));
         assertFalse(transformer.canTransformResource("META-INF/MANIFEST.MF"));
     }
 }
