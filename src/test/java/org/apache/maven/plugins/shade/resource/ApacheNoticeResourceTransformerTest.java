@@ -54,6 +54,7 @@ public class ApacheNoticeResourceTransformerTest {
         assertTrue(transformer.canTransformResource("META-INF/NOTICE.TXT"));
         assertTrue(transformer.canTransformResource("META-INF/NOTICE.md"));
         assertTrue(transformer.canTransformResource("META-INF/Notice.txt"));
+        assertTrue(transformer.canTransformResource("META-INF/Notice.md"));
         assertFalse(transformer.canTransformResource("META-INF/MANIFEST.MF"));
     }
 }
