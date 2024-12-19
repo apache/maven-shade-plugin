@@ -35,21 +35,25 @@ public class ApacheLicenseResourceTransformer extends AbstractCompatibilityTrans
 
     private static final String LICENSE_MD_PATH = "META-INF/LICENSE.md";
 
+    @Override
     public boolean canTransformResource(String resource) {
         return LICENSE_PATH.equalsIgnoreCase(resource)
                 || LICENSE_TXT_PATH.regionMatches(true, 0, resource, 0, LICENSE_TXT_PATH.length())
                 || LICENSE_MD_PATH.regionMatches(true, 0, resource, 0, LICENSE_MD_PATH.length());
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         // no op
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return false;
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream os) throws IOException {
         // no op
     }
