@@ -72,8 +72,8 @@ public class ServiceResourceTransformerTest {
         xformer.processResource(contentResource, contentStream, singletonList(relocator), 0);
         contentStream.close();
 
-        FileOutputStream fos = new FileOutputStream(tempJar);
-        try (JarOutputStream jos = new JarOutputStream(fos)) {
+        try (FileOutputStream fos = new FileOutputStream(tempJar)) {
+            JarOutputStream jos = new JarOutputStream(fos);
             xformer.modifyOutputStream(jos);
             jos.close();
 
@@ -110,8 +110,8 @@ public class ServiceResourceTransformerTest {
             xformer.processResource(contentResourceShaded, contentStream, singletonList(relocator), 0);
         }
 
-        FileOutputStream fos = new FileOutputStream(tempJar);
-        try (JarOutputStream jos = new JarOutputStream(fos)) {
+        try (FileOutputStream fos = new FileOutputStream(tempJar)) {
+            JarOutputStream jos = new JarOutputStream(fos);
             xformer.modifyOutputStream(jos);
             jos.close();
 
@@ -140,8 +140,8 @@ public class ServiceResourceTransformerTest {
         xformer.processResource(contentResource, contentStream, singletonList(relocator), 0);
         contentStream.close();
 
-        FileOutputStream fos = new FileOutputStream(tempJar);
-        try (JarOutputStream jos = new JarOutputStream(fos)) {
+        try (FileOutputStream fos = new FileOutputStream(tempJar)) {
+            JarOutputStream jos = new JarOutputStream(fos);
             xformer.modifyOutputStream(jos);
             jos.close();
 
@@ -178,8 +178,8 @@ public class ServiceResourceTransformerTest {
         xformer.processResource(contentResource, contentStream, singletonList(relocator), 0);
         contentStream.close();
 
-        FileOutputStream fos = new FileOutputStream(tempJar);
-        try (JarOutputStream jos = new JarOutputStream(fos)) {
+        try (FileOutputStream fos = new FileOutputStream(tempJar)) {
+            JarOutputStream jos = new JarOutputStream(fos);
             xformer.modifyOutputStream(jos);
             jos.close();
 
