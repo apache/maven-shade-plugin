@@ -24,8 +24,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -36,6 +34,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -54,13 +53,14 @@ public class ServiceResourceTransformerTest {
 
     @After
     public void cleanup() {
+        //noinspection ResultOfMethodCallIgnored
         tempJar.delete();
     }
 
     @Test
     public void relocatedClasses() throws Exception {
         SimpleRelocator relocator =
-                new SimpleRelocator("org.foo", "borg.foo", null, Arrays.asList("org.foo.exclude.*"));
+                new SimpleRelocator("org.foo", "borg.foo", null, singletonList("org.foo.exclude.*"));
 
         String content = "org.foo.Service\norg.foo.exclude.OtherService\n";
         byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
@@ -69,7 +69,7 @@ public class ServiceResourceTransformerTest {
         String contentResourceShaded = "META-INF/services/borg.foo.something.another";
 
         ServicesResourceTransformer xformer = new ServicesResourceTransformer();
-        xformer.processResource(contentResource, contentStream, Collections.singletonList(relocator), 0);
+        xformer.processResource(contentResource, contentStream, singletonList(relocator), 0);
         contentStream.close();
 
         FileOutputStream fos = new FileOutputStream(tempJar);
@@ -81,7 +81,7 @@ public class ServiceResourceTransformerTest {
             JarEntry jarEntry = jarFile.getJarEntry(contentResourceShaded);
             assertNotNull(jarEntry);
             try (InputStream entryStream = jarFile.getInputStream(jarEntry)) {
-                String xformedContent = IOUtils.toString(entryStream, "utf-8");
+                String xformedContent = IOUtils.toString(entryStream, StandardCharsets.UTF_8);
                 assertEquals("borg.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE, xformedContent);
             } finally {
                 jarFile.close();
@@ -92,7 +92,7 @@ public class ServiceResourceTransformerTest {
     @Test
     public void mergeRelocatedFiles() throws Exception {
         SimpleRelocator relocator =
-                new SimpleRelocator("org.foo", "borg.foo", null, Collections.singletonList("org.foo.exclude.*"));
+                new SimpleRelocator("org.foo", "borg.foo", null, singletonList("org.foo.exclude.*"));
 
         String content = "org.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE;
         String contentShaded = "borg.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE;
@@ -103,11 +103,11 @@ public class ServiceResourceTransformerTest {
         ServicesResourceTransformer xformer = new ServicesResourceTransformer();
 
         try (InputStream contentStream = new ByteArrayInputStream(contentBytes)) {
-            xformer.processResource(contentResource, contentStream, Collections.singletonList(relocator), 0);
+            xformer.processResource(contentResource, contentStream, singletonList(relocator), 0);
         }
 
         try (InputStream contentStream = new ByteArrayInputStream(contentBytes)) {
-            xformer.processResource(contentResourceShaded, contentStream, Collections.singletonList(relocator), 0);
+            xformer.processResource(contentResourceShaded, contentStream, singletonList(relocator), 0);
         }
 
         FileOutputStream fos = new FileOutputStream(tempJar);
@@ -132,12 +132,12 @@ public class ServiceResourceTransformerTest {
         SimpleRelocator relocator = new SimpleRelocator("org.eclipse", "org.eclipse1234", null, null);
 
         String content = "org.eclipse.osgi.launch.EquinoxFactory\n";
-        byte[] contentBytes = content.getBytes("UTF-8");
+        byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
         InputStream contentStream = new ByteArrayInputStream(contentBytes);
         String contentResource = "META-INF/services/org.osgi.framework.launch.FrameworkFactory";
 
         ServicesResourceTransformer xformer = new ServicesResourceTransformer();
-        xformer.processResource(contentResource, contentStream, Collections.singletonList(relocator), 0);
+        xformer.processResource(contentResource, contentStream, singletonList(relocator), 0);
         contentStream.close();
 
         FileOutputStream fos = new FileOutputStream(tempJar);
@@ -167,7 +167,7 @@ public class ServiceResourceTransformerTest {
         String contentResource = "META-INF/services/org.something.another";
 
         ServicesResourceTransformer xformer = new ServicesResourceTransformer();
-        xformer.processResource(contentResource, contentStream, Collections.singletonList(relocator), 0);
+        xformer.processResource(contentResource, contentStream, singletonList(relocator), 0);
         contentStream.close();
 
         content = "org.blah.Service\n";
@@ -175,7 +175,7 @@ public class ServiceResourceTransformerTest {
         contentStream = new ByteArrayInputStream(contentBytes);
         contentResource = "META-INF/services/org.something.another";
 
-        xformer.processResource(contentResource, contentStream, Collections.singletonList(relocator), 0);
+        xformer.processResource(contentResource, contentStream, singletonList(relocator), 0);
         contentStream.close();
 
         FileOutputStream fos = new FileOutputStream(tempJar);
@@ -187,7 +187,7 @@ public class ServiceResourceTransformerTest {
             JarEntry jarEntry = jarFile.getJarEntry(contentResource);
             assertNotNull(jarEntry);
             try (InputStream entryStream = jarFile.getInputStream(jarEntry)) {
-                String xformedContent = IOUtils.toString(entryStream, "utf-8");
+                String xformedContent = IOUtils.toString(entryStream, StandardCharsets.UTF_8);
                 // must be two lines, with our two classes.
                 String[] classes = xformedContent.split("\r?\n");
                 boolean h1 = false;
