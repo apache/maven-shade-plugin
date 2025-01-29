@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +32,8 @@ import java.util.jar.JarOutputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -42,6 +45,17 @@ import static org.junit.Assert.assertTrue;
  */
 public class ServiceResourceTransformerTest {
     private final String NEWLINE = "\n";
+    private File tempJar;
+
+    @Before
+    public void setup() throws IOException {
+        tempJar = File.createTempFile("shade.", ".jar");
+    }
+
+    @After
+    public void cleanup() {
+        tempJar.delete();
+    }
 
     @Test
     public void relocatedClasses() throws Exception {
@@ -58,8 +72,6 @@ public class ServiceResourceTransformerTest {
         xformer.processResource(contentResource, contentStream, Collections.singletonList(relocator), 0);
         contentStream.close();
 
-        File tempJar = File.createTempFile("shade.", ".jar");
-        tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(tempJar);
         try (JarOutputStream jos = new JarOutputStream(fos)) {
             xformer.modifyOutputStream(jos);
@@ -74,8 +86,6 @@ public class ServiceResourceTransformerTest {
             } finally {
                 jarFile.close();
             }
-        } finally {
-            tempJar.delete();
         }
     }
 
@@ -100,8 +110,6 @@ public class ServiceResourceTransformerTest {
             xformer.processResource(contentResourceShaded, contentStream, Collections.singletonList(relocator), 0);
         }
 
-        File tempJar = File.createTempFile("shade.", ".jar");
-        tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(tempJar);
         try (JarOutputStream jos = new JarOutputStream(fos)) {
             xformer.modifyOutputStream(jos);
@@ -116,8 +124,6 @@ public class ServiceResourceTransformerTest {
             } finally {
                 jarFile.close();
             }
-        } finally {
-            tempJar.delete();
         }
     }
 
@@ -134,8 +140,6 @@ public class ServiceResourceTransformerTest {
         xformer.processResource(contentResource, contentStream, Collections.singletonList(relocator), 0);
         contentStream.close();
 
-        File tempJar = File.createTempFile("shade.", ".jar");
-        tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(tempJar);
         try (JarOutputStream jos = new JarOutputStream(fos)) {
             xformer.modifyOutputStream(jos);
@@ -150,8 +154,6 @@ public class ServiceResourceTransformerTest {
             } finally {
                 jarFile.close();
             }
-        } finally {
-            tempJar.delete();
         }
     }
 
@@ -176,8 +178,6 @@ public class ServiceResourceTransformerTest {
         xformer.processResource(contentResource, contentStream, Collections.singletonList(relocator), 0);
         contentStream.close();
 
-        File tempJar = File.createTempFile("shade.", ".jar");
-        tempJar.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(tempJar);
         try (JarOutputStream jos = new JarOutputStream(fos)) {
             xformer.modifyOutputStream(jos);
@@ -203,8 +203,6 @@ public class ServiceResourceTransformerTest {
             } finally {
                 jarFile.close();
             }
-        } finally {
-            tempJar.delete();
         }
     }
 }
