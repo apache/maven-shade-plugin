@@ -51,7 +51,7 @@ under the License.
   <body>
     <menu name="Overview">
       <item name="Introduction" href="index.html"/>
-      <item name="Goals" href="plugin-info.html">
+      <item name="Plugin Documentation" href="plugin-info.html">
         <item name="shade:shade" href="shade-mojo.html" />
         <item name="shade:help" href="help-mojo.html" />
       </item>
