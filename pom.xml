@@ -64,8 +64,8 @@
     <url>https://github.com/apache/maven-shade-plugin/tree/${project.scm.tag}</url>
   </scm>
   <issueManagement>
-    <system>jira</system>
-    <url>https://issues.apache.org/jira/browse/MSHADE</url>
+    <system>GitHub</system>
+    <url>https://github.com/apache/maven-shade-plugin/issues/</url>
   </issueManagement>
   <ciManagement>
     <system>Jenkins</system>
