@@ -39,7 +39,7 @@ body:
       required: true
 
   - type: textarea
-    id: massage
+    id: message
     attributes:
       label: Bug description
     validations:
