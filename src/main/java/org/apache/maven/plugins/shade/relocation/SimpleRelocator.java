@@ -70,13 +70,21 @@ public class SimpleRelocator implements Relocator {
 
     private final boolean rawString;
 
+    private final boolean skipStringLiteral;
+
     public SimpleRelocator(String patt, String shadedPattern, List<String> includes, List<String> excludes) {
-        this(patt, shadedPattern, includes, excludes, false);
+        this(patt, shadedPattern, includes, excludes, false, false);
     }
 
     public SimpleRelocator(
-            String patt, String shadedPattern, List<String> includes, List<String> excludes, boolean rawString) {
+            String patt,
+            String shadedPattern,
+            List<String> includes,
+            List<String> excludes,
+            boolean rawString,
+            boolean skipStringLiteral) {
         this.rawString = rawString;
+        this.skipStringLiteral = skipStringLiteral;
 
         if (rawString) {
             this.pathPattern = patt;
@@ -256,5 +264,9 @@ public class SimpleRelocator implements Relocator {
             }
         }
         return shadedSourceContent.toString();
+    }
+
+    public boolean skipStringLiteral() {
+        return skipStringLiteral;
     }
 }

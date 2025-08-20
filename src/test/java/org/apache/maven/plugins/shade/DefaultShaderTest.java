@@ -278,6 +278,45 @@ public class DefaultShaderTest {
     }
 
     @Test
+    public void testShaderWithoutStringLiterals() throws Exception {
+        Shader s = newShader();
+
+        Set<File> set = new LinkedHashSet<>();
+
+        set.add(new File("src/test/jars/test-artifact-1.0-SNAPSHOT.jar"));
+
+        List<Relocator> relocators = new ArrayList<>();
+
+        relocators.add(new SimpleRelocator("org.apache.maven.plugins.shade", null, null, null, false, false));
+        relocators.add(new SimpleRelocator("foo.bar", null, null, null, false, true));
+        relocators.add(new SimpleRelocator("org.codehaus", null, null, null, false, true));
+
+        List<ResourceTransformer> resourceTransformers = new ArrayList<>();
+
+        List<Filter> filters = new ArrayList<>();
+
+        File file = new File("target/testShaderWithoutStringLiterals.jar");
+
+        ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars(set);
+        shadeRequest.setUberJar(file);
+        shadeRequest.setFilters(filters);
+        shadeRequest.setRelocators(relocators);
+        shadeRequest.setResourceTransformers(resourceTransformers);
+
+        s.shade(shadeRequest);
+
+        try (URLClassLoader cl = new URLClassLoader(new URL[] {file.toURI().toURL()})) {
+            Class<?> c = cl.loadClass("hidden.org.apache.maven.plugins.shade.Lib");
+            Object o = c.newInstance();
+            assertEquals("foo.bar/baz", c.getDeclaredField("CONSTANT").get(o));
+            assertEquals(
+                    "org.codehaus.plexus.util.xml.pull",
+                    c.getDeclaredField("CLASS_REALM_PACKAGE_IMPORT").get(o));
+        }
+    }
+
+    @Test
     public void testShaderWithCustomShadedPattern() throws Exception {
         shaderWithPattern("org/shaded/plexus/util", new File("target/foo-custom.jar"), EXCLUDES);
     }
