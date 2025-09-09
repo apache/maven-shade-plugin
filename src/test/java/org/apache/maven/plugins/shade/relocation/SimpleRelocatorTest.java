@@ -183,7 +183,7 @@ public class SimpleRelocatorTest {
         assertTrue(relocator.canRelocatePath("META-INF/maven/com-foo-bar/artifactId/pom.xml"));
     }
 
-    private static final String sourceFile = "package org.apache.maven.hello;\n" + "package org.objectweb.asm;\n"
+    private static final String SOURCE_FILE = "package org.apache.maven.hello;\n" + "package org.objectweb.asm;\n"
             + "\n"
             + "import foo.bar.Bar;\n"
             + "import zot.baz.Baz;\n"
@@ -216,7 +216,7 @@ public class SimpleRelocatorTest {
             + "  }\n"
             + "}\n";
 
-    private static final String relocatedFile = "package com.acme.maven.hello;\n" + "package aj.org.objectweb.asm;\n"
+    private static final String RELOCATED_FILE = "package com.acme.maven.hello;\n" + "package aj.org.objectweb.asm;\n"
             + "\n"
             + "import foo.bar.Bar;\n"
             + "import zot.baz.Baz;\n"
@@ -257,7 +257,7 @@ public class SimpleRelocatorTest {
                 Arrays.asList("foo.bar", "zot.baz"),
                 Arrays.asList("irrelevant.exclude", "org.apache.maven.exclude1", "org.apache.maven.sub.exclude2"),
                 true);
-        assertEquals(sourceFile, relocator.applyToSourceContent(sourceFile));
+        assertEquals(SOURCE_FILE, relocator.applyToSourceContent(SOURCE_FILE));
     }
 
     @Test
@@ -275,8 +275,8 @@ public class SimpleRelocatorTest {
         // Make sure not to replace 'foo' package by path-like 'shaded/foo'
         SimpleRelocator fooRelocator = new SimpleRelocator("foo", "shaded.foo", null, Arrays.asList("foo.bar"));
         assertEquals(
-                relocatedFile,
+                RELOCATED_FILE,
                 fooRelocator.applyToSourceContent(asmRelocator.applyToSourceContent(
-                        ioRelocator.applyToSourceContent(relocator.applyToSourceContent(sourceFile)))));
+                        ioRelocator.applyToSourceContent(relocator.applyToSourceContent(SOURCE_FILE)))));
     }
 }
