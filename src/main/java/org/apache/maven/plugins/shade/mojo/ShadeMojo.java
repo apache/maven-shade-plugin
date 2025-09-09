@@ -447,6 +447,7 @@ public class ShadeMojo extends AbstractMojo {
     /**
      * @throws MojoExecutionException in case of an error.
      */
+    @SuppressWarnings("checkstyle:methodlength")
     @Override
     public void execute() throws MojoExecutionException {
         if (skip) {

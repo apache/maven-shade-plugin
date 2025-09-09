@@ -256,6 +256,7 @@ public class DefaultShader implements Shader {
         }
     }
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     private void shadeDir(
             ShadeRequest shadeRequest,
             Set<String> resources,
@@ -320,6 +321,7 @@ public class DefaultShader implements Shader {
         }
     }
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     private void shadeJar(
             ShadeRequest shadeRequest,
             Set<String> resources,
@@ -381,6 +383,7 @@ public class DefaultShader implements Shader {
         return false;
     }
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     private void shadeJarEntry(
             ShadeRequest shadeRequest,
             Set<String> resources,
