@@ -58,8 +58,8 @@
   </prerequisites>
 
   <scm>
-    <connection>scm:git:https://github.com/apache/maven-shade-plugin</connection>
-    <developerConnection>scm:git:https://github.com/apache/maven-shade-plugin</developerConnection>
+    <connection>scm:git:https://github.com/apache/maven-shade-plugin.git</connection>
+    <developerConnection>scm:git:https://github.com/apache/maven-shade-plugin.git</developerConnection>
     <tag>HEAD</tag>
     <url>https://github.com/apache/maven-shade-plugin/tree/${project.scm.tag}</url>
   </scm>
