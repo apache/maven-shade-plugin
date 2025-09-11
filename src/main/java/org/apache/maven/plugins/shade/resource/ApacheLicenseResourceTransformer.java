@@ -26,7 +26,7 @@ import java.util.jar.JarOutputStream;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 
 /**
- * Prevents duplicate copies of the license
+ * Prevents duplicate copies of the license.
  */
 public class ApacheLicenseResourceTransformer extends AbstractCompatibilityTransformer {
     private static final String LICENSE_PATH = "META-INF/LICENSE";

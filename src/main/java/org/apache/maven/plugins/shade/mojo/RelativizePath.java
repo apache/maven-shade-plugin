@@ -23,17 +23,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- *
- */
 public final class RelativizePath {
     private RelativizePath() {
         //
     }
 
     /**
-     * relativize a pathname.
-     * @param thing Absolute File of something. (e.g., a parent pom)
+     * Relativize a pathname.
+     *
+     * @param thing absolute File of something. (e.g., a parent pom)
      * @param relativeTo base to relativize it do. (e.g., a pom into which a relative pathname to the 'thing' is to be
      *        installed).
      * @return

@@ -32,7 +32,7 @@ import java.util.jar.JarOutputStream;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 
 /**
- * Aggregate Apache Groovy extension modules descriptors
+ * Aggregate Apache Groovy extension modules descriptors.
  */
 public class GroovyResourceTransformer extends AbstractCompatibilityTransformer {
 
