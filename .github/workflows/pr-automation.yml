@@ -14,12 +14,14 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-   
-name: Release Drafter
+
+name: PR Automation
 on:
-  push:
-    branches:
-      - master
+  pull_request_target:
+    types:
+      - closed
+
 jobs:
-   update_release_draft:
-      uses: apache/maven-gh-actions-shared/.github/workflows/release-drafter.yml@v4
+  pr-automation:
+    name: PR Automation
+    uses: apache/maven-gh-actions-shared/.github/workflows/pr-automation.yml@v4

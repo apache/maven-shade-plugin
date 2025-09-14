@@ -44,9 +44,9 @@ import static org.junit.Assert.assertTrue;
  * Test for handling META-INF/service/...
  */
 public class ServiceResourceTransformerTest {
-    private final String NEWLINE = "\n";
+    private final String newline = "\n";
 
-    private List<Relocator> relocators = new ArrayList<Relocator>();
+    private final List<Relocator> relocators = new ArrayList<>();
 
     @Test
     public void relocatedClasses() throws Exception {
@@ -76,7 +76,7 @@ public class ServiceResourceTransformerTest {
             assertNotNull(jarEntry);
             try (InputStream entryStream = jarFile.getInputStream(jarEntry)) {
                 String xformedContent = IOUtils.toString(entryStream, "utf-8");
-                assertEquals("borg.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE, xformedContent);
+                assertEquals("borg.foo.Service" + newline + "org.foo.exclude.OtherService" + newline, xformedContent);
             } finally {
                 jarFile.close();
             }
@@ -91,8 +91,8 @@ public class ServiceResourceTransformerTest {
                 new SimpleRelocator("org.foo", "borg.foo", null, Collections.singletonList("org.foo.exclude.*"));
         relocators.add(relocator);
 
-        String content = "org.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE;
-        String contentShaded = "borg.foo.Service" + NEWLINE + "org.foo.exclude.OtherService" + NEWLINE;
+        String content = "org.foo.Service" + newline + "org.foo.exclude.OtherService" + newline;
+        String contentShaded = "borg.foo.Service" + newline + "org.foo.exclude.OtherService" + newline;
         byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
         String contentResource = "META-INF/services/org.foo.something.another";
         String contentResourceShaded = "META-INF/services/borg.foo.something.another";
@@ -154,7 +154,7 @@ public class ServiceResourceTransformerTest {
             assertNotNull(jarEntry);
             try (InputStream entryStream = jarFile.getInputStream(jarEntry)) {
                 String xformedContent = IOUtils.toString(entryStream, StandardCharsets.UTF_8);
-                assertEquals("org.eclipse1234.osgi.launch.EquinoxFactory" + NEWLINE, xformedContent);
+                assertEquals("org.eclipse1234.osgi.launch.EquinoxFactory" + newline, xformedContent);
             } finally {
                 jarFile.close();
             }

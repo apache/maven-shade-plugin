@@ -52,22 +52,22 @@ import static org.junit.Assert.fail;
 
 public class TransformerTesterRule implements TestRule {
     @Override
-    public Statement apply(final Statement base, final Description description) {
+    public Statement apply(Statement base, Description description) {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                final TransformerTest spec = description.getAnnotation(TransformerTest.class);
+                TransformerTest spec = description.getAnnotation(TransformerTest.class);
                 if (spec == null) {
                     base.evaluate();
                     return;
                 }
 
-                final Map<String, String> jar;
+                Map<String, String> jar;
                 try {
-                    final ReproducibleResourceTransformer transformer = createTransformer(spec);
+                    ReproducibleResourceTransformer transformer = createTransformer(spec);
                     visit(spec, transformer);
                     jar = captureOutput(transformer);
-                } catch (final Exception ex) {
+                } catch (Exception ex) {
                     if (Exception.class.isAssignableFrom(spec.expectedException())) {
                         assertTrue(
                                 ex.getClass().getName(),
@@ -82,7 +82,7 @@ public class TransformerTesterRule implements TestRule {
         };
     }
 
-    private void asserts(final TransformerTest spec, final Map<String, String> jar) {
+    private void asserts(TransformerTest spec, Map<String, String> jar) {
         if (spec.strictMatch() && jar.size() != spec.expected().length) {
             fail("Strict match test failed: " + jar);
         }
@@ -95,14 +95,14 @@ public class TransformerTesterRule implements TestRule {
         }
     }
 
-    private Map<String, String> captureOutput(final ReproducibleResourceTransformer transformer) throws IOException {
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try (final JarOutputStream jar = new JarOutputStream(out)) {
+    private Map<String, String> captureOutput(ReproducibleResourceTransformer transformer) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (JarOutputStream jar = new JarOutputStream(out)) {
             transformer.modifyOutputStream(jar);
         }
 
-        final Map<String, String> created = new HashMap<>();
-        try (final JarInputStream jar = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+        Map<String, String> created = new HashMap<>();
+        try (JarInputStream jar = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
             JarEntry entry;
             while ((entry = jar.getNextJarEntry()) != null) {
                 created.put(entry.getName(), read(jar));
@@ -111,9 +111,8 @@ public class TransformerTesterRule implements TestRule {
         return created;
     }
 
-    private void visit(final TransformerTest spec, final ReproducibleResourceTransformer transformer)
-            throws IOException {
-        for (final Resource resource : spec.visited()) {
+    private void visit(TransformerTest spec, ReproducibleResourceTransformer transformer) throws IOException {
+        for (Resource resource : spec.visited()) {
             if (transformer.canTransformResource(resource.path())) {
                 transformer.processResource(
                         resource.path(),
@@ -124,9 +123,9 @@ public class TransformerTesterRule implements TestRule {
         }
     }
 
-    private String read(final JarInputStream jar) throws IOException {
-        final StringBuilder builder = new StringBuilder();
-        final byte[] buffer = new byte[512];
+    private String read(JarInputStream jar) throws IOException {
+        StringBuilder builder = new StringBuilder();
+        byte[] buffer = new byte[512];
         int read;
         while ((read = jar.read(buffer)) >= 0) {
             builder.append(new String(buffer, 0, read));
@@ -134,22 +133,22 @@ public class TransformerTesterRule implements TestRule {
         return builder.toString();
     }
 
-    private ReproducibleResourceTransformer createTransformer(final TransformerTest spec) {
-        final ConverterLookup lookup = new DefaultConverterLookup();
+    private ReproducibleResourceTransformer createTransformer(TransformerTest spec) {
+        ConverterLookup lookup = new DefaultConverterLookup();
         try {
-            final ConfigurationConverter converter = lookup.lookupConverterForType(spec.transformer());
-            final PlexusConfiguration configuration = new DefaultPlexusConfiguration("configuration");
-            for (final Property property : spec.configuration()) {
+            ConfigurationConverter converter = lookup.lookupConverterForType(spec.transformer());
+            PlexusConfiguration configuration = new DefaultPlexusConfiguration("configuration");
+            for (Property property : spec.configuration()) {
                 configuration.addChild(property.name(), property.value());
             }
-            return ReproducibleResourceTransformer.class.cast(converter.fromConfiguration(
+            return (ReproducibleResourceTransformer) converter.fromConfiguration(
                     lookup,
                     configuration,
                     spec.transformer(),
                     spec.transformer(),
                     Thread.currentThread().getContextClassLoader(),
-                    new DefaultExpressionEvaluator()));
-        } catch (final ComponentConfigurationException e) {
+                    new DefaultExpressionEvaluator());
+        } catch (ComponentConfigurationException e) {
             throw new IllegalStateException(e);
         }
     }

@@ -85,8 +85,8 @@ public class ManifestResourceTransformerTest {
 
         final ByteArrayOutputStream out = transform(manifest, relocators);
 
-        try (final JarInputStream jis = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
-            final Attributes attrs = jis.getManifest().getMainAttributes();
+        try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            Attributes attrs = jis.getManifest().getMainAttributes();
             assertEquals(
                     "jakarta.decorator;version=\"2.0\";uses:=\"jakarta.enterprise.inject\","
                             + "jakarta.enterprise.context;version=\"2.0\";uses:=\"jakarta.enterprise.util,"
@@ -131,22 +131,22 @@ public class ManifestResourceTransformerTest {
         transformer.setAdditionalAttributes(Arrays.asList("description-custom", "attribute-unknown"));
         final ByteArrayOutputStream out = transform(manifest, relocators);
 
-        try (final JarInputStream jis = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
-            final Attributes attrs = jis.getManifest().getMainAttributes();
+        try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            Attributes attrs = jis.getManifest().getMainAttributes();
             assertEquals("This jar uses jakarta packages", attrs.getValue("description-custom"));
         }
     }
 
     private ByteArrayOutputStream transform(final Manifest manifest, List<Relocator> relocators) throws IOException {
         final ByteArrayOutputStream mboas = new ByteArrayOutputStream();
-        try (final OutputStream mos = mboas) {
+        try (OutputStream mos = mboas) {
             manifest.write(mos);
         }
         transformer.processResource(
                 JarFile.MANIFEST_NAME, new ByteArrayInputStream(mboas.toByteArray()), relocators, 0);
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try (final JarOutputStream jarOutputStream = new JarOutputStream(out)) {
+        try (JarOutputStream jarOutputStream = new JarOutputStream(out)) {
             transformer.modifyOutputStream(jarOutputStream);
         }
         return out;

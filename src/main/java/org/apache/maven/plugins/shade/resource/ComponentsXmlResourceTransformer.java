@@ -47,16 +47,19 @@ public class ComponentsXmlResourceTransformer extends AbstractCompatibilityTrans
 
     public static final String COMPONENTS_XML_PATH = "META-INF/plexus/components.xml";
 
+    @Override
     public boolean canTransformResource(String resource) {
         return COMPONENTS_XML_PATH.equals(resource);
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         Xpp3Dom newDom;
 
         try {
             BufferedInputStream bis = new BufferedInputStream(is) {
+                @Override
                 public void close() throws IOException {
                     // leave ZIP open
                 }
@@ -117,6 +120,7 @@ public class ComponentsXmlResourceTransformer extends AbstractCompatibilityTrans
         }
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         JarEntry jarEntry = new JarEntry(COMPONENTS_XML_PATH);
         jarEntry.setTime(time);
@@ -130,6 +134,7 @@ public class ComponentsXmlResourceTransformer extends AbstractCompatibilityTrans
         components.clear();
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return !components.isEmpty();
     }
