@@ -31,4 +31,6 @@ public interface Relocator {
     String relocateClass(String clazz);
 
     String applyToSourceContent(String sourceContent);
+
+    boolean skipStringLiteral();
 }
