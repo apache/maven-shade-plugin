@@ -34,12 +34,13 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  */
 public interface ReproducibleResourceTransformer extends ResourceTransformer {
     /**
-     * Transform an individual resource
-     * @param resource The resource name
-     * @param is An input stream for the resource, the implementation should *not* close this stream
-     * @param relocators  A list of relocators
+     * Transform an individual resource.
+     *
+     * @param resource the resource name
+     * @param is an input stream for the resource, the implementation should *not* close this stream
+     * @param relocators  a list of relocators
      * @param time the time of the resource to process
-     * @throws IOException When the IO blows up
+     * @throws IOException when the IO blows up
      */
     void processResource(String resource, InputStream is, List<Relocator> relocators, long time) throws IOException;
 }
