@@ -462,7 +462,7 @@ public class DefaultShaderTest {
         JarEntry entry = shadedJarFile.getJarEntry(innerJarFileName);
 
         // After shading, entry compression method should not be changed.
-        Assert.assertEquals(entry.getMethod(), ZipEntry.STORED);
+        Assert.assertEquals(ZipEntry.STORED, entry.getMethod());
 
         temporaryFolder.delete();
     }
