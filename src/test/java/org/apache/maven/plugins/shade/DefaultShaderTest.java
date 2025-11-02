@@ -59,10 +59,9 @@ import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ServicesResourceTransformer;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.Os;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -78,9 +77,9 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -93,8 +92,8 @@ public class DefaultShaderTest {
     private static final String[] EXCLUDES =
             new String[] {"org/codehaus/plexus/util/xml/Xpp3Dom", "org/codehaus/plexus/util/xml/pull.*"};
 
-    @ClassRule
-    public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
+    @TempDir
+    public static File TEMPORARY_FOLDER;
 
     private static final String NEWLINE = "\n";
 
@@ -190,17 +189,16 @@ public class DefaultShaderTest {
 
     @Test
     public void testOverlappingResourcesAreLoggedExceptATransformerHandlesIt() throws Exception {
-        TemporaryFolder temporaryFolder = new TemporaryFolder();
+        File temporaryFolder = Files.createTempDirectory("junit").toFile();
         try {
             Set<File> set = new LinkedHashSet<>();
-            temporaryFolder.create();
-            File j1 = temporaryFolder.newFile("j1.jar");
+            File j1 = newFile(temporaryFolder, "j1.jar");
             try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(j1))) {
                 jos.putNextEntry(new JarEntry("foo.txt"));
                 jos.write("c1".getBytes(StandardCharsets.UTF_8));
                 jos.closeEntry();
             }
-            File j2 = temporaryFolder.newFile("j2.jar");
+            File j2 = newFile(temporaryFolder, "j2.jar");
             try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(j2))) {
                 jos.putNextEntry(new JarEntry("foo.txt"));
                 jos.write("c2".getBytes(StandardCharsets.UTF_8));
@@ -293,7 +291,7 @@ public class DefaultShaderTest {
 
     @Test
     public void testHandleDirectory() throws Exception {
-        final File dir = TEMPORARY_FOLDER.getRoot();
+        final File dir = TEMPORARY_FOLDER;
         // explode src/test/jars/test-artifact-1.0-SNAPSHOT.jar in this temp dir
         try (JarInputStream in =
                 new JarInputStream(Files.newInputStream(Paths.get("src/test/jars/test-artifact-1.0-SNAPSHOT.jar")))) {
@@ -391,12 +389,10 @@ public class DefaultShaderTest {
 
     @Test
     public void testShaderWithNestedJar() throws Exception {
-        TemporaryFolder temporaryFolder = new TemporaryFolder();
+        File temporaryFolder = Files.createTempDirectory("junit").toFile();
 
         final String innerJarFileName = "inner.jar";
-
-        temporaryFolder.create();
-        File innerJar = temporaryFolder.newFile(innerJarFileName);
+        File innerJar = newFile(temporaryFolder, innerJarFileName);
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(innerJar.toPath()))) {
             jos.putNextEntry(new JarEntry("foo.txt"));
             jos.write("c1".getBytes(StandardCharsets.UTF_8));
@@ -408,7 +404,7 @@ public class DefaultShaderTest {
         shadeRequest.setFilters(Collections.emptyList());
         shadeRequest.setRelocators(Collections.emptyList());
         shadeRequest.setResourceTransformers(Collections.emptyList());
-        File shadedFile = temporaryFolder.newFile("shaded.jar");
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
         shadeRequest.setUberJar(shadedFile);
 
         DefaultShader shader = newShader();
@@ -427,19 +423,17 @@ public class DefaultShaderTest {
 
     @Test
     public void testShaderNoOverwrite() throws Exception {
-        TemporaryFolder temporaryFolder = new TemporaryFolder();
+        File temporaryFolder = Files.createTempDirectory("junit").toFile();
 
         final String innerJarFileName = "inner.jar";
-
-        temporaryFolder.create();
-        File innerJar = temporaryFolder.newFile(innerJarFileName);
+        File innerJar = newFile(temporaryFolder, innerJarFileName);
         try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(innerJar))) {
             jos.putNextEntry(new JarEntry("foo.txt"));
             jos.write("c1".getBytes(StandardCharsets.UTF_8));
             jos.closeEntry();
         }
 
-        File outerJar = temporaryFolder.newFile("outer.jar");
+        File outerJar = newFile(temporaryFolder, "outer.jar");
         try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(outerJar))) {
             FileInputStream innerStream = new FileInputStream(innerJar);
             byte[] bytes = IOUtil.toByteArray(innerStream, 32 * 1024);
@@ -452,7 +446,7 @@ public class DefaultShaderTest {
         shadeRequest.setFilters(new ArrayList<>());
         shadeRequest.setRelocators(new ArrayList<>());
         shadeRequest.setResourceTransformers(new ArrayList<>());
-        File shadedFile = temporaryFolder.newFile("shaded.jar");
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
         shadeRequest.setUberJar(shadedFile);
 
         DefaultShader shader = newShader();
@@ -462,27 +456,26 @@ public class DefaultShaderTest {
         JarEntry entry = shadedJarFile.getJarEntry(innerJarFileName);
 
         // After shading, entry compression method should not be changed.
-        Assert.assertEquals(entry.getMethod(), ZipEntry.STORED);
+        Assertions.assertEquals(entry.getMethod(), ZipEntry.STORED);
 
         temporaryFolder.delete();
     }
 
     @Test
     public void testShaderWithDuplicateService() throws Exception {
-        TemporaryFolder temporaryFolder = new TemporaryFolder();
-        temporaryFolder.create();
+        File temporaryFolder = Files.createTempDirectory("junit").toFile();
 
         String serviceEntryName = "META-INF/services/my.foo.Service";
         String serviceEntryValue = "my.foo.impl.Service1";
 
-        File innerJar1 = temporaryFolder.newFile("inner1.jar");
+        File innerJar1 = newFile(temporaryFolder, "inner1.jar");
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(innerJar1.toPath()))) {
             jos.putNextEntry(new JarEntry(serviceEntryName));
             jos.write((serviceEntryValue + NEWLINE).getBytes(StandardCharsets.UTF_8));
             jos.closeEntry();
         }
 
-        File innerJar2 = temporaryFolder.newFile("inner2.jar");
+        File innerJar2 = newFile(temporaryFolder, "inner2.jar");
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(innerJar2.toPath()))) {
             jos.putNextEntry(new JarEntry(serviceEntryName));
             jos.write((serviceEntryValue + NEWLINE).getBytes(StandardCharsets.UTF_8));
@@ -494,7 +487,7 @@ public class DefaultShaderTest {
         shadeRequest.setFilters(Collections.emptyList());
         shadeRequest.setRelocators(Collections.emptyList());
         shadeRequest.setResourceTransformers(Collections.singletonList(new ServicesResourceTransformer()));
-        File shadedFile = temporaryFolder.newFile("shaded.jar");
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
         shadeRequest.setUberJar(shadedFile);
 
         DefaultShader shader = newShader();
@@ -509,20 +502,18 @@ public class DefaultShaderTest {
                 .collect(Collectors.toList());
 
         // After shading, there should be a single input
-        Assert.assertEquals(Collections.singletonList(serviceEntryValue), lines);
+        Assertions.assertEquals(Collections.singletonList(serviceEntryValue), lines);
 
         temporaryFolder.delete();
     }
 
     @Test
     public void testShaderWithSmallEntries() throws Exception {
-        TemporaryFolder temporaryFolder = new TemporaryFolder();
+        File temporaryFolder = Files.createTempDirectory("junit").toFile();
 
         final String innerJarFileName = "inner.jar";
         int len;
-
-        temporaryFolder.create();
-        File innerJar = temporaryFolder.newFile(innerJarFileName);
+        File innerJar = newFile(temporaryFolder, innerJarFileName);
         try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(innerJar.toPath()))) {
             jos.putNextEntry(new JarEntry("foo.txt"));
             byte[] bytes = "c1".getBytes(StandardCharsets.UTF_8);
@@ -536,7 +527,7 @@ public class DefaultShaderTest {
         shadeRequest.setFilters(new ArrayList<>());
         shadeRequest.setRelocators(new ArrayList<>());
         shadeRequest.setResourceTransformers(new ArrayList<>());
-        File shadedFile = temporaryFolder.newFile("shaded.jar");
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
         shadeRequest.setUberJar(shadedFile);
 
         DefaultShader shader = newShader();
@@ -546,7 +537,7 @@ public class DefaultShaderTest {
         JarEntry entry = shadedJarFile.getJarEntry("foo.txt");
 
         // After shading, entry compression method should not be changed.
-        Assert.assertEquals(entry.getSize(), len);
+        Assertions.assertEquals(entry.getSize(), len);
 
         temporaryFolder.delete();
     }
@@ -627,5 +618,11 @@ public class DefaultShaderTest {
                         requireNonNull(jar2.getJarEntry(entry2), entry2 + " in " + jar2.getName()))) {
             return Arrays.equals(IOUtil.toByteArray(s1), IOUtil.toByteArray(s2));
         }
+    }
+
+    private static File newFile(File parent, String child) throws IOException {
+        File result = new File(parent, child);
+        result.createNewFile();
+        return result;
     }
 }

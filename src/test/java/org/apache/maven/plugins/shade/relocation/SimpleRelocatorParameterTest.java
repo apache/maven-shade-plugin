@@ -20,9 +20,9 @@ package org.apache.maven.plugins.shade.relocation;
 
 import java.util.Collections;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class SimpleRelocatorParameterTest {
 

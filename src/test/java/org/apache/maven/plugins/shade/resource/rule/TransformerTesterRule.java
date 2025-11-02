@@ -46,9 +46,9 @@ import org.junit.runners.model.Statement;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class TransformerTesterRule implements TestRule {
     @Override
@@ -70,8 +70,8 @@ public class TransformerTesterRule implements TestRule {
                 } catch (Exception ex) {
                     if (Exception.class.isAssignableFrom(spec.expectedException())) {
                         assertTrue(
-                                ex.getClass().getName(),
-                                spec.expectedException().isAssignableFrom(ex.getClass()));
+                                spec.expectedException().isAssignableFrom(ex.getClass()),
+                                ex.getClass().getName());
                         return;
                     } else {
                         throw ex;
@@ -88,10 +88,10 @@ public class TransformerTesterRule implements TestRule {
         }
         for (final Resource expected : spec.expected()) {
             final String content = jar.get(expected.path());
-            assertNotNull(expected.path(), content);
+            assertNotNull(content, expected.path());
             assertTrue(
-                    expected.path() + ", expected=" + expected.content() + ", actual=" + content,
-                    content.replace(System.lineSeparator(), "\n").matches(expected.content()));
+                    content.replace(System.lineSeparator(), "\n").matches(expected.content()),
+                    expected.path() + ", expected=" + expected.content() + ", actual=" + content);
         }
     }
 

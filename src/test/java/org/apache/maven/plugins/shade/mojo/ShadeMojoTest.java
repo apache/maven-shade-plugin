@@ -56,9 +56,12 @@ import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -74,6 +77,7 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         configuration.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
     }
 
+    @Test
     public void testManifestTransformerSelection() throws Exception {
         final ShadeMojo mojo = new ShadeMojo();
         final Method m = ShadeMojo.class.getDeclaredMethod("toResourceTransformers", String.class, List.class);
@@ -107,14 +111,17 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         assertEquals(asList(testsTfr1, testsTfr2), m.invoke(mojo, "tests", asList(testsTfr1, testsTfr2, defaultTfr)));
     }
 
+    @Test
     public void testShaderWithDefaultShadedPattern() throws Exception {
         shaderWithPattern(null, new File("target/foo-default.jar"));
     }
 
+    @Test
     public void testShaderWithCustomShadedPattern() throws Exception {
         shaderWithPattern("org/shaded/plexus/util", new File("target/foo-custom.jar"));
     }
 
+    @Test
     public void testShaderWithExclusions() throws Exception {
         File jarFile = new File(getBasedir(), "target/unit/foo-bar.jar");
 
@@ -159,6 +166,7 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
      *
      * @throws Exception
      */
+    @Test
     public void testShadeWithFilter() throws Exception {
         // create and configure MavenProject
         MavenProject project = new MavenProject();

@@ -32,12 +32,12 @@ import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule.Proper
 import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule.Resource;
 import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule.TransformerTest;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TestRule;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PropertiesTransformerTest {
     @Rule
