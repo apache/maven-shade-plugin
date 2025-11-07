@@ -61,13 +61,10 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
-import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 import org.eclipse.aether.RepositorySystem;
@@ -1078,11 +1075,8 @@ public class ShadeMojo extends AbstractMojo {
         // MSHADE-413: Must not use objects (for example `Model` or `Dependency`) that are "owned
         // by Maven" and being used by other projects/plugins. Modifying those will break the
         // correctness of the build - or cause an endless loop.
-        List<Dependency> origDeps = new ArrayList<>();
-        List<Dependency> source = promoteTransitiveDependencies ? transitiveDeps : project.getDependencies();
-        for (Dependency d : source) {
-            origDeps.add(d.clone());
-        }
+        DependencyList origDeps =
+                new DependencyList(promoteTransitiveDependencies ? transitiveDeps : project.getDependencies());
         model = model.clone();
 
         // MSHADE-185: We will remove all system scoped dependencies which usually
@@ -1118,12 +1112,11 @@ public class ShadeMojo extends AbstractMojo {
         addSystemScopedDependencyFromNonInterpolatedPom(dependencies, originalDependencies);
 
         // Check to see if we have a reduction and if so rewrite the POM.
-        rewriteDependencyReducedPomIfWeHaveReduction(dependencies, modified, transitiveDeps, model);
+        rewriteDependencyReducedPomIfWeHaveReduction(dependencies, modified, model, origDeps);
     }
 
     private void rewriteDependencyReducedPomIfWeHaveReduction(
-            List<Dependency> dependencies, boolean modified, List<Dependency> transitiveDeps, Model model)
-            throws IOException, ProjectBuildingException, DependencyCollectionException {
+            List<Dependency> dependencies, boolean modified, Model model, DependencyList origDeps) throws IOException {
         if (modified) {
             for (int loopCounter = 0; modified; loopCounter++) {
 
@@ -1185,17 +1178,8 @@ public class ShadeMojo extends AbstractMojo {
                     w.close();
                 }
 
-                synchronized (session.getProjectBuildingRequest()) { // Lock critical section to fix MSHADE-467
-                    ProjectBuildingRequest projectBuildingRequest =
-                            new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
-                    projectBuildingRequest.setLocalRepository(session.getLocalRepository());
-                    projectBuildingRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-
-                    ProjectBuildingResult result = projectBuilder.build(f, projectBuildingRequest);
-
-                    getLog().debug("updateExcludesInDeps()");
-                    modified = updateExcludesInDeps(result.getProject(), dependencies, transitiveDeps);
-                }
+                modified = origDeps.resolveTransitiveDependenciesExclusions(
+                        session, project, projectBuilder, f, repositorySystem, dependencies, getLog());
             }
 
             project.setFile(dependencyReducedPomLocation);
@@ -1237,16 +1221,16 @@ public class ShadeMojo extends AbstractMojo {
         return dep;
     }
 
-    private String getId(Artifact artifact) {
+    static String getId(Artifact artifact) {
         return getId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), artifact.getClassifier());
     }
 
-    private String getId(Dependency dependency) {
+    static String getId(Dependency dependency) {
         return getId(
                 dependency.getGroupId(), dependency.getArtifactId(), dependency.getType(), dependency.getClassifier());
     }
 
-    private String getId(String groupId, String artifactId, String type, String classifier) {
+    static String getId(String groupId, String artifactId, String type, String classifier) {
         return groupId + ":" + artifactId + ":" + type + ":" + ((classifier != null) ? classifier : "");
     }
 
