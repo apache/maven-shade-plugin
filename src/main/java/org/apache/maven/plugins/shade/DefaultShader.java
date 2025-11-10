@@ -727,7 +727,7 @@ public class DefaultShader implements Shader {
 
     private interface PackageMapper {
         /**
-         * Map an entity name according to the mapping rules known to this package mapper
+         * Map an entity name according to the mapping rules known to this package mapper.
          *
          * @param entityName entity name to be mapped
          * @param mapPaths map "slashy" names like paths or internal Java class names, e.g. {@code com/acme/Foo}?
@@ -738,7 +738,7 @@ public class DefaultShader implements Shader {
     }
 
     /**
-     * A package mapper based on a list of {@link Relocator}s
+     * A package mapper based on a list of {@link Relocator}s.
      */
     private static class DefaultPackageMapper implements PackageMapper {
         private static final Pattern CLASS_PATTERN = Pattern.compile("(\\[*)?L(.+);");

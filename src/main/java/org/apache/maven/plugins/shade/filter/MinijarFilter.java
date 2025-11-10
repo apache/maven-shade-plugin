@@ -68,7 +68,7 @@ public class MinijarFilter implements Filter {
     /**
      * @param project {@link MavenProject}
      * @param log {@link Log}
-     * @throws IOException in case of error.
+     * @throws IOException in case of error
      */
     public MinijarFilter(MavenProject project, Log log) throws IOException {
         this(project, log, Collections.<SimpleFilter>emptyList(), Collections.<String>emptySet());
@@ -78,7 +78,7 @@ public class MinijarFilter implements Filter {
      * @param project {@link MavenProject}
      * @param log {@link Log}
      * @param entryPoints
-     * @throws IOException in case of error.
+     * @throws IOException in case of error
      */
     public MinijarFilter(MavenProject project, Log log, Set<String> entryPoints) throws IOException {
         this(project, log, Collections.<SimpleFilter>emptyList(), entryPoints);
@@ -89,7 +89,7 @@ public class MinijarFilter implements Filter {
      * @param log {@link Log}
      * @param simpleFilters {@link SimpleFilter}
      * @param entryPoints
-     * @throws IOException in case of errors.
+     * @throws IOException in case of errors
      * @since 1.6
      */
     public MinijarFilter(MavenProject project, Log log, List<SimpleFilter> simpleFilters, Set<String> entryPoints)
