@@ -16,10 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-(1..4).each {
-    def exclusionCount = new File("$basedir/shadeMT$it/dependency-reduced-pom.xml")
-        .readLines()
-        .findAll { it.contains '<exclusion>' }
-        .size()
-    assert exclusionCount == 15
-} || true
+import groovy.xml.XmlParser
+
+File pomFile = new File( basedir, "target/dependency-reduced-pom.xml" );
+assert pomFile.isFile()
+
+def ns = new groovy.xml.Namespace("http://maven.apache.org/POM/4.0.0") 
+def pom = new XmlParser().parse( pomFile )
+
+assert pom[ns.modelVersion].size() == 1
+assert pom[ns.dependencies][ns.dependency].size() == 5
+assert pom[ns.dependencies][ns.dependency][1][ns.exclusions][ns.exclusion].size() == 3
+assert pom[ns.dependencies][ns.dependency][3][ns.exclusions][ns.exclusion].size() == 1
+
+
