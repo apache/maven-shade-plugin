@@ -535,7 +535,7 @@ public class ShadeMojo extends AbstractMojo {
 
         // Now add our extra resources
         try {
-            List<Filter> filters = getFilters(processedArtifacts);
+            List<Filter> filters = getFilters(processedArtifacts, artifactSelector);
 
             List<Relocator> relocators = getRelocators();
 
@@ -790,36 +790,48 @@ public class ShadeMojo extends AbstractMojo {
             artifactIds.add(getId(artifact));
 
             if (createSourcesJar) {
-                Artifact sources = resolveArtifactForClassifier(artifact, "sources");
-                if (sources != null) {
-                    if (sources.getFile().length() > 0) {
-                        sourceArtifacts.add(sources.getFile());
-                        processedArtifacts.add(sources);
-                    } else {
-                        emptySourceArtifacts.add(artifact);
+                ArtifactId sourcesArtifactId =
+                        new ArtifactId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "sources");
+                if (artifactSelector.isSelected(sourcesArtifactId)) {
+                    Artifact sources = resolveArtifactForClassifier(artifact, "sources");
+                    if (sources != null) {
+                        if (sources.getFile().length() > 0) {
+                            sourceArtifacts.add(sources.getFile());
+                            processedArtifacts.add(sources);
+                        } else {
+                            emptySourceArtifacts.add(artifact);
+                        }
                     }
                 }
             }
 
             if (shadeTestJar) {
-                Artifact tests = resolveArtifactForClassifier(artifact, "tests");
-                if (tests != null) {
-                    if (tests.getFile().length() > 0) {
-                        testArtifacts.add(tests.getFile());
-                        processedArtifacts.add(tests);
-                    } else {
-                        emptyTestArtifacts.add(artifact);
+                ArtifactId testArtifactId =
+                        new ArtifactId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "tests");
+                if (artifactSelector.isSelected(testArtifactId)) {
+                    Artifact tests = resolveArtifactForClassifier(artifact, "tests");
+                    if (tests != null) {
+                        if (tests.getFile().length() > 0) {
+                            testArtifacts.add(tests.getFile());
+                            processedArtifacts.add(tests);
+                        } else {
+                            emptyTestArtifacts.add(artifact);
+                        }
                     }
                 }
             }
 
             if (createTestSourcesJar) {
-                Artifact testSources = resolveArtifactForClassifier(artifact, "test-sources");
-                if (testSources != null) {
-                    testSourceArtifacts.add(testSources.getFile());
-                    processedArtifacts.add(testSources);
-                } else {
-                    emptyTestSourceArtifacts.add(artifact);
+                ArtifactId testSourcesArtifactId = new ArtifactId(
+                        artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "test-sources");
+                if (artifactSelector.isSelected(testSourcesArtifactId)) {
+                    Artifact testSources = resolveArtifactForClassifier(artifact, "test-sources");
+                    if (testSources != null) {
+                        testSourceArtifacts.add(testSources.getFile());
+                        processedArtifacts.add(testSources);
+                    } else {
+                        emptyTestSourceArtifacts.add(artifact);
+                    }
                 }
             }
         }
@@ -961,7 +973,8 @@ public class ShadeMojo extends AbstractMojo {
         return Arrays.asList(transformers);
     }
 
-    private List<Filter> getFilters(List<Artifact> artifactCollection) throws MojoExecutionException {
+    private List<Filter> getFilters(List<Artifact> artifactCollection, ArtifactSelector artifactSelector)
+            throws MojoExecutionException {
         List<Filter> filters = new ArrayList<>();
         List<SimpleFilter> simpleFilters = new ArrayList<>();
 
@@ -972,7 +985,9 @@ public class ShadeMojo extends AbstractMojo {
             artifacts.put(project.getArtifact(), new ArtifactId(project.getArtifact()));
 
             for (Artifact artifact : artifactCollection) {
-                artifacts.put(artifact, new ArtifactId(artifact));
+                if (artifactSelector.isSelected(artifact)) {
+                    artifacts.put(artifact, new ArtifactId(artifact));
+                }
             }
 
             for (ArchiveFilter filter : this.filters) {
@@ -987,16 +1002,24 @@ public class ShadeMojo extends AbstractMojo {
                         jars.add(artifact.getFile());
 
                         if (createSourcesJar) {
-                            Artifact sources = resolveArtifactForClassifier(artifact, "sources");
-                            if (sources != null) {
-                                jars.add(sources.getFile());
+                            ArtifactId sourcesArtifactId = new ArtifactId(
+                                    artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "sources");
+                            if (artifactSelector.isSelected(sourcesArtifactId)) {
+                                Artifact sources = resolveArtifactForClassifier(artifact, "sources");
+                                if (sources != null) {
+                                    jars.add(sources.getFile());
+                                }
                             }
                         }
 
                         if (shadeTestJar) {
-                            Artifact tests = resolveArtifactForClassifier(artifact, "tests");
-                            if (tests != null) {
-                                jars.add(tests.getFile());
+                            ArtifactId testsArtifactId = new ArtifactId(
+                                    artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "tests");
+                            if (artifactSelector.isSelected(testsArtifactId)) {
+                                Artifact tests = resolveArtifactForClassifier(artifact, "tests");
+                                if (tests != null) {
+                                    jars.add(tests.getFile());
+                                }
                             }
                         }
                     }
