@@ -164,7 +164,7 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
     /**
      * The shades to apply this transformer to or no shades if no filter is applied.
      *
-     * @param shade {@code null}, {@code jar}, {@code test-jar}, {@code sources-jar} or {@code test-sources-jar}.
+     * @param shade {@code null}, {@code jar}, {@code test-jar}, {@code sources-jar} or {@code test-sources-jar}
      */
     public void setForShade(String shade) {
         this.shade = shade;
