@@ -398,7 +398,7 @@ public class DefaultShader implements Shader {
             int method)
             throws Exception {
         try (InputStream in = inputProvider.call()) {
-            String mappedName = packageMapper.map(name, true, false);
+            String mappedName = packageMapper.map(name, true, false, false);
 
             int idx = mappedName.lastIndexOf('/');
             if (idx != -1) {
@@ -622,7 +622,7 @@ public class DefaultShader implements Shader {
         }
 
         // Need to take the .class off for remapping evaluation
-        String mappedName = packageMapper.map(name.substring(0, name.indexOf('.')), true, false);
+        String mappedName = packageMapper.map(name.substring(0, name.indexOf('.')), true, false, false);
 
         try {
             // Now we put it back on so the class file is written out with the right extension.
@@ -732,9 +732,10 @@ public class DefaultShader implements Shader {
          * @param entityName entity name to be mapped
          * @param mapPaths map "slashy" names like paths or internal Java class names, e.g. {@code com/acme/Foo}?
          * @param mapPackages  map "dotty" names like qualified Java class or package names, e.g. {@code com.acme.Foo}?
+         * @param mapLiterals  map string literals, e.g. {@code "com.acme.Foo"}?
          * @return mapped entity name, e.g. {@code org/apache/acme/Foo} or {@code org.apache.acme.Foo}
          */
-        String map(String entityName, boolean mapPaths, boolean mapPackages);
+        String map(String entityName, boolean mapPaths, boolean mapPackages, boolean mapLiterals);
     }
 
     /**
@@ -750,7 +751,7 @@ public class DefaultShader implements Shader {
         }
 
         @Override
-        public String map(String entityName, boolean mapPaths, final boolean mapPackages) {
+        public String map(String entityName, boolean mapPaths, final boolean mapPackages, final boolean mapLiterals) {
             String value = entityName;
 
             String prefix = "";
@@ -764,7 +765,9 @@ public class DefaultShader implements Shader {
             }
 
             for (Relocator r : relocators) {
-                if (mapPackages && r.canRelocateClass(entityName)) {
+                if (mapLiterals && r.skipStringLiteral()) {
+                    continue;
+                } else if (mapPackages && r.canRelocateClass(entityName)) {
                     value = prefix + r.relocateClass(entityName) + suffix;
                     break;
                 } else if (mapPaths && r.canRelocatePath(entityName)) {
@@ -781,7 +784,9 @@ public class DefaultShader implements Shader {
 
         @Override
         public Object mapValue(Object object) {
-            return object instanceof String ? relocators.map((String) object, true, true) : super.mapValue(object);
+            return object instanceof String
+                    ? relocators.map((String) object, true, true, true)
+                    : super.mapValue(object);
         }
 
         @Override
@@ -794,7 +799,7 @@ public class DefaultShader implements Shader {
             //  TODO: Analyse if this case is really necessary and has any special meaning or avoids any known problems.
             //   If not, then simplify DefaultShader.PackageMapper.map to only have the String parameter and assume
             //   both boolean ones to always be true.
-            return relocators.map(name, true, false);
+            return relocators.map(name, true, false, false);
         }
     }
 
@@ -831,14 +836,15 @@ public class DefaultShader implements Shader {
             }
 
             final String fqSource = pkg + source;
-            final String mappedSource = map(fqSource, true, false);
+            final String mappedSource = map(fqSource, true, false, false);
             final String filename = mappedSource.substring(mappedSource.lastIndexOf('/') + 1);
             super.visitSource(filename, debug);
         }
 
         @Override
-        public String map(final String entityName, boolean mapPaths, final boolean mapPackages) {
-            final String mapped = packageMapper.map(entityName, true, mapPackages);
+        public String map(
+                final String entityName, boolean mapPaths, final boolean mapPackages, final boolean mapLiterals) {
+            final String mapped = packageMapper.map(entityName, true, mapPackages, mapLiterals);
             if (!remapped) {
                 remapped = !mapped.equals(entityName);
             }
