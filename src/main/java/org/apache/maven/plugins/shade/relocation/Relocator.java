@@ -18,7 +18,9 @@
  */
 package org.apache.maven.plugins.shade.relocation;
 
-/** @author Jason van Zyl */
+/**
+ * @author Jason van Zyl
+ */
 public interface Relocator {
     String ROLE = Relocator.class.getName();
 
