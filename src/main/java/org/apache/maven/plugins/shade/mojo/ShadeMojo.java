@@ -518,7 +518,7 @@ public class ShadeMojo extends AbstractMojo {
 
         // Now add our extra resources
         try {
-            List<Filter> filters = getFilters();
+            List<Filter> filters = getFilters(artifactSelector);
 
             List<Relocator> relocators = getRelocators();
 
@@ -773,33 +773,45 @@ public class ShadeMojo extends AbstractMojo {
             artifactIds.add(getId(artifact));
 
             if (createSourcesJar) {
-                File file = resolveArtifactForClassifier(artifact, "sources");
-                if (file != null) {
-                    if (file.length() > 0) {
-                        sourceArtifacts.add(file);
-                    } else {
-                        emptySourceArtifacts.add(artifact.getArtifactId());
+                ArtifactId sourcesArtifactId =
+                        new ArtifactId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "sources");
+                if (artifactSelector.isSelected(sourcesArtifactId)) {
+                    File file = resolveArtifactForClassifier(artifact, "sources");
+                    if (file != null) {
+                        if (file.length() > 0) {
+                            sourceArtifacts.add(file);
+                        } else {
+                            emptySourceArtifacts.add(artifact.getArtifactId());
+                        }
                     }
                 }
             }
 
             if (shadeTestJar) {
-                File file = resolveArtifactForClassifier(artifact, "tests");
-                if (file != null) {
-                    if (file.length() > 0) {
-                        testArtifacts.add(file);
-                    } else {
-                        emptyTestArtifacts.add(artifact.getId());
+                ArtifactId testArtifactId =
+                        new ArtifactId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "tests");
+                if (artifactSelector.isSelected(testArtifactId)) {
+                    File file = resolveArtifactForClassifier(artifact, "tests");
+                    if (file != null) {
+                        if (file.length() > 0) {
+                            testArtifacts.add(file);
+                        } else {
+                            emptyTestArtifacts.add(artifact.getId());
+                        }
                     }
                 }
             }
 
             if (createTestSourcesJar) {
-                File file = resolveArtifactForClassifier(artifact, "test-sources");
-                if (file != null) {
-                    testSourceArtifacts.add(file);
-                } else {
-                    emptyTestSourceArtifacts.add(artifact.getId());
+                ArtifactId testSourcesArtifactId = new ArtifactId(
+                        artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "test-sources");
+                if (artifactSelector.isSelected(testSourcesArtifactId)) {
+                    File file = resolveArtifactForClassifier(artifact, "test-sources");
+                    if (file != null) {
+                        testSourceArtifacts.add(file);
+                    } else {
+                        emptyTestSourceArtifacts.add(artifact.getId());
+                    }
                 }
             }
         }
@@ -868,6 +880,27 @@ public class ShadeMojo extends AbstractMojo {
         }
     }
 
+    private org.eclipse.aether.artifact.Artifact resolveArtifactForClassifier2(Artifact artifact, String classifier) {
+        Artifact toResolve = new DefaultArtifact(
+                artifact.getGroupId(),
+                artifact.getArtifactId(),
+                artifact.getVersionRange() == null
+                        ? VersionRange.createFromVersion(artifact.getVersion())
+                        : artifact.getVersionRange(),
+                artifact.getScope(),
+                artifact.getType(),
+                classifier,
+                artifact.getArtifactHandler(),
+                artifact.isOptional());
+        try {
+            org.eclipse.aether.artifact.Artifact resolved = resolveArtifact(RepositoryUtils.toArtifact(toResolve));
+            return resolved;
+        } catch (ArtifactResolutionException e) {
+            getLog().warn("Could not get " + classifier + " for " + artifact);
+            return null;
+        }
+    }
+
     private File resolveArtifactForClassifier(Artifact artifact, String classifier) {
         Artifact toResolve = new DefaultArtifact(
                 artifact.getGroupId(),
@@ -930,6 +963,10 @@ public class ShadeMojo extends AbstractMojo {
     }
 
     private List<Filter> getFilters() throws MojoExecutionException {
+        return getFilters(null);
+    }
+
+    private List<Filter> getFilters(ArtifactSelector artifactSelector) throws MojoExecutionException {
         List<Filter> filters = new ArrayList<>();
         List<SimpleFilter> simpleFilters = new ArrayList<>();
 
@@ -939,7 +976,9 @@ public class ShadeMojo extends AbstractMojo {
             artifacts.put(project.getArtifact(), new ArtifactId(project.getArtifact()));
 
             for (Artifact artifact : project.getArtifacts()) {
-                artifacts.put(artifact, new ArtifactId(artifact));
+                if (artifactSelector == null || artifactSelector.isSelected(artifact)) {
+                    artifacts.put(artifact, new ArtifactId(artifact));
+                }
             }
 
             for (ArchiveFilter filter : this.filters) {
@@ -954,16 +993,24 @@ public class ShadeMojo extends AbstractMojo {
                         jars.add(artifact.getFile());
 
                         if (createSourcesJar) {
-                            File file = resolveArtifactForClassifier(artifact, "sources");
-                            if (file != null) {
-                                jars.add(file);
+                            ArtifactId testSourcesArtifactId = new ArtifactId(
+                                    artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "sources");
+                            if (artifactSelector == null || artifactSelector.isSelected(testSourcesArtifactId)) {
+                                File file = resolveArtifactForClassifier(artifact, "sources");
+                                if (file != null) {
+                                    jars.add(file);
+                                }
                             }
                         }
 
                         if (shadeTestJar) {
-                            File file = resolveArtifactForClassifier(artifact, "tests");
-                            if (file != null) {
-                                jars.add(file);
+                            ArtifactId testSourcesArtifactId = new ArtifactId(
+                                    artifact.getGroupId(), artifact.getArtifactId(), artifact.getType(), "tests");
+                            if (artifactSelector == null || artifactSelector.isSelected(testSourcesArtifactId)) {
+                                File file = resolveArtifactForClassifier(artifact, "tests");
+                                if (file != null) {
+                                    jars.add(file);
+                                }
                             }
                         }
                     }
