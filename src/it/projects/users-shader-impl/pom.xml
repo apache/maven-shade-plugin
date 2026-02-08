@@ -36,11 +36,6 @@ under the License.
 
   <name>users-shader-impl</name>
 
-  <properties>
-    <maven.compiler.source>1.5</maven.compiler.source>
-    <maven.compiler.target>1.5</maven.compiler.target>
-  </properties>
-
   <dependencies>
       <dependency>
           <groupId>org.junit.jupiter</groupId>

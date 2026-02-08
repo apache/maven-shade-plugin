@@ -51,9 +51,9 @@ under the License.
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.1</version>
+        <version>@version.maven-compiler-plugin@</version>
         <configuration>
-          <release>${java.specification.version}</release>
+          <release>${java.version}</release>
         </configuration>
       </plugin>
       <plugin>
@@ -77,7 +77,7 @@ under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-invoker-plugin</artifactId>
-        <version>3.9.1</version>
+        <version>@version.maven-invoker-plugin@</version>
       </plugin>
     </plugins>
   </build>
