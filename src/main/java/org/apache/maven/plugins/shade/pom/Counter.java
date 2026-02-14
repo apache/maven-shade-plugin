@@ -28,12 +28,12 @@ public class Counter {
     // --------------------------/
 
     /**
-     * Field currentIndex
+     * Field currentIndex.
      */
     private int currentIndex = 0;
 
     /**
-     * Field level
+     * Field level.
      */
     private int level;
 
@@ -50,14 +50,15 @@ public class Counter {
     // -----------/
 
     /**
-     * Method getCurrentIndex
+     * Method getCurrentIndex.
      */
     public int getCurrentIndex() {
         return currentIndex;
     } // -- int getCurrentIndex()
 
     /**
-     * Method getDepth
+     * Method getDepth.
+     *
      * @return {@link #level}
      */
     public int getDepth() {
@@ -65,7 +66,7 @@ public class Counter {
     } // -- int getDepth()
 
     /**
-     * Method increaseCount
+     * Method increaseCount.
      */
     public void increaseCount() {
         currentIndex = currentIndex + 1;

@@ -32,7 +32,7 @@ import org.codehaus.plexus.util.SelectorUtils;
  */
 public class SimpleRelocator implements Relocator {
     /**
-     * Match dot, slash or space at end of string
+     * Match dot, slash or space at end of string.
      */
     private static final Pattern RX_ENDS_WITH_DOT_SLASH_SPACE = Pattern.compile("[./ ]$");
 
@@ -43,7 +43,7 @@ public class SimpleRelocator implements Relocator {
      *     <li>(opening curly brace / opening parenthesis / comma / equals / semicolon) + space</li>
      *     <li>(closing curly brace / closing multi-line comment) + space</li>
      * </ul>
-     * at end of string
+     * at end of string.
      */
     private static final Pattern RX_ENDS_WITH_JAVA_KEYWORD = Pattern.compile(
             "\\b(import|package|public|protected|private|static|final|synchronized|abstract|volatile|extends|implements|throws) $"
