@@ -910,7 +910,12 @@ public class ShadeMojo extends AbstractMojo {
 
         for (PackageRelocation r : relocations) {
             relocators.add(new SimpleRelocator(
-                    r.getPattern(), r.getShadedPattern(), r.getIncludes(), r.getExcludes(), r.isRawString()));
+                    r.getPattern(),
+                    r.getShadedPattern(),
+                    r.getIncludes(),
+                    r.getExcludes(),
+                    r.isRawString(),
+                    r.isSkipStringLiteral()));
         }
 
         return relocators;
