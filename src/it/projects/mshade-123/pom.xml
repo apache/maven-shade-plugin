@@ -50,11 +50,11 @@ under the License.
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>@version.maven-compiler-plugin@</version>
         <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
+          <source>1.8</source>
+          <target>1.8</target>
         </configuration>
       </plugin>
       <plugin>
@@ -99,7 +99,7 @@ under the License.
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.3</version>
+        <version>@version.maven-assembly-plugin@</version>
         <configuration>
           <appendAssemblyId>false</appendAssemblyId>
           <outputDirectory>${project.build.directory}/releases/</outputDirectory>
