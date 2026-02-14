@@ -44,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -85,7 +85,7 @@ public class MinijarFilterTest {
 
         mf.finished();
 
-        verify(log, times(1)).info(logCaptor.capture());
+        verify(log).info(logCaptor.capture());
 
         assertEquals("Minimized 0 -> 0", logCaptor.getValue());
     }
@@ -100,10 +100,10 @@ public class MinijarFilterTest {
 
         mf.finished();
 
-        verify(log, times(1)).info(logCaptor.capture());
+        verify(log).info(logCaptor.capture());
 
         // verify no access to project's artifacts
-        verify(mavenProject, times(0)).getArtifacts();
+        verify(mavenProject, never()).getArtifacts();
 
         assertEquals("Minimized 0 -> 0", logCaptor.getValue());
     }
@@ -156,7 +156,7 @@ public class MinijarFilterTest {
 
         m.finished();
 
-        verify(log, times(1)).info(logCaptor.capture());
+        verify(log).info(logCaptor.capture());
 
         assertEquals("Minimized 51 -> 1 (1%)", logCaptor.getValue());
     }
@@ -167,7 +167,7 @@ public class MinijarFilterTest {
 
         m.finished();
 
-        verify(log, times(1)).info(logCaptor.capture());
+        verify(log).info(logCaptor.capture());
 
         assertEquals("Minimized 0 -> 0", logCaptor.getValue());
     }
