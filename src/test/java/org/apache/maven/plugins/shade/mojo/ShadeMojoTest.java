@@ -214,9 +214,9 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         filtersField.set(mojo, new ArchiveFilter[] {archiveFilter});
 
         // invoke getFilters()
-        Method getFilters = ShadeMojo.class.getDeclaredMethod("getFilters");
+        Method getFilters = ShadeMojo.class.getDeclaredMethod("getFilters", List.class);
         getFilters.setAccessible(true);
-        List<Filter> filters = (List<Filter>) getFilters.invoke(mojo);
+        List<Filter> filters = (List<Filter>) getFilters.invoke(mojo, Collections.emptyList());
 
         // assertions - there must be one filter
         assertEquals(1, filters.size());

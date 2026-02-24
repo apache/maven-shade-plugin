@@ -508,7 +508,7 @@ public class ShadeMojo extends AbstractMojo {
             }
         }
 
-        processArtifactSelectors(
+        List<Artifact> processedArtifacts = processArtifactSelectors(
                 artifacts, artifactIds, sourceArtifacts, testArtifacts, testSourceArtifacts, artifactSelector);
 
         File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier();
@@ -518,7 +518,7 @@ public class ShadeMojo extends AbstractMojo {
 
         // Now add our extra resources
         try {
-            List<Filter> filters = getFilters();
+            List<Filter> filters = getFilters(processedArtifacts);
 
             List<Relocator> relocators = getRelocators();
 
@@ -716,7 +716,7 @@ public class ShadeMojo extends AbstractMojo {
         }
     }
 
-    private void processArtifactSelectors(
+    private List<Artifact> processArtifactSelectors(
             Set<File> artifacts,
             Set<String> artifactIds,
             Set<File> sourceArtifacts,
@@ -725,11 +725,11 @@ public class ShadeMojo extends AbstractMojo {
             ArtifactSelector artifactSelector)
             throws MojoExecutionException {
 
-        List<String> excludedArtifacts = new ArrayList<>();
-        List<String> pomArtifacts = new ArrayList<>();
-        List<String> emptySourceArtifacts = new ArrayList<>();
-        List<String> emptyTestArtifacts = new ArrayList<>();
-        List<String> emptyTestSourceArtifacts = new ArrayList<>();
+        List<Artifact> excludedArtifacts = new ArrayList<>();
+        List<Artifact> pomArtifacts = new ArrayList<>();
+        List<Artifact> emptySourceArtifacts = new ArrayList<>();
+        List<Artifact> emptyTestArtifacts = new ArrayList<>();
+        List<Artifact> emptyTestSourceArtifacts = new ArrayList<>();
 
         ArrayList<Artifact> processedArtifacts = new ArrayList<>();
         if (extraArtifacts != null && !extraArtifacts.isEmpty()) {
@@ -755,15 +755,15 @@ public class ShadeMojo extends AbstractMojo {
         }
         processedArtifacts.addAll(project.getArtifacts());
 
-        for (Artifact artifact : processedArtifacts) {
+        // for loop over COPY; as we add to the list in this loop
+        for (Artifact artifact : new ArrayList<>(processedArtifacts)) {
             if (!artifactSelector.isSelected(artifact)) {
-                excludedArtifacts.add(artifact.getId());
-
+                excludedArtifacts.add(artifact);
                 continue;
             }
 
             if ("pom".equals(artifact.getType())) {
-                pomArtifacts.add(artifact.getId());
+                pomArtifacts.add(artifact);
                 continue;
             }
 
@@ -773,52 +773,62 @@ public class ShadeMojo extends AbstractMojo {
             artifactIds.add(getId(artifact));
 
             if (createSourcesJar) {
-                File file = resolveArtifactForClassifier(artifact, "sources");
-                if (file != null) {
-                    if (file.length() > 0) {
-                        sourceArtifacts.add(file);
+                Artifact sources = resolveArtifactForClassifier(artifact, "sources");
+                if (sources != null) {
+                    if (sources.getFile().length() > 0) {
+                        sourceArtifacts.add(sources.getFile());
+                        processedArtifacts.add(sources);
                     } else {
-                        emptySourceArtifacts.add(artifact.getArtifactId());
+                        emptySourceArtifacts.add(artifact);
                     }
                 }
             }
 
             if (shadeTestJar) {
-                File file = resolveArtifactForClassifier(artifact, "tests");
-                if (file != null) {
-                    if (file.length() > 0) {
-                        testArtifacts.add(file);
+                Artifact tests = resolveArtifactForClassifier(artifact, "tests");
+                if (tests != null) {
+                    if (tests.getFile().length() > 0) {
+                        testArtifacts.add(tests.getFile());
+                        processedArtifacts.add(tests);
                     } else {
-                        emptyTestArtifacts.add(artifact.getId());
+                        emptyTestArtifacts.add(artifact);
                     }
                 }
             }
 
             if (createTestSourcesJar) {
-                File file = resolveArtifactForClassifier(artifact, "test-sources");
-                if (file != null) {
-                    testSourceArtifacts.add(file);
+                Artifact testSources = resolveArtifactForClassifier(artifact, "test-sources");
+                if (testSources != null) {
+                    testSourceArtifacts.add(testSources.getFile());
+                    processedArtifacts.add(testSources);
                 } else {
-                    emptyTestSourceArtifacts.add(artifact.getId());
+                    emptyTestSourceArtifacts.add(artifact);
                 }
             }
         }
 
-        for (String artifactId : excludedArtifacts) {
-            getLog().debug("Excluding " + artifactId + " from the shaded jar.");
+        processedArtifacts.removeAll(excludedArtifacts);
+        processedArtifacts.removeAll(pomArtifacts);
+        processedArtifacts.removeAll(emptySourceArtifacts);
+        processedArtifacts.removeAll(emptyTestArtifacts);
+        processedArtifacts.removeAll(emptyTestSourceArtifacts);
+
+        for (Artifact artifact : excludedArtifacts) {
+            getLog().debug("Excluding " + artifact.getId() + " from the shaded jar.");
         }
-        for (String artifactId : pomArtifacts) {
-            getLog().debug("Skipping pom dependency " + artifactId + " in the shaded jar.");
+        for (Artifact artifact : pomArtifacts) {
+            getLog().debug("Skipping pom dependency " + artifact.getId() + " in the shaded jar.");
         }
-        for (String artifactId : emptySourceArtifacts) {
-            getLog().warn("Skipping empty source jar " + artifactId + ".");
+        for (Artifact artifact : emptySourceArtifacts) {
+            getLog().warn("Skipping empty source jar " + artifact.getId() + ".");
         }
-        for (String artifactId : emptyTestArtifacts) {
-            getLog().warn("Skipping empty test jar " + artifactId + ".");
+        for (Artifact artifact : emptyTestArtifacts) {
+            getLog().warn("Skipping empty test jar " + artifact.getId() + ".");
         }
-        for (String artifactId : emptyTestSourceArtifacts) {
-            getLog().warn("Skipping empty test source jar " + artifactId + ".");
+        for (Artifact artifact : emptyTestSourceArtifacts) {
+            getLog().warn("Skipping empty test source jar " + artifact.getId() + ".");
         }
+        return processedArtifacts;
     }
 
     private boolean invalidMainArtifact() {
@@ -868,7 +878,7 @@ public class ShadeMojo extends AbstractMojo {
         }
     }
 
-    private File resolveArtifactForClassifier(Artifact artifact, String classifier) {
+    private Artifact resolveArtifactForClassifier(Artifact artifact, String classifier) {
         Artifact toResolve = new DefaultArtifact(
                 artifact.getGroupId(),
                 artifact.getArtifactId(),
@@ -883,7 +893,8 @@ public class ShadeMojo extends AbstractMojo {
         try {
             org.eclipse.aether.artifact.Artifact resolved = resolveArtifact(RepositoryUtils.toArtifact(toResolve));
             if (resolved.getFile() != null) {
-                return resolved.getFile();
+                toResolve.setFile(resolved.getFile());
+                return toResolve;
             }
             return null;
         } catch (ArtifactResolutionException e) {
@@ -929,16 +940,17 @@ public class ShadeMojo extends AbstractMojo {
         return Arrays.asList(transformers);
     }
 
-    private List<Filter> getFilters() throws MojoExecutionException {
+    private List<Filter> getFilters(List<Artifact> artifactCollection) throws MojoExecutionException {
         List<Filter> filters = new ArrayList<>();
         List<SimpleFilter> simpleFilters = new ArrayList<>();
 
         if (this.filters != null && this.filters.length > 0) {
             Map<Artifact, ArtifactId> artifacts = new HashMap<>();
 
+            // artifactCollection does not contain project; that must also be subjected to filtering
             artifacts.put(project.getArtifact(), new ArtifactId(project.getArtifact()));
 
-            for (Artifact artifact : project.getArtifacts()) {
+            for (Artifact artifact : artifactCollection) {
                 artifacts.put(artifact, new ArtifactId(artifact));
             }
 
@@ -954,16 +966,16 @@ public class ShadeMojo extends AbstractMojo {
                         jars.add(artifact.getFile());
 
                         if (createSourcesJar) {
-                            File file = resolveArtifactForClassifier(artifact, "sources");
-                            if (file != null) {
-                                jars.add(file);
+                            Artifact sources = resolveArtifactForClassifier(artifact, "sources");
+                            if (sources != null) {
+                                jars.add(sources.getFile());
                             }
                         }
 
                         if (shadeTestJar) {
-                            File file = resolveArtifactForClassifier(artifact, "tests");
-                            if (file != null) {
-                                jars.add(file);
+                            Artifact tests = resolveArtifactForClassifier(artifact, "tests");
+                            if (tests != null) {
+                                jars.add(tests.getFile());
                             }
                         }
                     }
