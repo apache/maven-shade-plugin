@@ -30,6 +30,11 @@ under the License.
         to relocated classes either. In that case, the user expects to retain the original classes.
     </description>
 
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>commons-io</groupId>

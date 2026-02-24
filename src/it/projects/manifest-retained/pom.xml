@@ -32,6 +32,11 @@ under the License.
     Test that existing manifest entries are retained upon shading.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <dependencies>
     <dependency>
       <!-- dummy dependency to test interaction of multiple manifests -->

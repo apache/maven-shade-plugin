@@ -32,6 +32,11 @@ under the License.
     Test that reproduces the issue described in MSHADE-373.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <dependencies>
     <dependency>
       <!-- dummy dependency to test interaction of multiple manifests -->

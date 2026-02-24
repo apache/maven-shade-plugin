@@ -34,7 +34,11 @@ under the License.
   <description>
     Test that NullPointerException is not thrown when projectName parameter is unset.
   </description>
-  
+
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
 
   <dependencies>
     <dependency>

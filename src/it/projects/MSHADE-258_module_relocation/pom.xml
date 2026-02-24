@@ -29,6 +29,11 @@ under the License.
     RemappingClassAdapter is deprecated and throws an exception with ASM 6.0 beta
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.ow2.asm</groupId>

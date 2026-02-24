@@ -32,8 +32,25 @@ under the License.
     Test that plugin descriptors get adjusted to account for relocation of role/impl classes.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <modules>
     <module>lib</module>
     <module>app</module>
   </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.12.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 </project>

@@ -27,6 +27,11 @@ under the License.
   <version>1.0</version>
   <packaging>pom</packaging>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <profiles>
     <profile>
       <id>jdk9</id>

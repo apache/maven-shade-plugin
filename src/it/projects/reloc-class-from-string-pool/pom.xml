@@ -32,6 +32,11 @@ under the License.
     Test that classes in strings like "[Lnet/sf/cglib/proxy/Callback" get properly relocated.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <build>
     <plugins>
       <plugin>

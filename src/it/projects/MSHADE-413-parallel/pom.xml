@@ -32,6 +32,11 @@ under the License.
     Test that shade works in two parallel project builds.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <modules>
     <module>p1</module>
     <module>p2</module>

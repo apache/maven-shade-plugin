@@ -37,6 +37,11 @@ under the License.
     in the shade-artifact finally.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <modules>
     <module>pomDependency</module>
     <module>shadingModule</module>

@@ -32,6 +32,11 @@ under the License.
     Test that XmlAppendingResourceTransformer ignores DTD by default to avoid potential problematic network access.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <build>
     <plugins>
       <plugin>

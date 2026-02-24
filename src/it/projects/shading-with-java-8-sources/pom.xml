@@ -29,6 +29,10 @@ under the License.
 
   <name>users-shader-impl</name>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -44,10 +48,6 @@ under the License.
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <configuration>
-            <source>1.8</source>
-            <target>1.8</target>
-          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

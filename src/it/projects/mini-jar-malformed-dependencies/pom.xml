@@ -27,6 +27,11 @@ under the License.
   <version>1</version>
   <name>mini-jar-malformed-dependencies-MSHADE-107</name>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <dependencies>  
     <!-- dependencies with "malformed classes" that break asm's ClassReader -->
     <!-- see also https://issues.apache.org/jira/browse/MANIMALSNIFFER-9 -->

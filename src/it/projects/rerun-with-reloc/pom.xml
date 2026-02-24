@@ -35,6 +35,11 @@ under the License.
     run.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <!-- NOTE: The test requires a dependency to include during shading, doesn't matter what classes though -->
   <dependencies>
     <dependency>

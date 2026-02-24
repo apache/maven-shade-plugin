@@ -35,8 +35,8 @@ under the License.
     <description>Test for minimizeJar keeping package-info around.</description>
     
     <properties>
-        <maven.compiler.source>1.5</maven.compiler.source>
-        <maven.compiler.target>1.5</maven.compiler.target>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
     </properties>
     
     <modules>

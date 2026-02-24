@@ -31,6 +31,11 @@ under the License.
     Test that creation of the dependency reduced POM properly handles snapshot dependencies with useBaseVersion.
   </description>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.maven.its.shade.drp</groupId>

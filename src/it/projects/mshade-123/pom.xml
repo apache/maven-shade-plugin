@@ -35,6 +35,11 @@ under the License.
     <version>7</version>
   </parent>
 
+  <properties>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+  </properties>
+
   <dependencies>
 
     <dependency>
