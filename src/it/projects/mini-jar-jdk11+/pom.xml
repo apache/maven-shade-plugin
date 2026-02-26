@@ -53,7 +53,7 @@ under the License.
         <artifactId>maven-compiler-plugin</artifactId>
         <version>@version.maven-compiler-plugin@</version>
         <configuration>
-          <release>${java.version}</release>
+          <release>${java.specification.version}</release>
         </configuration>
       </plugin>
       <plugin>
