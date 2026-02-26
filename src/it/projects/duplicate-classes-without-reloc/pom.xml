@@ -32,11 +32,6 @@ under the License.
     Test that duplicate classes/resources on the class path are gracefully handled.
   </description>
 
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <modules>
     <module>libs/a-0.1.pom</module>
     <module>libs/b-0.1.pom</module>

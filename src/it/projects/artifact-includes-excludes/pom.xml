@@ -31,11 +31,6 @@ under the License.
     Test artifact selection via glob includes/excludes.
   </description>
 
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>junit</groupId>

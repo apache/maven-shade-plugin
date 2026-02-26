@@ -32,11 +32,6 @@ under the License.
     Test that existing manifest entries are retained upon shading.
   </description>
 
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <dependencies>
     <dependency>
       <!-- dummy dependency to test interaction of multiple manifests -->
@@ -51,17 +46,17 @@ under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.0.2</version>
+        <version>@version.maven-compiler-plugin@</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
-        <version>2.2</version>
+        <version>@version.maven-install-plugin@</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.2</version>
+        <version>@version.maven-jar-plugin@</version>
         <configuration>
           <archive>
             <manifest>
@@ -76,7 +71,7 @@ under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>2.2</version>
+        <version>@version.maven-resources-plugin@</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -99,7 +94,7 @@ under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.3.1</version>
+        <version>@version.maven-surefire@</version>
       </plugin>
     </plugins>
   </build>

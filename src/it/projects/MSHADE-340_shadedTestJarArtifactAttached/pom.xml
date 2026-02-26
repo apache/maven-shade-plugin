@@ -27,10 +27,6 @@ under the License.
     <artifactId>mshade-340-parent</artifactId>
     <packaging>pom</packaging>
     <version>1.0</version>
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-    </properties>
     <modules>
         <module>api</module>
         <module>impl</module>

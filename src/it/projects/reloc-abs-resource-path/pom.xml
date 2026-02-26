@@ -39,11 +39,6 @@ under the License.
     in calls to Class.getResource().
   </description>
 
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <build>
     <plugins>
       <plugin>

@@ -24,10 +24,6 @@ under the License.
   <artifactId>system-dep</artifactId>
   <packaging>jar</packaging>
   <version>1.0.0-SNAPSHOT</version>
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
   <dependencies>
     <dependency>
       <groupId>jline</groupId>

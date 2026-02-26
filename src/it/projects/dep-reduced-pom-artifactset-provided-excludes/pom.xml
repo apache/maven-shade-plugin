@@ -35,11 +35,6 @@ under the License.
     That exclusion must be retained in the dependency reduced POM.
   </description>
 
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.maven.its.shade.drpape</groupId>

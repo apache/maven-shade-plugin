@@ -32,11 +32,6 @@ under the License.
     Prevent minimizeJar from excluding classes that are used by services.
   </description>
 
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <modules>
     <module>unused-service</module>
     <module>used-service</module>

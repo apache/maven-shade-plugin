@@ -32,11 +32,6 @@ under the License.
     Test that dependencies not matching runtime scope are automatically excluded.
   </description>
 
-  <properties>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.maven.its.shade.nrse</groupId>
