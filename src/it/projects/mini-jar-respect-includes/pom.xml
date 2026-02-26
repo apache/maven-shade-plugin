@@ -48,7 +48,7 @@ under the License.
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm</artifactId>
-      <version>@asmVersion@</version>
+      <version>9.9.1</version>
     </dependency>
   </dependencies>
 

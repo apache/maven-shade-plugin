@@ -66,13 +66,13 @@ import org.apache.maven.plugins.shade.resource.ReproducibleResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.io.CachingOutputStream;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vafer.jdeb.shaded.objectweb.asm.ClassReader;
+import org.vafer.jdeb.shaded.objectweb.asm.ClassVisitor;
+import org.vafer.jdeb.shaded.objectweb.asm.ClassWriter;
+import org.vafer.jdeb.shaded.objectweb.asm.commons.ClassRemapper;
+import org.vafer.jdeb.shaded.objectweb.asm.commons.Remapper;
 
 /**
  * @author Jason van Zyl
