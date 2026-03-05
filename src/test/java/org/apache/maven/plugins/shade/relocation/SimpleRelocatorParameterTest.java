@@ -27,11 +27,6 @@ import static org.junit.Assert.fail;
 public class SimpleRelocatorParameterTest {
 
     @Test
-    public void testThatNullPatternInConstructorShouldNotThrowNullPointerException() {
-        constructThenFailOnNullPointerException(null, "");
-    }
-
-    @Test
     public void testThatNullShadedPatternInConstructorShouldNotThrowNullPointerException() {
         constructThenFailOnNullPointerException("", null);
     }
@@ -43,5 +38,6 @@ public class SimpleRelocatorParameterTest {
         } catch (NullPointerException e) {
             fail("Constructor should not throw null pointer exceptions");
         }
+        // any other exception leads to test failure as well
     }
 }

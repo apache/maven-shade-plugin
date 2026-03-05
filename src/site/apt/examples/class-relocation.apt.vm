@@ -67,23 +67,29 @@ Relocating Classes
 +-----
 
   This instructs the plugin to move classes from the package <<<org.codehaus.plexus.util>>> and its subpackages
-  into the package <<<org.shaded.plexus.util>>> by moving the corresponding JAR file entries and rewritting the
+  into the package <<<org.shaded.plexus.util>>> by moving the corresponding JAR file entries and rewriting the
   affected bytecode. The class <<<Xpp3Dom>>> and some others will remain in their original package.
 
 
-  It's also possible to narrow the pattern with the <<<include>>> tag:
+  It's also possible to narrow the pattern with the <<<include>>> and/or <<<exclude>>> tag:
 
 
 +-----
 <project>
   ...
-                <relocation>
-                  <pattern>org.codehaus.plexus.util</pattern>
-                  <shadedPattern>org.shaded.plexus.util</shadedPattern>
-                  <includes>
-                    <include>org.codehaud.plexus.util.io.*</include>
-                  </includes>
-                </relocation>
+    <relocation>
+      <pattern>org.codehaus.plexus.util</pattern>
+      <shadedPattern>org.shaded.plexus.util</shadedPattern>
+      <includes>
+        <include>org.codehaud.plexus.util.io.*</include>
+      </includes>
+      <excludes>
+        <exclude>org.codehaud.plexus.util.io.*</exclude>
+      </excludes>
+    </relocation>
   ...
 </project>
 +-----
+
+When using relocations with the <<<rawString>>> element set to <<<true>>>, both <<<includes>>> and <<<excludes>>> are disregarded but the pattern is treated as {{{https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html}regular expression pattern}}. 
+Also the <<<pattern>>> and <<<shadedPattern>>> are always referring to a filesystem path (and must use forward slash (<<</>>>) as separator). Both are not normalized in this case.

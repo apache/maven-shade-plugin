@@ -155,6 +155,8 @@ public class SimpleRelocatorTest {
 
         relocator = new SimpleRelocator("org.foo", "private.stuff", null, null);
         assertEquals("private.stuff.bar.Class", relocator.relocateClass("org.foo.bar.Class"));
+        // make sure that "." does not match "x" in "orgxfoo.bar.Class"
+        assertEquals("orgxfoo.bar.Class", relocator.relocateClass("orgxfoo.bar.Class"));
     }
 
     @Test
@@ -170,6 +172,8 @@ public class SimpleRelocatorTest {
         assertEquals(
                 "private.stuff.bar.Class, private.stuff.bar.Class and private.stuff.bar.Class",
                 relocator.relocateAllClasses("org.foo.bar.Class, private.stuff.bar.Class and org.foo.bar.Class"));
+        // make sure that "." does not match "x" in "orgxfoo.bar.Class"
+        assertEquals("orgxfoo.bar.Class", relocator.relocateClass("orgxfoo.bar.Class"));
     }
 
     @Test
