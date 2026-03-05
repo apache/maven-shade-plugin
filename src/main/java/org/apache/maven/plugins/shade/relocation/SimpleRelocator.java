@@ -208,8 +208,13 @@ public class SimpleRelocator implements Relocator {
     }
 
     @Override
-    public String relocateClass(String clazz) {
-        return rawString ? clazz : clazz.replaceFirst(pattern, shadedPattern);
+    public String relocateClass(String input) {
+        return rawString ? input : input.replaceFirst(pattern, shadedPattern);
+    }
+
+    @Override
+    public String relocateAllClasses(String input) {
+        return rawString ? input : input.replaceAll(pattern, shadedPattern);
     }
 
     @Override

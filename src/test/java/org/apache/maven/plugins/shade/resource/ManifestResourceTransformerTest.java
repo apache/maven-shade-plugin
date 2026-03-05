@@ -46,8 +46,7 @@ public class ManifestResourceTransformerTest {
         transformer = new ManifestResourceTransformer();
     }
 
-    @Test
-    public void rewriteDefaultAttributes() throws Exception {
+    private Manifest createTestManifest() {
         final Manifest manifest = new Manifest();
         final Attributes attributes = manifest.getMainAttributes();
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
@@ -79,6 +78,12 @@ public class ManifestResourceTransformerTest {
                         + "osgi.contract;osgi.contract=JavaInject;"
                         + "filter:=\"(&(osgi.contract=JavaInject)(version=1.0.0))\","
                         + "osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version=1.8))\"");
+        return manifest;
+    }
+
+    @Test
+    public void rewriteDefaultAttributes() throws Exception {
+        final Manifest manifest = createTestManifest();
 
         List<Relocator> relocators = Collections.<Relocator>singletonList(new SimpleRelocator(
                 "javax", "jakarta", Collections.<String>emptyList(), Collections.<String>emptyList()));
@@ -114,6 +119,32 @@ public class ManifestResourceTransformerTest {
                             + "osgi.contract;osgi.contract=JavaInject;"
                             + "filter:=\"(&(osgi.contract=JavaInject)(version=1.0.0))\","
                             + "osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version=1.8))\"",
+                    attrs.getValue("Require-Capability"));
+        }
+    }
+
+    @Test()
+    public void rewriteDefaultAttributesWithSameSuffix() throws Exception {
+        final Manifest manifest = createTestManifest();
+
+        List<Relocator> relocators = Collections.<Relocator>singletonList(new SimpleRelocator(
+                "javax", "shaded.javax", Collections.<String>emptyList(), Collections.<String>emptyList()));
+
+        final ByteArrayOutputStream out = transform(manifest, relocators);
+
+        try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            Attributes attrs = jis.getManifest().getMainAttributes();
+            assertEquals(
+                    "shaded.javax.decorator;version=\"2.0\";uses:=\"shaded.javax.enterprise.inject\",shaded.javax.enterprise.context;version=\"2.0\";uses:=\"shaded.javax.enterprise.util,shaded.javax.inject\"",
+                    attrs.getValue("Export-Package"));
+            assertEquals(
+                    "shaded.javax.el,shaded.javax.enterprise.context;version=\"[2.0,3)\"",
+                    attrs.getValue("Import-Package"));
+            assertEquals(
+                    "osgi.contract;osgi.contract=JavaCDI;uses:=\"shaded.javax.enterprise.context,shaded.javax.enterprise.context.spi,shaded.javax.enterprise.context.control,shaded.javax.enterprise.util,shaded.javax.enterprise.inject,shaded.javax.enterprise.inject.spi,shaded.javax.enterprise.inject.spi.configurator,shaded.javax.enterprise.inject.literal,shaded.javax.enterprise.inject.se,shaded.javax.enterprise.event,shaded.javax.decorator\";version:List<Version>=\"2.0,1.2,1.1,1.0\"",
+                    attrs.getValue("Provide-Capability"));
+            assertEquals(
+                    "osgi.serviceloader;filter:=\"(osgi.serviceloader=shaded.javax.enterprise.inject.se.SeContainerInitializer)\";cardinality:=multiple,osgi.serviceloader;filter:=\"(osgi.serviceloader=shaded.javax.enterprise.inject.spi.CDIProvider)\";cardinality:=multiple,osgi.extender;filter:=\"(osgi.extender=osgi.serviceloader.processor)\",osgi.contract;osgi.contract=JavaEL;filter:=\"(&(osgi.contract=JavaEL)(version=2.2.0))\",osgi.contract;osgi.contract=JavaInterceptor;filter:=\"(&(osgi.contract=JavaInterceptor)(version=1.2.0))\",osgi.contract;osgi.contract=JavaInject;filter:=\"(&(osgi.contract=JavaInject)(version=1.0.0))\",osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version=1.8))\"",
                     attrs.getValue("Require-Capability"));
         }
     }

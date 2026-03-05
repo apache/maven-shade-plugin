@@ -158,6 +158,21 @@ public class SimpleRelocatorTest {
     }
 
     @Test
+    public void testRelocateAllClasses() {
+        SimpleRelocator relocator;
+
+        relocator = new SimpleRelocator("org.foo", null, null, null);
+        assertEquals(
+                "hidden.org.foo.bar.Class, hidden.hidden.org.foo.bar.Class and hidden.org.foo.bar.Class",
+                relocator.relocateAllClasses("org.foo.bar.Class, hidden.org.foo.bar.Class and org.foo.bar.Class"));
+
+        relocator = new SimpleRelocator("org.foo", "private.stuff", null, null);
+        assertEquals(
+                "private.stuff.bar.Class, private.stuff.bar.Class and private.stuff.bar.Class",
+                relocator.relocateAllClasses("org.foo.bar.Class, private.stuff.bar.Class and org.foo.bar.Class"));
+    }
+
+    @Test
     public void testRelocateRawString() {
         SimpleRelocator relocator;
 
