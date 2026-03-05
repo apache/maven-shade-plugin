@@ -219,7 +219,7 @@ public class ShadeMojo extends AbstractMojo {
 
     /**
      * Defines whether the shaded artifact should be attached as classifier to the original artifact. If false, the
-     * shaded jar will be the main artifact of the project
+     * shaded jar will be the main artifact of the project.
      */
     @Parameter
     private boolean shadedArtifactAttached;
@@ -283,7 +283,7 @@ public class ShadeMojo extends AbstractMojo {
     private String shadedClassifierName;
 
     /**
-     * When true, it will attempt to create a sources jar as well
+     * When true, it will attempt to create a sources jar as well.
      */
     @Parameter
     private boolean createSourcesJar;
@@ -372,7 +372,7 @@ public class ShadeMojo extends AbstractMojo {
      * When true, the version of each dependency of the reduced pom will be based on the baseVersion of the original
      * dependency instead of its resolved version. For example, if the original pom (transitively) depends on
      * a:a:2.7-SNAPSHOT, if useBaseVersion is set to false, the reduced pom will depend on a:a:2.7-20130312.222222-12
-     * whereas if useBaseVersion is set to true, the reduced pom will depend on a:a:2.7-SNAPSHOT
+     * whereas if useBaseVersion is set to true, the reduced pom will depend on a:a:2.7-SNAPSHOT.
      *
      * @since 3.0
      */
@@ -387,6 +387,7 @@ public class ShadeMojo extends AbstractMojo {
 
     /**
      * When true, skips the execution of this MOJO.
+     *
      * @since 3.3.0
      */
     @Parameter(defaultValue = "false")
@@ -445,7 +446,7 @@ public class ShadeMojo extends AbstractMojo {
     private Map<String, Shader> shaders;
 
     /**
-     * @throws MojoExecutionException in case of an error.
+     * @throws MojoExecutionException in case of an error
      */
     @SuppressWarnings("checkstyle:methodlength")
     @Override
