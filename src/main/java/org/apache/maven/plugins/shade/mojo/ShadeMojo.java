@@ -145,18 +145,29 @@ public class ShadeMojo extends AbstractMojo {
      *       &lt;exclude&gt;org.apache.maven.Public*&lt;/exclude&gt;
      *     &lt;/excludes&gt;
      *   &lt;/relocation&gt;
+     *   &lt;relocation&gt;
+     *     &lt;pattern&gt;Lorg/aspectj/&lt;/pattern&gt;
+     *     &lt;shadedPattern&gt;Lorg/example/shaded/aspectj/&lt;/shadedPattern&gt;
+     *     &lt;rawString&gt;true&lt;/rawString&gt;
+     *   &lt;/relocation&gt;
      * &lt;/relocations&gt;
      * </pre>
      *
-     * <em>Note:</em> Support for includes exists only since version 1.4.
+     * Each {@code relocation} item must contain a non-empty {@code pattern} element. Its value may use either {@code /} or {@code .} as separator. It will be normalized accordingly depending on the relocation context (filesystem or fully qualified class/package name).
+     * The {@code shadedPattern} element is optional, if not given or empty the shaded pattern will be the same as the pattern prefixed by {@code hidden.}. Its value may use either {@code /} or {@code .} as separator. It will be normalized accordingly depending on the relocation context (filesystem or fully qualified class/package name).
+     * When {@code rawString} is set to {@code true} the given pattern is treated as regular expression {@link Pattern} otherwise is treated as plain String (not supporting any wildcards).
+     * The {@code includes} and {@code excludes} elements are optional and can be used to further fine-tune the set of classes to be relocated.
+     * Both are <a href="https://ant.apache.org/manual/dirtasks.html#patterns">Ant-based patterns</a>, i.e. support wildcards {@code *}, {@code **} and {@code ?}.
+     * If both {@code includes} and {@code excludes} are given both conditions need to be fulfilled for a relocation to happen (i.e. both included and not excluded).
+     * @see <a href="https://maven.apache.org/plugins/maven-shade-plugin/examples/class-relocation.html">Class Relocation</a>
      */
     @SuppressWarnings("MismatchedReadAndWriteOfArray")
     @Parameter
     private PackageRelocation[] relocations;
 
     /**
-     * Resource transformers to be used. Please see the "Examples" section for more information on available
-     * transformers and their configuration.
+     * Resource transformers to be used.
+     * @see <a href="https://maven.apache.org/plugins/maven-shade-plugin/examples/resource-transformers.html">Resource Transformers</a>
      */
     @Parameter
     private ResourceTransformer[] transformers;
