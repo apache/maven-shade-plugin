@@ -81,7 +81,12 @@ import org.eclipse.aether.resolution.ArtifactResolutionException;
 import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomReplaceTransformers;
 
 /**
- * Mojo that performs shading delegating to the Shader component.
+ * Creates a shaded JAR artifact (i.e. embeds additional artifacts and optionally relocates their packages).
+ * The generated shaded JAR becomes either the primary artifact or a secondary artifact of the current project.
+ * The actual shading process is delegated to a {@link Shader} component.
+ * It supports relocating references in binary classes and optionally also in Java source files, as well as resource transformations.
+ * @see org.apache.maven.plugins.shade.DefaultShader DefaultShader (the default implementation of the Shader component).
+ * @see <a href="https://maven.apache.org/plugins/maven-shade-plugin/examples/resource-transformers.html">Resource Transformers</a>
  *
  * @author Jason van Zyl
  * @author Mauro Talevi
