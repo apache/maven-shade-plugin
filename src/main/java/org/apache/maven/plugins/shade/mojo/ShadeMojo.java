@@ -1224,7 +1224,7 @@ public class ShadeMojo extends AbstractMojo {
                 }
             }
 
-            project.setPomFile( dependencyReducedPomLocation );
+            project.setPomFile(dependencyReducedPomLocation);
         }
     }
 
