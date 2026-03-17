@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.mojo;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,14 +16,14 @@ package org.apache.maven.plugins.shade.mojo;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.mojo;
 
 import java.util.Set;
 
 /**
  * @author David Blevins
  */
-public class ArchiveFilter
-{
+public class ArchiveFilter {
     private String artifact;
 
     private Set<String> includes;
@@ -34,23 +32,19 @@ public class ArchiveFilter
 
     private boolean excludeDefaults = true;
 
-    public String getArtifact()
-    {
+    public String getArtifact() {
         return artifact;
     }
 
-    public Set<String> getIncludes()
-    {
+    public Set<String> getIncludes() {
         return includes;
     }
 
-    public Set<String> getExcludes()
-    {
+    public Set<String> getExcludes() {
         return excludes;
     }
 
-    public boolean getExcludeDefaults()
-    {
+    public boolean getExcludeDefaults() {
         return excludeDefaults;
     }
 }

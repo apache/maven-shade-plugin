@@ -34,6 +34,8 @@ String[] wanted =
 
 String[] unwanted =
 {
+    // Unused SPI config files are not removed
+    //"META-INF/services/UnusedServiceInterface",
     "UnusedServiceInterface.class",
     "UnusedServiceClass.class",
     "SomeUnreferencedClass.class",

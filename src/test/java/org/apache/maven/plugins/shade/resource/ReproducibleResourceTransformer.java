@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,12 +16,13 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+
+import org.apache.maven.plugins.shade.relocation.Relocator;
 
 /**
  * Copy of original interface necessary to MSHADE-363_old-plugin IT:
@@ -31,13 +30,10 @@ import java.util.List;
  * recent maven-shade-plugin, but older maven-shade-plugin 3.2.2 will be used at runtime in the
  * MSHADE-363_old-plugin IT, an older that does not provide the interface. Without the interface copy
  * in the custom resource transformer code, this would lead to ClassNotFoundException...
- * 
+ *
  * @since 3.2.4
  * @see org.apache.maven.plugins.shade.custom.CustomReproducibleResourceTransformer
  */
-public interface ReproducibleResourceTransformer
-    extends ResourceTransformer
-{
-    void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException;
+public interface ReproducibleResourceTransformer extends ResourceTransformer {
+    void processResource(String resource, InputStream is, List<Relocator> relocators, long time) throws IOException;
 }

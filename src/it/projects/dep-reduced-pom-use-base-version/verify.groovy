@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import groovy.xml.XmlParser
 
 File pomFile = new File( basedir, "target/dependency-reduced-pom.xml" );
 assert pomFile.isFile()

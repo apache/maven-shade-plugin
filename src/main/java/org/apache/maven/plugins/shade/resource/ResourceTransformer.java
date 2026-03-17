@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,18 +16,18 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 
+import org.apache.maven.plugins.shade.relocation.Relocator;
+
 /** @author Jason van Zyl */
-public interface ResourceTransformer
-{
-    boolean canTransformResource( String resource );
+public interface ResourceTransformer {
+    boolean canTransformResource(String resource);
 
     /**
      * Transform an individual resource
@@ -39,11 +37,9 @@ public interface ResourceTransformer
      * @throws IOException When the IO blows up
      * @deprecated prefer ReproducibleResourceTransformer
      */
-    void processResource( String resource, InputStream is, List<Relocator> relocators )
-        throws IOException;
+    void processResource(String resource, InputStream is, List<Relocator> relocators) throws IOException;
 
     boolean hasTransformedResource();
 
-    void modifyOutputStream( JarOutputStream os )
-        throws IOException;
+    void modifyOutputStream(JarOutputStream os) throws IOException;
 }

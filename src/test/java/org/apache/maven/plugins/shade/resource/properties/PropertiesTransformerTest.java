@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource.properties;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -9,7 +7,7 @@ package org.apache.maven.plugins.shade.resource.properties;
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -18,10 +16,7 @@ package org.apache.maven.plugins.shade.resource.properties;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+package org.apache.maven.plugins.shade.resource.properties;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -40,34 +35,34 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
-public class PropertiesTransformerTest
-{
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class PropertiesTransformerTest {
     @Rule
     public final TestRule tester = new TransformerTesterRule();
 
     @Test
-    public void propertiesRewritingIsStable() throws IOException
-    {
+    public void propertiesRewritingIsStable() throws IOException {
         final Properties properties = new SortedProperties();
         properties.setProperty("a", "1");
         properties.setProperty("b", "2");
 
         final ByteArrayOutputStream os = new ByteArrayOutputStream();
         final BufferedWriter writer = new SkipPropertiesDateLineWriter(
-                new OutputStreamWriter( new NoCloseOutputStream( os ), StandardCharsets.ISO_8859_1 ) );
-        properties.store( writer, " Merged by maven-shade-plugin" );
+                new OutputStreamWriter(new NoCloseOutputStream(os), StandardCharsets.ISO_8859_1));
+        properties.store(writer, " Merged by maven-shade-plugin");
         writer.close();
         os.close();
 
         assertEquals(
-            "# Merged by maven-shade-plugin\n" +
-            "a=1\n" +
-            "b=2\n", os.toString("UTF-8").replace( System.lineSeparator(), "\n" ) );
+                "# Merged by maven-shade-plugin\n" + "a=1\n" + "b=2\n",
+                os.toString("UTF-8").replace(System.lineSeparator(), "\n"));
     }
 
     @Test
-    public void canTransform()
-    {
+    public void canTransform() {
         final PropertiesTransformer transformer = new PropertiesTransformer();
         transformer.setResource("foo/bar/my.properties");
         assertTrue(transformer.canTransformResource("foo/bar/my.properties"));
@@ -79,65 +74,53 @@ public class PropertiesTransformerTest
             transformer = PropertiesTransformer.class,
             configuration = @Property(name = "resource", value = "foo/bar/my.properties"),
             visited = {
-                    @Resource(path = "foo/bar/my.properties", content = "a=b"),
-                    @Resource(path = "foo/bar/my.properties", content = "c=d"),
+                @Resource(path = "foo/bar/my.properties", content = "a=b"),
+                @Resource(path = "foo/bar/my.properties", content = "c=d"),
             },
-            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=b\nc=d\n")
-    )
-    public void mergeWithoutOverlap()
-    {
-    }
+            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=b\nc=d\n"))
+    public void mergeWithoutOverlap() {}
 
     @Test
     @TransformerTest(
             transformer = PropertiesTransformer.class,
             configuration = {
-                    @Property(name = "resource", value = "foo/bar/my.properties"),
-                    @Property(name = "ordinalKey", value = "priority")
+                @Property(name = "resource", value = "foo/bar/my.properties"),
+                @Property(name = "ordinalKey", value = "priority")
             },
             visited = {
-                    @Resource(path = "foo/bar/my.properties", content = "a=d\npriority=3"),
-                    @Resource(path = "foo/bar/my.properties", content = "a=b\npriority=1"),
-                    @Resource(path = "foo/bar/my.properties", content = "a=c\npriority=2"),
+                @Resource(path = "foo/bar/my.properties", content = "a=d\npriority=3"),
+                @Resource(path = "foo/bar/my.properties", content = "a=b\npriority=1"),
+                @Resource(path = "foo/bar/my.properties", content = "a=c\npriority=2"),
             },
-            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=d\n")
-    )
-    public void mergeWithOverlap()
-    {
-    }
+            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=d\n"))
+    public void mergeWithOverlap() {}
 
     @Test
     @TransformerTest(
             transformer = PropertiesTransformer.class,
             configuration = {
-                    @Property(name = "resource", value = "foo/bar/my.properties"),
-                    @Property(name = "alreadyMergedKey", value = "complete")
+                @Property(name = "resource", value = "foo/bar/my.properties"),
+                @Property(name = "alreadyMergedKey", value = "complete")
             },
             visited = {
-                    @Resource(path = "foo/bar/my.properties", content = "a=b\ncomplete=true"),
-                    @Resource(path = "foo/bar/my.properties", content = "a=c\npriority=2"),
+                @Resource(path = "foo/bar/my.properties", content = "a=b\ncomplete=true"),
+                @Resource(path = "foo/bar/my.properties", content = "a=c\npriority=2"),
             },
-            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=b\n")
-    )
-    public void mergeWithAlreadyMerged()
-    {
-    }
+            expected = @Resource(path = "foo/bar/my.properties", content = "#.*\na=b\n"))
+    public void mergeWithAlreadyMerged() {}
 
     @Test
     @TransformerTest(
             transformer = PropertiesTransformer.class,
             configuration = {
-                    @Property(name = "resource", value = "foo/bar/my.properties"),
-                    @Property(name = "alreadyMergedKey", value = "complete")
+                @Property(name = "resource", value = "foo/bar/my.properties"),
+                @Property(name = "alreadyMergedKey", value = "complete")
             },
             visited = {
-                    @Resource(path = "foo/bar/my.properties", content = "a=b\ncomplete=true"),
-                    @Resource(path = "foo/bar/my.properties", content = "a=c\ncomplete=true"),
+                @Resource(path = "foo/bar/my.properties", content = "a=b\ncomplete=true"),
+                @Resource(path = "foo/bar/my.properties", content = "a=c\ncomplete=true"),
             },
             expected = {},
-            expectedException = IllegalStateException.class
-    )
-    public void alreadyMergeConflict()
-    {
-    }
+            expectedException = IllegalStateException.class)
+    public void alreadyMergeConflict() {}
 }

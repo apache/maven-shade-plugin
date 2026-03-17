@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.mojo;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,25 +16,23 @@ package org.apache.maven.plugins.shade.mojo;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.mojo;
 
 import java.util.Set;
 
 /**
  * @author Jason van Zyl
  */
-public class ArtifactSet
-{
+public class ArtifactSet {
     private Set<String> includes;
 
     private Set<String> excludes;
 
-    public Set<String> getIncludes()
-    {
+    public Set<String> getIncludes() {
         return includes;
     }
 
-    public Set<String> getExcludes()
-    {
+    public Set<String> getExcludes() {
         return excludes;
     }
 }

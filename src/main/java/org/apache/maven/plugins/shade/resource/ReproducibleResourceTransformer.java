@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,12 +16,13 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+
+import org.apache.maven.plugins.shade.relocation.Relocator;
 
 /**
  * Transform resource ensuring reproducible output: that requires to get the timestamp of
@@ -33,9 +32,7 @@ import java.util.List;
  * @author Hervé Boutemy
  * @since 3.2.4
  */
-public interface ReproducibleResourceTransformer
-    extends ResourceTransformer
-{
+public interface ReproducibleResourceTransformer extends ResourceTransformer {
     /**
      * Transform an individual resource
      * @param resource The resource name
@@ -44,6 +41,5 @@ public interface ReproducibleResourceTransformer
      * @param time the time of the resource to process
      * @throws IOException When the IO blows up
      */
-    void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException;
+    void processResource(String resource, InputStream is, List<Relocator> relocators, long time) throws IOException;
 }

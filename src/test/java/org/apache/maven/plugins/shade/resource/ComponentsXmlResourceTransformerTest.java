@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -9,7 +7,7 @@ package org.apache.maven.plugins.shade.resource;
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -18,6 +16,10 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
+
+import java.io.InputStream;
+import java.util.Collections;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.codehaus.plexus.util.IOUtil;
@@ -27,47 +29,38 @@ import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.util.Collections;
-
 /**
  * Test for {@link ComponentsXmlResourceTransformer}.
  *
  * @author Brett Porter
  *
  */
-public class ComponentsXmlResourceTransformerTest
-{
+public class ComponentsXmlResourceTransformerTest {
     private ComponentsXmlResourceTransformer transformer;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         this.transformer = new ComponentsXmlResourceTransformer();
     }
 
     @Test
-    public void testConfigurationMerging()
-        throws Exception
-    {
+    public void testConfigurationMerging() throws Exception {
 
-        XMLUnit.setNormalizeWhitespace( true );
+        XMLUnit.setNormalizeWhitespace(true);
 
-        InputStream resourceAsStream = getClass().getResourceAsStream( "/components-1.xml" );
-        transformer.processResource( "components-1.xml", resourceAsStream,
-                                     Collections.<Relocator> emptyList(), 0 );
+        InputStream resourceAsStream = getClass().getResourceAsStream("/components-1.xml");
+        transformer.processResource("components-1.xml", resourceAsStream, Collections.<Relocator>emptyList(), 0);
         resourceAsStream.close();
-        InputStream resourceAsStream1 = getClass().getResourceAsStream( "/components-2.xml" );
-        transformer.processResource( "components-1.xml", resourceAsStream1,
-                                     Collections.<Relocator> emptyList(), 0 );
+        InputStream resourceAsStream1 = getClass().getResourceAsStream("/components-2.xml");
+        transformer.processResource("components-1.xml", resourceAsStream1, Collections.<Relocator>emptyList(), 0);
         resourceAsStream1.close();
-        final InputStream resourceAsStream2 = getClass().getResourceAsStream( "/components-expected.xml" );
+        final InputStream resourceAsStream2 = getClass().getResourceAsStream("/components-expected.xml");
         Diff diff = XMLUnit.compareXML(
-            IOUtil.toString( resourceAsStream2, "UTF-8" ),
-            IOUtil.toString( transformer.getTransformedResource(), "UTF-8" ) );
-        //assertEquals( IOUtil.toString( getClass().getResourceAsStream( "/components-expected.xml" ), "UTF-8" ),
+                IOUtil.toString(resourceAsStream2, "UTF-8"),
+                IOUtil.toString(transformer.getTransformedResource(), "UTF-8"));
+        // assertEquals( IOUtil.toString( getClass().getResourceAsStream( "/components-expected.xml" ), "UTF-8" ),
         //              IOUtil.toString( transformer.getTransformedResource(), "UTF-8" ).replaceAll("\r\n", "\n") );
         resourceAsStream2.close();
-        XMLAssert.assertXMLIdentical( diff, true );
+        XMLAssert.assertXMLIdentical(diff, true);
     }
 }

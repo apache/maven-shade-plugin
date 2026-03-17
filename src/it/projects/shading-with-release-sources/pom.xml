@@ -34,7 +34,7 @@ under the License.
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.7</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -44,7 +44,7 @@ under the License.
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.1</version>
+          <version>@version.maven-compiler-plugin@</version>
           <configuration>
             <release>${java.specification.version}</release>
           </configuration>

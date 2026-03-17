@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,20 +16,22 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.codehaus.plexus.util.IOUtil;
 
 /**
  * Resources transformer that relocates classes in META-INF/services and appends entries in META-INF/services resources
@@ -40,91 +40,64 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  * META-INF/services/org.apache.maven.project.ProjectBuilder resource packaged into the resultant JAR produced by the
  * shading process.
  */
-public class ServicesResourceTransformer
-    extends AbstractCompatibilityTransformer
-{
-
+public class ServicesResourceTransformer extends AbstractCompatibilityTransformer {
     private static final String SERVICES_PATH = "META-INF/services";
 
-    private final Map<String, ArrayList<String>> serviceEntries = new HashMap<>();
-
-    private List<Relocator> relocators;
+    private final Map<String, Set<String>> serviceEntries = new HashMap<>();
 
     private long time = Long.MIN_VALUE;
 
-    public boolean canTransformResource( String resource )
-    {
-        return resource.startsWith( SERVICES_PATH );
+    @Override
+    public boolean canTransformResource(String resource) {
+        return resource.startsWith(SERVICES_PATH);
     }
 
-    public void processResource( String resource, InputStream is, final List<Relocator> relocators, long time )
-        throws IOException
-    {
-        ArrayList<String> out = serviceEntries.get( resource );
-        if ( out == null )
-        {
-            out = new ArrayList<>();
-            serviceEntries.put( resource, out );
+    @Override
+    public void processResource(String resource, InputStream is, final List<Relocator> relocators, long time)
+            throws IOException {
+        resource = resource.substring(SERVICES_PATH.length() + 1);
+        for (Relocator relocator : relocators) {
+            if (relocator.canRelocateClass(resource)) {
+                resource = relocator.relocateClass(resource);
+                break;
+            }
         }
+        resource = SERVICES_PATH + '/' + resource;
 
-        Scanner scanner = new Scanner( is, StandardCharsets.UTF_8.name() );
-        while ( scanner.hasNextLine() )
-        {
+        Set<String> out = serviceEntries.computeIfAbsent(resource, k -> new LinkedHashSet<>());
+
+        Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name());
+        while (scanner.hasNextLine()) {
             String relContent = scanner.nextLine();
-            for ( Relocator relocator : relocators )
-            {
-                if ( relocator.canRelocateClass( relContent ) )
-                {
-                    relContent = relocator.applyToSourceContent( relContent );
+            for (Relocator relocator : relocators) {
+                if (relocator.canRelocateClass(relContent)) {
+                    relContent = relocator.applyToSourceContent(relContent);
                 }
             }
-            out.add( relContent );
+            out.add(relContent);
         }
 
-        if ( this.relocators == null )
-        {
-            this.relocators = relocators;
-        }
-
-        if ( time > this.time )
-        {
-            this.time = time;        
+        if (time > this.time) {
+            this.time = time;
         }
     }
 
-    public boolean hasTransformedResource()
-    {
+    @Override
+    public boolean hasTransformedResource() {
         return !serviceEntries.isEmpty();
     }
 
-    public void modifyOutputStream( JarOutputStream jos )
-        throws IOException
-    {
-        for ( Map.Entry<String, ArrayList<String>> entry : serviceEntries.entrySet() )
-        {
+    @Override
+    public void modifyOutputStream(JarOutputStream jos) throws IOException {
+        for (Map.Entry<String, Set<String>> entry : serviceEntries.entrySet()) {
             String key = entry.getKey();
-            ArrayList<String> data = entry.getValue();
+            Set<String> data = entry.getValue();
 
-            if ( relocators != null )
-            {
-                key = key.substring( SERVICES_PATH.length() + 1 );
-                for ( Relocator relocator : relocators )
-                {
-                    if ( relocator.canRelocateClass( key ) )
-                    {
-                        key = relocator.relocateClass( key );
-                        break;
-                    }
-                }
+            JarEntry jarEntry = new JarEntry(key);
+            jarEntry.setTime(time);
+            jos.putNextEntry(jarEntry);
 
-                key = SERVICES_PATH + '/' + key;
-            }
-
-            JarEntry jarEntry = new JarEntry( key );
-            jarEntry.setTime( time );
-            jos.putNextEntry( jarEntry );
-
-            IOUtils.writeLines( data, "\n", jos, StandardCharsets.UTF_8 );
+            IOUtil.copy((String.join("\n", data) + "\n").getBytes(StandardCharsets.UTF_8), jos);
             jos.flush();
             data.clear();
         }

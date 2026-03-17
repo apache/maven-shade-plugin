@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.mojo;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,79 +16,68 @@ package org.apache.maven.plugins.shade.mojo;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.artifact.Artifact;
+package org.apache.maven.plugins.shade.mojo;
 
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.apache.maven.artifact.Artifact;
+
 /**
  * @author Benjamin Bentmann
  */
-class ArtifactSelector
-{
+class ArtifactSelector {
 
     private Collection<ArtifactId> includes;
 
     private Collection<ArtifactId> excludes;
 
-    ArtifactSelector( Artifact projectArtifact, ArtifactSet artifactSet, String groupPrefix )
-    {
-        this( ( artifactSet != null ) ? artifactSet.getIncludes() : null,
-              ( artifactSet != null ) ? artifactSet.getExcludes() : null, groupPrefix );
+    ArtifactSelector(Artifact projectArtifact, ArtifactSet artifactSet, String groupPrefix) {
+        this(
+                (artifactSet != null) ? artifactSet.getIncludes() : null,
+                (artifactSet != null) ? artifactSet.getExcludes() : null,
+                groupPrefix);
 
-        if ( projectArtifact != null && !this.includes.isEmpty() )
-        {
-            this.includes.add( new ArtifactId( projectArtifact ) );
+        if (projectArtifact != null && !this.includes.isEmpty()) {
+            this.includes.add(new ArtifactId(projectArtifact));
         }
     }
 
-    ArtifactSelector( Collection<String> includes, Collection<String> excludes, String groupPrefix )
-    {
-        this.includes = toIds( includes );
-        this.excludes = toIds( excludes );
+    ArtifactSelector(Collection<String> includes, Collection<String> excludes, String groupPrefix) {
+        this.includes = toIds(includes);
+        this.excludes = toIds(excludes);
 
-        if ( groupPrefix != null && groupPrefix.length() > 0 )
-        {
-            this.includes.add( new ArtifactId( groupPrefix + "*", "*", "*", "*" ) );
+        if (groupPrefix != null && groupPrefix.length() > 0) {
+            this.includes.add(new ArtifactId(groupPrefix + "*", "*", "*", "*"));
         }
     }
 
-    private static Collection<ArtifactId> toIds( Collection<String> patterns )
-    {
+    private static Collection<ArtifactId> toIds(Collection<String> patterns) {
         Collection<ArtifactId> result = new HashSet<>();
 
-        if ( patterns != null )
-        {
-            for ( String pattern : patterns )
-            {
-                result.add( new ArtifactId( pattern ) );
+        if (patterns != null) {
+            for (String pattern : patterns) {
+                result.add(new ArtifactId(pattern));
             }
         }
 
         return result;
     }
 
-    public boolean isSelected( Artifact artifact )
-    {
-        return artifact != null && isSelected( new ArtifactId( artifact ) );
+    public boolean isSelected(Artifact artifact) {
+        return artifact != null && isSelected(new ArtifactId(artifact));
     }
 
-    boolean isSelected( ArtifactId id )
-    {
-        return ( includes.isEmpty() || matches( includes, id ) ) && !matches( excludes, id );
+    boolean isSelected(ArtifactId id) {
+        return (includes.isEmpty() || matches(includes, id)) && !matches(excludes, id);
     }
 
-    private boolean matches( Collection<ArtifactId> patterns, ArtifactId id )
-    {
-        for ( ArtifactId pattern : patterns )
-        {
-            if ( id.matches( pattern ) )
-            {
+    private boolean matches(Collection<ArtifactId> patterns, ArtifactId id) {
+        for (ArtifactId pattern : patterns) {
+            if (id.matches(pattern)) {
                 return true;
             }
         }
         return false;
     }
-
 }

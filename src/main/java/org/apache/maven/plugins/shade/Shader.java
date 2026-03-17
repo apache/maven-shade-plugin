@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,6 +16,7 @@ package org.apache.maven.plugins.shade;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade;
 
 import java.io.IOException;
 
@@ -26,8 +25,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 /**
  * Interface that defines the process of shading.
  */
-public interface Shader
-{
+public interface Shader {
     /**
      * Perform a shading operation.
      *
@@ -35,6 +33,5 @@ public interface Shader
      * @throws IOException            for IO errors reading the thing
      * @throws MojoExecutionException for anything else that goes wrong.
      */
-    void shade( ShadeRequest shadeRequest )
-        throws IOException, MojoExecutionException;
+    void shade(ShadeRequest shadeRequest) throws IOException, MojoExecutionException;
 }

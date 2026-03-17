@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.relocation;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,19 +16,29 @@ package org.apache.maven.plugins.shade.relocation;
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.maven.plugins.shade.relocation;
 
 /** @author Jason van Zyl */
-public interface Relocator
-{
+public interface Relocator {
     String ROLE = Relocator.class.getName();
 
-    boolean canRelocatePath( String clazz );
+    boolean canRelocatePath(String clazz);
 
-    String relocatePath( String clazz );
+    String relocatePath(String clazz);
 
-    boolean canRelocateClass( String clazz );
+    boolean canRelocateClass(String clazz);
 
-    String relocateClass( String clazz );
-    
-    String applyToSourceContent( String sourceContent );
+    /**
+     * Replace the first class pattern match in the given string
+     * @see #relocateAllClasses(String)
+     */
+    String relocateClass(String input);
+
+    String applyToSourceContent(String sourceContent);
+
+    /**
+     * Replace all class pattern matches in the given input.
+     * @see #relocateClass(String)
+     */
+    String relocateAllClasses(String input);
 }

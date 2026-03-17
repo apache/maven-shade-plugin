@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,8 +16,7 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugins.shade.relocation.Relocator;
+package org.apache.maven.plugins.shade.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,12 +29,12 @@ import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+import org.apache.maven.plugins.shade.relocation.Relocator;
+
 /**
  * Aggregate Apache Groovy extension modules descriptors
  */
-public class GroovyResourceTransformer
-    extends AbstractCompatibilityTransformer
-{
+public class GroovyResourceTransformer extends AbstractCompatibilityTransformer {
 
     static final String EXT_MODULE_NAME_LEGACY = "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule";
 
@@ -55,101 +52,83 @@ public class GroovyResourceTransformer
     private long time = Long.MIN_VALUE;
 
     @Override
-    public boolean canTransformResource( String resource )
-    {
-        return EXT_MODULE_NAME.equals( resource ) || EXT_MODULE_NAME_LEGACY.equals( resource );
+    public boolean canTransformResource(String resource) {
+        return EXT_MODULE_NAME.equals(resource) || EXT_MODULE_NAME_LEGACY.equals(resource);
     }
 
     @Override
-    public void processResource( String resource, InputStream is, List<Relocator> relocators, long time )
-        throws IOException
-    {
+    public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
+            throws IOException {
         Properties out = new Properties();
-        try ( InputStream props = is )
-        {
-            out.load( props );
+        try (InputStream props = is) {
+            out.load(props);
         }
-        String extensionClasses = out.getProperty( "extensionClasses", "" ).trim();
-        if ( extensionClasses.length() > 0 )
-        {
-            append( extensionClasses, extensionClassesList );
+        String extensionClasses = out.getProperty("extensionClasses", "").trim();
+        if (extensionClasses.length() > 0) {
+            append(extensionClasses, extensionClassesList);
         }
-        String staticExtensionClasses = out.getProperty( "staticExtensionClasses", "" ).trim();
-        if ( staticExtensionClasses.length() > 0 )
-        {
-            append( staticExtensionClasses, staticExtensionClassesList );
+        String staticExtensionClasses =
+                out.getProperty("staticExtensionClasses", "").trim();
+        if (staticExtensionClasses.length() > 0) {
+            append(staticExtensionClasses, staticExtensionClassesList);
         }
-        if ( time > this.time )
-        {
-            this.time = time;        
+        if (time > this.time) {
+            this.time = time;
         }
     }
 
-    private void append( String entry, List<String> list )
-    {
-        if ( entry != null )
-        {
-            Collections.addAll( list, entry.split( "\\s*,\\s*" ) );
+    private void append(String entry, List<String> list) {
+        if (entry != null) {
+            Collections.addAll(list, entry.split("\\s*,\\s*"));
         }
     }
 
     @Override
-    public boolean hasTransformedResource()
-    {
+    public boolean hasTransformedResource() {
         return extensionClassesList.size() > 0 && staticExtensionClassesList.size() > 0;
     }
 
     @Override
-    public void modifyOutputStream( JarOutputStream os )
-        throws IOException
-    {
-        if ( hasTransformedResource() )
-        {
-            JarEntry jarEntry = new JarEntry( EXT_MODULE_NAME );
-            jarEntry.setTime( time );
-            os.putNextEntry( jarEntry );
+    public void modifyOutputStream(JarOutputStream os) throws IOException {
+        if (hasTransformedResource()) {
+            JarEntry jarEntry = new JarEntry(EXT_MODULE_NAME);
+            jarEntry.setTime(time);
+            os.putNextEntry(jarEntry);
 
             Properties desc = new Properties();
-            desc.put( "moduleName", extModuleName );
-            desc.put( "moduleVersion", extModuleVersion );
-            if ( extensionClassesList.size() > 0 )
-            {
-                desc.put( "extensionClasses", join( extensionClassesList ) );
+            desc.put("moduleName", extModuleName);
+            desc.put("moduleVersion", extModuleVersion);
+            if (extensionClassesList.size() > 0) {
+                desc.put("extensionClasses", join(extensionClassesList));
             }
-            if ( staticExtensionClassesList.size() > 0 )
-            {
-                desc.put( "staticExtensionClasses", join( staticExtensionClassesList ) );
+            if (staticExtensionClassesList.size() > 0) {
+                desc.put("staticExtensionClasses", join(staticExtensionClassesList));
             }
-            desc.store( os, null );
+            desc.store(os, null);
         }
     }
 
-    private String join( Collection<String> strings )
-    {
+    private String join(Collection<String> strings) {
         Iterator<String> it = strings.iterator();
-        switch ( strings.size() )
-        {
+        switch (strings.size()) {
             case 0:
                 return "";
             case 1:
                 return it.next();
             default:
-                StringBuilder buff = new StringBuilder( it.next() );
-                while ( it.hasNext() )
-                {
-                    buff.append( "," ).append( it.next() );
+                StringBuilder buff = new StringBuilder(it.next());
+                while (it.hasNext()) {
+                    buff.append(",").append(it.next());
                 }
                 return buff.toString();
         }
     }
 
-    public void setExtModuleName( String extModuleName )
-    {
+    public void setExtModuleName(String extModuleName) {
         this.extModuleName = extModuleName;
     }
 
-    public void setExtModuleVersion( String extModuleVersion )
-    {
+    public void setExtModuleVersion(String extModuleVersion) {
         this.extModuleVersion = extModuleVersion;
     }
 }

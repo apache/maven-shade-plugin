@@ -1,4 +1,3 @@
-package org.apache.maven.plugins.shade;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -17,25 +16,22 @@ package org.apache.maven.plugins.shade;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import org.apache.maven.plugin.MojoExecutionException;
-
-import java.io.IOException;
+package org.apache.maven.plugins.shade;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
+
+import java.io.IOException;
+
+import org.apache.maven.plugin.MojoExecutionException;
 
 /**
  * @author Olivier Lamy
  */
 @Singleton
-@Named( "mock" )
-public class MockShader
-    implements Shader
-{
-    public void shade( ShadeRequest shadeRequest )
-        throws IOException, MojoExecutionException
-    {
-        System.out.println( "Executing MockShader#shade" );
+@Named("mock")
+public class MockShader implements Shader {
+    public void shade(ShadeRequest shadeRequest) throws IOException, MojoExecutionException {
+        System.out.println("Executing MockShader#shade");
     }
 }

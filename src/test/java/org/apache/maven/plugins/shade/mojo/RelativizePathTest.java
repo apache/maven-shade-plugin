@@ -16,37 +16,40 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.maven.plugins.shade.mojo;
-
-import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
 
 import org.junit.Test;
 
-public class RelativizePathTest
-{
-    final static String[] PARENTS = { "rel-path-test-files/a/pom", "rel-path-test-files/a/b/pom",
-        "rel-path-test-files/a/b/c/pom", "rel-path-test-files/a/c/d/pom" };
+import static org.junit.Assert.assertEquals;
 
-    final static String[] CHILDREN = { "rel-path-test-files/a/b/pom", "rel-path-test-files/a/pom",
-        "rel-path-test-files/a/b/c1/pom", "rel-path-test-files/a/c/d/pom" };
+public class RelativizePathTest {
+    static final String[] PARENTS = {
+        "rel-path-test-files/a/pom",
+        "rel-path-test-files/a/b/pom",
+        "rel-path-test-files/a/b/c/pom",
+        "rel-path-test-files/a/c/d/pom"
+    };
 
-    final static String[] ANSWER = { "../pom", "b/pom", "../c/pom", "pom" };
+    static final String[] CHILDREN = {
+        "rel-path-test-files/a/b/pom",
+        "rel-path-test-files/a/pom",
+        "rel-path-test-files/a/b/c1/pom",
+        "rel-path-test-files/a/c/d/pom"
+    };
+
+    static final String[] ANSWER = {"../pom", "b/pom", "../c/pom", "pom"};
 
     @Test
-    public void runTests() throws IOException
-    {
-        for ( int x = 0; x < PARENTS.length; x++ )
-        {
+    public void runTests() throws IOException {
+        for (int x = 0; x < PARENTS.length; x++) {
             File parent = new File(PARENTS[x]).getCanonicalFile();
             File child = new File(CHILDREN[x]).getCanonicalFile();
             String answer = ANSWER[x];
-            String r = RelativizePath.convertToRelativePath( parent, child );
-            assertEquals(String.format("parent %s child %s", parent.toString(), child.toString()), answer, r );
+            String r = RelativizePath.convertToRelativePath(parent, child);
+            assertEquals(String.format("parent %s child %s", parent.toString(), child.toString()), answer, r);
         }
     }
-
 }

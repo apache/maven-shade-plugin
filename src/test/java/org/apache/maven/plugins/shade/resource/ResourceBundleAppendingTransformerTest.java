@@ -1,5 +1,3 @@
-package org.apache.maven.plugins.shade.resource;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,38 +16,35 @@ package org.apache.maven.plugins.shade.resource;
  * specific language governing permissions and limitations
  * under the License.
  */
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+package org.apache.maven.plugins.shade.resource;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class ResourceBundleAppendingTransformerTest
-{
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class ResourceBundleAppendingTransformerTest {
     private ResourceBundleAppendingTransformer transformer;
-    
+
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         transformer = new ResourceBundleAppendingTransformer();
     }
-    
+
     @Test
-    public void testCanTransformResource()
-    {
-        transformer.setBasename( "a/b/c/ButtonLabel" );
-        
-        assertTrue( transformer.canTransformResource( "a/b/c/ButtonLabel.properties" ) );
-        assertTrue( transformer.canTransformResource( "a/b/c/ButtonLabel_en.properties" ) );
-        assertTrue( transformer.canTransformResource( "a/b/c/ButtonLabel_en_US.properties" ) );
-        assertTrue( transformer.canTransformResource( "a/b/c/ButtonLabel_fr.properties" ) );
-        assertTrue( transformer.canTransformResource( "a/b/c/ButtonLabel_fr_CA.properties" ) );
-        assertTrue( transformer.canTransformResource( "a/b/c/ButtonLabel_fr_CA_UNIX.properties" ) );
+    public void testCanTransformResource() {
+        transformer.setBasename("a/b/c/ButtonLabel");
 
-        assertFalse( transformer.canTransformResource( "a/b/c/ButtonLabel.class" ) );
-        assertFalse( transformer.canTransformResource( "c/ButtonLabel.properties" ) );
-        assertFalse( transformer.canTransformResource( "ButtonLabel.properties" ) );
+        assertTrue(transformer.canTransformResource("a/b/c/ButtonLabel.properties"));
+        assertTrue(transformer.canTransformResource("a/b/c/ButtonLabel_en.properties"));
+        assertTrue(transformer.canTransformResource("a/b/c/ButtonLabel_en_US.properties"));
+        assertTrue(transformer.canTransformResource("a/b/c/ButtonLabel_fr.properties"));
+        assertTrue(transformer.canTransformResource("a/b/c/ButtonLabel_fr_CA.properties"));
+        assertTrue(transformer.canTransformResource("a/b/c/ButtonLabel_fr_CA_UNIX.properties"));
+
+        assertFalse(transformer.canTransformResource("a/b/c/ButtonLabel.class"));
+        assertFalse(transformer.canTransformResource("c/ButtonLabel.properties"));
+        assertFalse(transformer.canTransformResource("ButtonLabel.properties"));
     }
-
 }
