@@ -49,16 +49,19 @@ public class PluginXmlResourceTransformer extends AbstractCompatibilityTransform
 
     public static final String PLUGIN_XML_PATH = "META-INF/maven/plugin.xml";
 
+    @Override
     public boolean canTransformResource(String resource) {
         return PLUGIN_XML_PATH.equals(resource);
     }
 
+    @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         Xpp3Dom newDom;
 
         try {
             BufferedInputStream bis = new BufferedInputStream(is) {
+                @Override
                 public void close() throws IOException {
                     // leave ZIP open
                 }
@@ -116,6 +119,7 @@ public class PluginXmlResourceTransformer extends AbstractCompatibilityTransform
         }
     }
 
+    @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
         byte[] data = getTransformedResource();
 
@@ -128,6 +132,7 @@ public class PluginXmlResourceTransformer extends AbstractCompatibilityTransform
         mojos.clear();
     }
 
+    @Override
     public boolean hasTransformedResource() {
         return !mojos.isEmpty();
     }

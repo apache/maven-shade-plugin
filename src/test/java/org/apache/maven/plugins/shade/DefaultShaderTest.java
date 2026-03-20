@@ -31,6 +31,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -93,37 +94,37 @@ public class DefaultShaderTest {
             new String[] {"org/codehaus/plexus/util/xml/Xpp3Dom", "org/codehaus/plexus/util/xml/pull.*"};
 
     @ClassRule
-    public static final TemporaryFolder tmp = new TemporaryFolder();
+    public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
-    private final String NEWLINE = "\n";
+    private static final String NEWLINE = "\n";
 
     @Test
     public void testNoopWhenNotRelocated() throws IOException, MojoExecutionException {
-        final File plexusJar = new File("src/test/jars/plexus-utils-1.4.1.jar");
-        final File shadedOutput = new File("target/foo-custom_testNoopWhenNotRelocated.jar");
+        File plexusJar = new File("src/test/jars/plexus-utils-1.4.1.jar");
+        File shadedOutput = new File("target/foo-custom_testNoopWhenNotRelocated.jar");
 
-        final Set<File> jars = new LinkedHashSet<>();
+        Set<File> jars = new LinkedHashSet<>();
         jars.add(new File("src/test/jars/test-project-1.0-SNAPSHOT.jar"));
         jars.add(plexusJar);
 
-        final Relocator relocator = new SimpleRelocator(
+        Relocator relocator = new SimpleRelocator(
                 "org/codehaus/plexus/util/cli",
                 "relocated/plexus/util/cli",
-                Collections.<String>emptyList(),
-                Collections.<String>emptyList());
+                Collections.emptyList(),
+                Collections.emptyList());
 
-        final ShadeRequest shadeRequest = new ShadeRequest();
+        ShadeRequest shadeRequest = new ShadeRequest();
         shadeRequest.setJars(jars);
         shadeRequest.setRelocators(Collections.singletonList(relocator));
-        shadeRequest.setResourceTransformers(Collections.<ResourceTransformer>emptyList());
-        shadeRequest.setFilters(Collections.<Filter>emptyList());
+        shadeRequest.setResourceTransformers(Collections.emptyList());
+        shadeRequest.setFilters(Collections.emptyList());
         shadeRequest.setUberJar(shadedOutput);
 
-        final DefaultShader shader = newShader();
+        DefaultShader shader = newShader();
         shader.shade(shadeRequest);
 
-        try (final JarFile originalJar = new JarFile(plexusJar);
-                final JarFile shadedJar = new JarFile(shadedOutput)) {
+        try (JarFile originalJar = new JarFile(plexusJar);
+                JarFile shadedJar = new JarFile(shadedOutput)) {
             // ASM processes all class files. In doing so, it modifies them, even when not relocating anything.
             // Before MSHADE-391, the processed files were written to the uber JAR, which did no harm, but made it
             // difficult to find out by simple file comparison, if a file was actually relocated or not. Now, Shade
@@ -141,7 +142,7 @@ public class DefaultShaderTest {
                     "relocated/plexus/util/cli/Arg.class"));
         }
         int result = 0;
-        for (final String msg : debugMessages.getAllValues()) {
+        for (String msg : debugMessages.getAllValues()) {
             if ("Rewrote class bytecode: org/codehaus/plexus/util/cli/Arg.class".equals(msg)) {
                 result |= 1;
             } else if ("Keeping original class bytecode: org/codehaus/plexus/util/Expand.class".equals(msg)) {
@@ -153,15 +154,15 @@ public class DefaultShaderTest {
 
     @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
-        final DefaultShader shader = newShader();
+        DefaultShader shader = newShader();
 
         // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
         // but this can lead to a broken deployment if intended for OSGi or so, so even this should be logged
-        final Set<File> set = new LinkedHashSet<>();
+        Set<File> set = new LinkedHashSet<>();
         set.add(new File("src/test/jars/test-project-1.0-SNAPSHOT.jar"));
         set.add(new File("src/test/jars/plexus-utils-1.4.1.jar"));
 
-        final ShadeRequest shadeRequest = new ShadeRequest();
+        ShadeRequest shadeRequest = new ShadeRequest();
         shadeRequest.setJars(set);
         shadeRequest.setRelocators(Collections.<Relocator>emptyList());
         shadeRequest.setResourceTransformers(Collections.<ResourceTransformer>emptyList());
@@ -215,9 +216,9 @@ public class DefaultShaderTest {
 
             ShadeRequest shadeRequest = new ShadeRequest();
             shadeRequest.setJars(set);
-            shadeRequest.setRelocators(Collections.<Relocator>emptyList());
-            shadeRequest.setResourceTransformers(Collections.<ResourceTransformer>singletonList(transformer));
-            shadeRequest.setFilters(Collections.<Filter>emptyList());
+            shadeRequest.setRelocators(Collections.emptyList());
+            shadeRequest.setResourceTransformers(Collections.singletonList(transformer));
+            shadeRequest.setFilters(Collections.emptyList());
             shadeRequest.setUberJar(new File("target/foo-custom_testOverlappingResourcesAreLogged.jar"));
 
             DefaultShader shaderWithTransformer = newShader();
@@ -226,7 +227,7 @@ public class DefaultShaderTest {
             assertThat(warnMessages.getAllValues().size(), is(0));
 
             DefaultShader shaderWithoutTransformer = newShader();
-            shadeRequest.setResourceTransformers(Collections.<ResourceTransformer>emptyList());
+            shadeRequest.setResourceTransformers(Collections.emptyList());
             shaderWithoutTransformer.shade(shadeRequest);
 
             assertThat(
@@ -292,33 +293,33 @@ public class DefaultShaderTest {
 
     @Test
     public void testHandleDirectory() throws Exception {
-        final File dir = tmp.getRoot();
+        final File dir = TEMPORARY_FOLDER.getRoot();
         // explode src/test/jars/test-artifact-1.0-SNAPSHOT.jar in this temp dir
-        try (final JarInputStream in =
-                new JarInputStream(new FileInputStream("src/test/jars/test-artifact-1.0-SNAPSHOT.jar"))) {
+        try (JarInputStream in =
+                new JarInputStream(Files.newInputStream(Paths.get("src/test/jars/test-artifact-1.0-SNAPSHOT.jar")))) {
             JarEntry nextJarEntry;
             while ((nextJarEntry = in.getNextJarEntry()) != null) {
                 if (nextJarEntry.isDirectory()) {
                     continue;
                 }
-                final File out = new File(dir, nextJarEntry.getName());
+                File out = new File(dir, nextJarEntry.getName());
                 forceMkdir(out.getParentFile());
-                try (final OutputStream outputStream = new FileOutputStream(out)) {
+                try (OutputStream outputStream = Files.newOutputStream(out.toPath())) {
                     IOUtil.copy(in, outputStream, (int) Math.max(nextJarEntry.getSize(), 512));
                 }
             }
         }
 
         // do shade
-        final File shade = new File("target/testHandleDirectory.jar");
+        File shade = new File("target/testHandleDirectory.jar");
         shaderWithPattern("org/shaded/plexus/util", shade, new String[0], singleton(dir));
 
         // ensure directory was shaded properly
-        try (final JarFile jar = new JarFile(shade)) {
-            final List<String> entries = new ArrayList<>();
-            final Enumeration<JarEntry> jarEntryEnumeration = jar.entries();
+        try (JarFile jar = new JarFile(shade)) {
+            List<String> entries = new ArrayList<>();
+            Enumeration<JarEntry> jarEntryEnumeration = jar.entries();
             while (jarEntryEnumeration.hasMoreElements()) {
-                final JarEntry jarEntry = jarEntryEnumeration.nextElement();
+                JarEntry jarEntry = jarEntryEnumeration.nextElement();
                 if (jarEntry.isDirectory()) {
                     continue;
                 }
@@ -346,8 +347,8 @@ public class DefaultShaderTest {
 
         List<Relocator> relocators = new ArrayList<>();
 
-        relocators.add(new SimpleRelocator(
-                "org/codehaus/plexus/util/", "_plexus/util/__", null, Collections.<String>emptyList()));
+        relocators.add(
+                new SimpleRelocator("org/codehaus/plexus/util/", "_plexus/util/__", null, Collections.emptyList()));
 
         List<ResourceTransformer> resourceTransformers = new ArrayList<>();
 
@@ -373,8 +374,8 @@ public class DefaultShaderTest {
             assertEquals("", c.getMethod("clean", String.class).invoke(o, (String) null));
 
             // now, check that its source file was rewritten:
-            final String[] source = {null};
-            final ClassReader classReader = new ClassReader(cl.getResourceAsStream("_plexus/util/__StringUtils.class"));
+            String[] source = {null};
+            ClassReader classReader = new ClassReader(cl.getResourceAsStream("_plexus/util/__StringUtils.class"));
             classReader.accept(
                     new ClassVisitor(Opcodes.ASM4) {
                         @Override
@@ -448,9 +449,9 @@ public class DefaultShaderTest {
 
         ShadeRequest shadeRequest = new ShadeRequest();
         shadeRequest.setJars(new LinkedHashSet<>(Collections.singleton(outerJar)));
-        shadeRequest.setFilters(new ArrayList<Filter>());
-        shadeRequest.setRelocators(new ArrayList<Relocator>());
-        shadeRequest.setResourceTransformers(new ArrayList<ResourceTransformer>());
+        shadeRequest.setFilters(new ArrayList<>());
+        shadeRequest.setRelocators(new ArrayList<>());
+        shadeRequest.setResourceTransformers(new ArrayList<>());
         File shadedFile = temporaryFolder.newFile("shaded.jar");
         shadeRequest.setUberJar(shadedFile);
 
@@ -522,7 +523,7 @@ public class DefaultShaderTest {
 
         temporaryFolder.create();
         File innerJar = temporaryFolder.newFile(innerJarFileName);
-        try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(innerJar))) {
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(innerJar.toPath()))) {
             jos.putNextEntry(new JarEntry("foo.txt"));
             byte[] bytes = "c1".getBytes(StandardCharsets.UTF_8);
             len = bytes.length;
@@ -532,9 +533,9 @@ public class DefaultShaderTest {
 
         ShadeRequest shadeRequest = new ShadeRequest();
         shadeRequest.setJars(new LinkedHashSet<>(Collections.singleton(innerJar)));
-        shadeRequest.setFilters(new ArrayList<Filter>());
-        shadeRequest.setRelocators(new ArrayList<Relocator>());
-        shadeRequest.setResourceTransformers(new ArrayList<ResourceTransformer>());
+        shadeRequest.setFilters(new ArrayList<>());
+        shadeRequest.setRelocators(new ArrayList<>());
+        shadeRequest.setResourceTransformers(new ArrayList<>());
         File shadedFile = temporaryFolder.newFile("shaded.jar");
         shadeRequest.setUberJar(shadedFile);
 
@@ -620,9 +621,9 @@ public class DefaultShaderTest {
 
     private boolean areEqual(final JarFile jar1, final JarFile jar2, final String entry1, String entry2)
             throws IOException {
-        try (final InputStream s1 = jar1.getInputStream(
+        try (InputStream s1 = jar1.getInputStream(
                         requireNonNull(jar1.getJarEntry(entry1), entry1 + " in " + jar1.getName()));
-                final InputStream s2 = jar2.getInputStream(
+                InputStream s2 = jar2.getInputStream(
                         requireNonNull(jar2.getJarEntry(entry2), entry2 + " in " + jar2.getName()))) {
             return Arrays.equals(IOUtil.toByteArray(s1), IOUtil.toByteArray(s2));
         }

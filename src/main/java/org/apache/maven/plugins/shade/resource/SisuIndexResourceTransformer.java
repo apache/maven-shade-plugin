@@ -27,8 +27,8 @@ import java.util.Scanner;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.codehaus.plexus.util.IOUtil;
 
 /**
  * Resource transformer that relocates classes in {@code META-INF/sisu/javax.inject.Named} and appends resources
@@ -78,7 +78,7 @@ public class SisuIndexResourceTransformer extends AbstractCompatibilityTransform
         JarEntry jarEntry = new JarEntry(SISU_INDEX_PATH);
         jarEntry.setTime(time);
         jos.putNextEntry(jarEntry);
-        IOUtils.writeLines(indexEntries, "\n", jos, StandardCharsets.UTF_8);
+        IOUtil.copy((String.join("\n", indexEntries) + "\n").getBytes(StandardCharsets.UTF_8), jos);
         jos.flush();
         indexEntries.clear();
     }
