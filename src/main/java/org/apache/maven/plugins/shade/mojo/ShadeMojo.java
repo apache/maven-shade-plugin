@@ -58,6 +58,7 @@ import org.apache.maven.plugins.shade.filter.MinijarFilter;
 import org.apache.maven.plugins.shade.filter.SimpleFilter;
 import org.apache.maven.plugins.shade.pom.PomWriter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.apache.maven.plugins.shade.relocation.SerializedLambdaRelocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
@@ -938,6 +939,11 @@ public class ShadeMojo extends AbstractMojo {
         for (PackageRelocation r : relocations) {
             relocators.add(new SimpleRelocator(
                     r.getPattern(), r.getShadedPattern(), r.getIncludes(), r.getExcludes(), r.isRawString()));
+            if (r.isShadeSerializedLambda()) {
+                relocators.add(new SerializedLambdaRelocator(
+                        r.getPattern(), r.getShadedPattern(), r.getIncludes(), r.getExcludes(), r.isRawString()
+                ));
+            }
         }
 
         return relocators;

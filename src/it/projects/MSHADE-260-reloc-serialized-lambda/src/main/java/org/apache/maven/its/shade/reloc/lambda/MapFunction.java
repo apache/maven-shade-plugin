@@ -16,48 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.maven.plugins.shade.mojo;
+package org.apache.maven.its.shade.reloc.lambda;
 
-import java.util.List;
+import java.io.Serializable;
 
 /**
- * @author Jason van Zyl
- * @author Mauro Talevi
+ * A serializable functional interface that will cause lambdas/method references
+ * to have their class information stored in the serialized lambda metadata.
  */
-public class PackageRelocation {
-    private String pattern;
-
-    private String shadedPattern;
-
-    private List<String> includes;
-
-    private List<String> excludes;
-
-    private boolean rawString;
-
-    private boolean shadeSerializedLambda;
-
-    public String getPattern() {
-        return pattern;
-    }
-
-    public String getShadedPattern() {
-        return shadedPattern;
-    }
-
-    public List<String> getIncludes() {
-        return includes;
-    }
-
-    public List<String> getExcludes() {
-        return excludes;
-    }
-
-    public boolean isRawString() {
-        return rawString;
-    }
-
-    public boolean isShadeSerializedLambda() {
-        return shadeSerializedLambda;
-    }
+@FunctionalInterface
+public interface MapFunction<T, R> extends Serializable {
+    R map(T t);
 }

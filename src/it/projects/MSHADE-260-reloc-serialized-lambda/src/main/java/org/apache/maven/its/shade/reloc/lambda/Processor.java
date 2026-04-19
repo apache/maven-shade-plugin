@@ -16,48 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.maven.plugins.shade.mojo;
-
-import java.util.List;
+package org.apache.maven.its.shade.reloc.lambda;
 
 /**
- * @author Jason van Zyl
- * @author Mauro Talevi
+ * Processor class that contains a method used as a method reference.
  */
-public class PackageRelocation {
-    private String pattern;
-
-    private String shadedPattern;
-
-    private List<String> includes;
-
-    private List<String> excludes;
-
-    private boolean rawString;
-
-    private boolean shadeSerializedLambda;
-
-    public String getPattern() {
-        return pattern;
-    }
-
-    public String getShadedPattern() {
-        return shadedPattern;
-    }
-
-    public List<String> getIncludes() {
-        return includes;
-    }
-
-    public List<String> getExcludes() {
-        return excludes;
-    }
-
-    public boolean isRawString() {
-        return rawString;
-    }
-
-    public boolean isShadeSerializedLambda() {
-        return shadeSerializedLambda;
+public class Processor {
+    public String process(DataHolder data) {
+        return "Processed: " + data.getValue();
     }
 }

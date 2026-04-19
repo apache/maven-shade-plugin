@@ -124,7 +124,7 @@ public class DefaultShaderTest {
         shader.shade(shadeRequest);
 
         try (JarFile originalJar = new JarFile(plexusJar);
-                JarFile shadedJar = new JarFile(shadedOutput)) {
+             JarFile shadedJar = new JarFile(shadedOutput)) {
             // ASM processes all class files. In doing so, it modifies them, even when not relocating anything.
             // Before MSHADE-391, the processed files were written to the uber JAR, which did no harm, but made it
             // difficult to find out by simple file comparison, if a file was actually relocated or not. Now, Shade
@@ -296,7 +296,7 @@ public class DefaultShaderTest {
         final File dir = TEMPORARY_FOLDER.getRoot();
         // explode src/test/jars/test-artifact-1.0-SNAPSHOT.jar in this temp dir
         try (JarInputStream in =
-                new JarInputStream(Files.newInputStream(Paths.get("src/test/jars/test-artifact-1.0-SNAPSHOT.jar")))) {
+                     new JarInputStream(Files.newInputStream(Paths.get("src/test/jars/test-artifact-1.0-SNAPSHOT.jar")))) {
             JarEntry nextJarEntry;
             while ((nextJarEntry = in.getNextJarEntry()) != null) {
                 if (nextJarEntry.isDirectory()) {
@@ -504,7 +504,7 @@ public class DefaultShaderTest {
         JarEntry entry = shadedJarFile.getJarEntry(serviceEntryName);
 
         List<String> lines = new BufferedReader(
-                        new InputStreamReader(shadedJarFile.getInputStream(entry), StandardCharsets.UTF_8))
+                new InputStreamReader(shadedJarFile.getInputStream(entry), StandardCharsets.UTF_8))
                 .lines()
                 .collect(Collectors.toList());
 
@@ -622,9 +622,9 @@ public class DefaultShaderTest {
     private boolean areEqual(final JarFile jar1, final JarFile jar2, final String entry1, String entry2)
             throws IOException {
         try (InputStream s1 = jar1.getInputStream(
-                        requireNonNull(jar1.getJarEntry(entry1), entry1 + " in " + jar1.getName()));
-                InputStream s2 = jar2.getInputStream(
-                        requireNonNull(jar2.getJarEntry(entry2), entry2 + " in " + jar2.getName()))) {
+                requireNonNull(jar1.getJarEntry(entry1), entry1 + " in " + jar1.getName()));
+             InputStream s2 = jar2.getInputStream(
+                     requireNonNull(jar2.getJarEntry(entry2), entry2 + " in " + jar2.getName()))) {
             return Arrays.equals(IOUtil.toByteArray(s1), IOUtil.toByteArray(s2));
         }
     }
