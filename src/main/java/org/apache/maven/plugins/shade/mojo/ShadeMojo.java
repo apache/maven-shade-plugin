@@ -941,8 +941,7 @@ public class ShadeMojo extends AbstractMojo {
                     r.getPattern(), r.getShadedPattern(), r.getIncludes(), r.getExcludes(), r.isRawString()));
             if (r.isShadeSerializedLambda()) {
                 relocators.add(new SerializedLambdaRelocator(
-                        r.getPattern(), r.getShadedPattern(), r.getIncludes(), r.getExcludes(), r.isRawString()
-                ));
+                        r.getPattern(), r.getShadedPattern(), r.getIncludes(), r.getExcludes(), r.isRawString()));
             }
         }
 

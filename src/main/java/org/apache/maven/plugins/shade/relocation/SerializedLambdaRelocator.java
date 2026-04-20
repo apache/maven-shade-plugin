@@ -23,13 +23,14 @@ import java.util.regex.Pattern;
 
 /** @author Kamil Wójcik */
 public class SerializedLambdaRelocator extends SimpleRelocator {
-    private final Pattern serializedLambdaDefinitionPattern = Pattern.compile("\\(([BCDFIJSZ]|\\[+[BCDFIJSZ]|\\[*L[^;]+;)*\\)([BCDFIJSZ]|V|\\[+[BCDFIJSZ]|\\[*L[^;]+;)");
+    private final Pattern serializedLambdaDefinitionPattern =
+            Pattern.compile("\\(([BCDFIJSZ]|\\[+[BCDFIJSZ]|\\[*L[^;]+;)*\\)([BCDFIJSZ]|V|\\[+[BCDFIJSZ]|\\[*L[^;]+;)");
     private final Pattern clazzInsideFunctionDefintionPattern;
     private final String shadedPathPattern;
     private boolean shouldRelocate = true;
 
-
-    public SerializedLambdaRelocator(String pattern, String shadedPattern, List<String> includes, List<String> excludes, boolean rawString) {
+    public SerializedLambdaRelocator(
+            String pattern, String shadedPattern, List<String> includes, List<String> excludes, boolean rawString) {
         super(pattern, shadedPattern, includes, excludes, rawString);
         if (shadedPattern != null && pattern != null) {
             this.shadedPathPattern = shadedPattern.replace('.', '/');
@@ -54,7 +55,9 @@ public class SerializedLambdaRelocator extends SimpleRelocator {
 
     @Override
     public String relocatePath(String path) {
-        return !shouldRelocate ? path : clazzInsideFunctionDefintionPattern.matcher(path).replaceAll(shadedPathPattern);
+        return !shouldRelocate
+                ? path
+                : clazzInsideFunctionDefintionPattern.matcher(path).replaceAll(shadedPathPattern);
     }
 
     @Override
@@ -71,6 +74,4 @@ public class SerializedLambdaRelocator extends SimpleRelocator {
     public String applyToSourceContent(String sourceContent) {
         return sourceContent;
     }
-
-
 }
