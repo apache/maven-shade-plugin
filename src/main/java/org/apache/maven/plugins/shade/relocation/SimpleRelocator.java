@@ -32,7 +32,11 @@ import org.codehaus.plexus.util.SelectorUtils;
  */
 public class SimpleRelocator implements Relocator {
     /**
-     * Match dot, slash or space at end of string
+     * Matches <ul>
+     *     <li>either dot,</li>
+     *     <li>or slash,</li>
+     *     <li>or space at the end of a string, where string does NOT end with operator (generic type, binary, trinary).</li>
+     * </ul>
      */
     private static final Pattern RX_ENDS_WITH_DOT_SLASH_SPACE = Pattern.compile("(\\.|/|[^<?:+\\-*/^|&] )$");
 
