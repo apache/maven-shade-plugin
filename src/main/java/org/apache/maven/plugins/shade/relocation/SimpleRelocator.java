@@ -217,7 +217,7 @@ public class SimpleRelocator implements Relocator {
         return normalized;
     }
 
-    private boolean isIncluded(String path) {
+    protected boolean isIncluded(String path) {
         if (includes != null && !includes.isEmpty()) {
             for (String include : includes) {
                 if (SelectorUtils.matchPath(include, path, true)) {
@@ -229,7 +229,7 @@ public class SimpleRelocator implements Relocator {
         return true;
     }
 
-    private boolean isExcluded(String path) {
+    protected boolean isExcluded(String path) {
         if (excludes != null && !excludes.isEmpty()) {
             for (String exclude : excludes) {
                 if (SelectorUtils.matchPath(exclude, path, true)) {
