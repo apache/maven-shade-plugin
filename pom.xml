@@ -82,7 +82,7 @@
     <mavenVersion>3.9.16</mavenVersion>
     <javaVersion>8</javaVersion>
     <currentVersion>${project.version}</currentVersion>
-    <asmVersion>9.10</asmVersion>
+    <asmVersion>9.10.1</asmVersion>
     <slf4j.version>1.7.36</slf4j.version>
     <project.build.outputTimestamp>2026-03-02T10:52:20Z</project.build.outputTimestamp>
   </properties>
