@@ -25,14 +25,14 @@ import java.io.File;
  */
 public interface Filter {
     /**
-     * @param jar The jar file.
-     * @return true if we can filter false otherwise.
+     * @param jar the jar file
+     * @return true if we can filter false otherwise
      */
     boolean canFilter(File jar);
 
     /**
-     * @param classFile The classFile.
-     * @return true if the file has been filtered false otherwise.
+     * @param classFile the classFile
+     * @return true if the file has been filtered false otherwise
      */
     boolean isFiltered(String classFile);
 
