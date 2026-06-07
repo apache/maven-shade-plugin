@@ -29,4 +29,20 @@ under the License.
     <module>bundle</module>
   </modules>
 
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>@version.maven-resources-plugin@</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>@version.maven-jar-plugin@</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 </project>
