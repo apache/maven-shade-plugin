@@ -64,6 +64,7 @@ under the License.
         <plugins>
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>@version.maven-source-plugin@</version>
                 <executions>
                     <execution>
                         <goals>
@@ -74,6 +75,7 @@ under the License.
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>@version.maven-jar-plugin@</version>
                 <executions>
                     <execution>
                         <goals>
