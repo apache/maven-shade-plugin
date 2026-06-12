@@ -30,9 +30,11 @@ import org.codehaus.plexus.util.IOUtil;
 
 /**
  * A resource processor that appends content for a resource, separated by a newline.
+ * The newline separator can be disabled with {@code <separator>false</separator>}.
  */
 public class AppendingTransformer extends AbstractCompatibilityTransformer {
     String resource;
+    boolean separator = true;
 
     ByteArrayOutputStream data = new ByteArrayOutputStream();
 
@@ -47,7 +49,9 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         IOUtil.copy(is, data);
-        data.write('\n');
+        if (separator || !data.toString().endsWith("\n")) {
+            data.write('\n');
+        }
         if (time > this.time) {
             this.time = time;
         }
