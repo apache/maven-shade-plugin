@@ -83,16 +83,15 @@ import org.jdom2.output.XMLOutputter;
 
 /**
  * Class MavenJDOMWriter.
- *
  */
 public class MavenJDOMWriter {
     /**
-     * Field factory
+     * Field factory.
      */
     private final DefaultJDOMFactory factory;
 
     /**
-     * Field lineSeparator
+     * Field lineSeparator.
      */
     private final String lineSeparator;
 
@@ -106,11 +105,11 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method findAndReplaceProperties
+     * Method findAndReplaceProperties.
      *
      * @param counter {@link Counter}
      * @param props {@link Map}
-     * @param name The name.
+     * @param name the name
      * @param parent {@link Element}
      * @return {@link Element}
      */
@@ -138,13 +137,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method findAndReplaceSimpleElement
+     * Method findAndReplaceSimpleElement.
      *
      * @param counter {@link Counter}
-     * @param defaultValue The default value.
-     * @param text The text.
-     * @param name The name.
-     * @param parent The parent.
+     * @param defaultValue the default value
+     * @param text the text
+     * @param name the name
+     * @param parent the parent
      * @return {@link Element}
      */
     protected Element findAndReplaceSimpleElement(
@@ -165,13 +164,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method findAndReplaceSimpleLists
+     * Method findAndReplaceSimpleLists.
      *
      * @param counter {@link Counter}
-     * @param childName The childName
-     * @param parentName The parentName
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childName the childName
+     * @param parentName the parentName
+     * @param list the list of elements
+     * @param parent the parent
      * @return {@link Element}
      */
     protected Element findAndReplaceSimpleLists(
@@ -210,12 +209,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method findAndReplaceXpp3DOM
+     * Method findAndReplaceXpp3DOM.
      *
      * @param counter {@link Counter}
      * @param dom {@link Xpp3Dom}
-     * @param name The name.
-     * @param parent The parent.
+     * @param name the name
+     * @param parent the parent
      * @return {@link Element}
      */
     protected Element findAndReplaceXpp3DOM(Counter counter, Element parent, String name, Xpp3Dom dom) {
@@ -228,9 +227,9 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method insertAtPreferredLocation
+     * Method insertAtPreferredLocation.
      *
-     * @param parent The parent.
+     * @param parent the parent
      * @param counter {@link Counter}
      * @param child {@link Element}
      */
@@ -272,13 +271,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateContributor
+     * Method iterateContributor.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateContributor(
             Counter counter, Element parent, Collection<Contributor> list, String parentTag, String childTag) {
@@ -315,13 +314,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateDependency
+     * Method iterateDependency.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateDependency(
             Counter counter, Element parent, Collection<Dependency> list, String parentTag, String childTag) {
@@ -358,13 +357,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateDeveloper
+     * Method iterateDeveloper.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateDeveloper(
             Counter counter, Element parent, Collection<Developer> list, String parentTag, String childTag) {
@@ -401,13 +400,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateExclusion
+     * Method iterateExclusion.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateExclusion(
             Counter counter, Element parent, Collection<Exclusion> list, String parentTag, String childTag) {
@@ -444,13 +443,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateExtension
+     * Method iterateExtension.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateExtension(
             Counter counter, Element parent, Collection<Extension> list, String parentTag, String childTag) {
@@ -487,13 +486,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateLicense
+     * Method iterateLicense.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateLicense(
             Counter counter, Element parent, Collection<License> list, String parentTag, String childTag) {
@@ -530,13 +529,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateMailingList
+     * Method iterateMailingList.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateMailingList(
             Counter counter, Element parent, Collection<MailingList> list, String parentTag, String childTag) {
@@ -573,13 +572,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateNotifier
+     * Method iterateNotifier.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateNotifier(
             Counter counter, Element parent, Collection<Notifier> list, String parentTag, String childTag) {
@@ -616,13 +615,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iteratePlugin
+     * Method iteratePlugin.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iteratePlugin(
             Counter counter, Element parent, Collection<Plugin> list, String parentTag, String childTag) {
@@ -659,13 +658,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iteratePluginExecution
+     * Method iteratePluginExecution.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iteratePluginExecution(
             Counter counter, Element parent, Collection<PluginExecution> list, String parentTag, String childTag) {
@@ -702,13 +701,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateProfile
+     * Method iterateProfile.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateProfile(
             Counter counter, Element parent, Collection<Profile> list, String parentTag, String childTag) {
@@ -745,13 +744,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateReportPlugin
+     * Method iterateReportPlugin.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateReportPlugin(
             Counter counter, Element parent, Collection<ReportPlugin> list, String parentTag, String childTag) {
@@ -788,13 +787,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateReportSet
+     * Method iterateReportSet.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateReportSet(
             Counter counter, Element parent, Collection<ReportSet> list, String parentTag, String childTag) {
@@ -831,13 +830,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateRepository
+     * Method iterateRepository.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateRepository(
             Counter counter, Element parent, Collection<Repository> list, String parentTag, String childTag) {
@@ -874,13 +873,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method iterateResource
+     * Method iterateResource.
      *
      * @param counter {@link Counter}
-     * @param childTag The childTag
-     * @param parentTag The parentTag
-     * @param list The list of elements.
-     * @param parent The parent.
+     * @param childTag the childTag
+     * @param parentTag the parentTag
+     * @param list the list of elements
+     * @param parent the parent
      */
     protected void iterateResource(
             Counter counter, Element parent, Collection<Resource> list, String parentTag, String childTag) {
@@ -917,9 +916,9 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method replaceXpp3DOM
+     * Method replaceXpp3DOM.
      *
-     * @param parent The parent.
+     * @param parent the parent
      * @param counter {@link Counter}
      * @param parentDom {@link Element}
      */
@@ -957,12 +956,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateActivationFile
+     * Method updateActivationFile.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateActivationFile(ActivationFile value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -975,12 +974,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateActivationOS
+     * Method updateActivationOS.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateActivationOS(ActivationOS value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -995,12 +994,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateActivationProperty
+     * Method updateActivationProperty.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateActivationProperty(ActivationProperty value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1013,12 +1012,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateBuild
+     * Method updateBuild.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     // CHECKSTYLE_OFF: LineLength
     protected void updateBuild(Build value, String xmlTag, Counter counter, Element element) {
@@ -1046,12 +1045,12 @@ public class MavenJDOMWriter {
     // CHECKSTYLE_ON: LineLength
 
     /**
-     * Method updateBuildBase
+     * Method updateBuildBase.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateBuildBase(BuildBase value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1070,12 +1069,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateCiManagement
+     * Method updateCiManagement.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateCiManagement(CiManagement value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1089,12 +1088,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateConfigurationContainer
+     * Method updateConfigurationContainer.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateConfigurationContainer(
             ConfigurationContainer value, String xmlTag, Counter counter, Element element) {
@@ -1108,12 +1107,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateContributor
+     * Method updateContributor.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateContributor(Contributor value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1129,12 +1128,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateDependency
+     * Method updateDependency.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateDependency(Dependency value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1152,12 +1151,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateDependencyManagement
+     * Method updateDependencyManagement.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateDependencyManagement(
             DependencyManagement value, String xmlTag, Counter counter, Element element) {
@@ -1170,12 +1169,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateDeploymentRepository
+     * Method updateDeploymentRepository.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateDeploymentRepository(
             DeploymentRepository value, String xmlTag, Counter counter, Element element) {
@@ -1197,12 +1196,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateDeveloper
+     * Method updateDeveloper.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateDeveloper(Developer value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1219,12 +1218,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateDistributionManagement
+     * Method updateDistributionManagement.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateDistributionManagement(
             DistributionManagement value, String xmlTag, Counter counter, Element element) {
@@ -1242,12 +1241,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateElement
+     * Method updateElement.
      *
      * @param counter {@link Counter}
-     * @param shouldExist should exist.
-     * @param name The name.
-     * @param parent The parent.
+     * @param shouldExist should exist
+     * @param name the name
+     * @param parent the parent
      * @return {@link Element}
      */
     protected Element updateElement(Counter counter, Element parent, String name, boolean shouldExist) {
@@ -1277,12 +1276,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateExclusion
+     * Method updateExclusion.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateExclusion(Exclusion value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1292,12 +1291,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateExtension
+     * Method updateExtension.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateExtension(Extension value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1308,12 +1307,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateFileSet
+     * Method updateFileSet.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateFileSet(FileSet value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1327,12 +1326,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateIssueManagement
+     * Method updateIssueManagement.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateIssueManagement(IssueManagement value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1345,12 +1344,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateLicense
+     * Method updateLicense.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateLicense(License value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1362,12 +1361,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateMailingList
+     * Method updateMailingList.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateMailingList(MailingList value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1381,12 +1380,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateModel
+     * Method updateModel.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateModel(Model value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1423,12 +1422,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateModelBase
+     * Method updateModelBase.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     // CHECKSTYLE_OFF: LineLength
     protected void updateModelBase(ModelBase value, String xmlTag, Counter counter, Element element) {
@@ -1450,12 +1449,12 @@ public class MavenJDOMWriter {
     // CHECKSTYLE_ON: LineLength
 
     /**
-     * Method updateNotifier
+     * Method updateNotifier.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     // CHECKSTYLE_OFF: LineLength
     protected void updateNotifier(Notifier value, String xmlTag, Counter counter, Element element) {
@@ -1492,12 +1491,12 @@ public class MavenJDOMWriter {
     // CHECKSTYLE_ON: LineLength
 
     /**
-     * Method updateOrganization
+     * Method updateOrganization.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateOrganization(Organization value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1510,12 +1509,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateParent
+     * Method updateParent.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateParent(Parent value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1530,12 +1529,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updatePatternSet
+     * Method updatePatternSet.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updatePatternSet(PatternSet value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1548,12 +1547,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updatePlugin
+     * Method updatePlugin.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updatePlugin(Plugin value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1574,12 +1573,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updatePluginConfiguration
+     * Method updatePluginConfiguration.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     // CHECKSTYLE_OFF: LineLength
     protected void updatePluginConfiguration(
@@ -1595,12 +1594,12 @@ public class MavenJDOMWriter {
     // CHECKSTYLE_ON: LineLength
 
     /**
-     * Method updatePluginContainer
+     * Method updatePluginContainer.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updatePluginContainer(PluginContainer value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1612,12 +1611,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updatePluginExecution
+     * Method updatePluginExecution.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updatePluginExecution(PluginExecution value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1630,12 +1629,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updatePluginManagement
+     * Method updatePluginManagement.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updatePluginManagement(PluginManagement value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1647,12 +1646,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updatePrerequisites
+     * Method updatePrerequisites.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updatePrerequisites(Prerequisites value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1664,12 +1663,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateProfile
+     * Method updateProfile.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateProfile(Profile value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1688,12 +1687,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateRelocation
+     * Method updateRelocation.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateRelocation(Relocation value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1708,12 +1707,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateReportPlugin
+     * Method updateReportPlugin.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateReportPlugin(ReportPlugin value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1727,12 +1726,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateReportSet
+     * Method updateReportSet.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateReportSet(ReportSet value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1744,12 +1743,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateReporting
+     * Method updateReporting.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateReporting(Reporting value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1768,12 +1767,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateRepository
+     * Method updateRepository.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateRepository(Repository value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1787,12 +1786,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateRepositoryBase
+     * Method updateRepositoryBase.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateRepositoryBase(RepositoryBase value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1807,12 +1806,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateRepositoryPolicy
+     * Method updateRepositoryPolicy.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateRepositoryPolicy(RepositoryPolicy value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1827,12 +1826,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateResource
+     * Method updateResource.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateResource(Resource value, String xmlTag, Counter counter, Element element) {
         Element root = element;
@@ -1850,12 +1849,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateScm
+     * Method updateScm.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateScm(Scm value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1874,12 +1873,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method updateSite
+     * Method updateSite.
      *
-     * @param value The value.
+     * @param value the value
      * @param element {@link Element}
      * @param counter {@link Counter}
-     * @param xmlTag The XMLTag.
+     * @param xmlTag the XMLTag
      */
     protected void updateSite(Site value, String xmlTag, Counter counter, Element element) {
         boolean shouldExist = value != null;
@@ -1893,13 +1892,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method write
+     * Method write.
      *
      * @param project {@link Model}
      * @param stream {@link OutputStream}
      * @param document {@link Document}
+     * @throws IOException in case of an error
      * @deprecated
-     * @throws IOException in case of an error.
      */
     public void write(Model project, Document document, OutputStream stream) throws IOException {
         updateModel(project, "project", new Counter(0), document.getRootElement());
@@ -1911,12 +1910,12 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method write
+     * Method write.
      *
      * @param project {@link Model}
      * @param writer {@link OutputStreamWriter}
      * @param document {@link Document}
-     * @throws IOException in case of an error.
+     * @throws IOException in case of an error
      */
     public void write(Model project, Document document, OutputStreamWriter writer) throws IOException {
         Format format = Format.getRawFormat();
@@ -1925,13 +1924,13 @@ public class MavenJDOMWriter {
     }
 
     /**
-     * Method write
+     * Method write.
      *
      * @param project {@link Model}
      * @param jdomFormat {@link Format}
      * @param writer {@link Writer}
      * @param document {@link Document}
-     * @throws IOException in case of an error.
+     * @throws IOException in case of an error
      */
     public void write(Model project, Document document, Writer writer, Format jdomFormat) throws IOException {
         updateModel(project, "project", new Counter(0), document.getRootElement());
