@@ -71,6 +71,7 @@ import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
+import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.CollectResult;
@@ -78,6 +79,7 @@ import org.eclipse.aether.collection.DependencyCollectionException;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 
 import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomReplaceTransformers;
 
@@ -1299,7 +1301,15 @@ public class ShadeMojo extends AbstractMojo {
                             d, session.getRepositorySession().getArtifactTypeRegistry()))
                     .collect(Collectors.toList()));
         }
-        CollectResult result = repositorySystem.collectDependencies(session.getRepositorySession(), collectRequest);
+        // #819: collect with verbose conflict resolution so that dependencies omitted as conflict
+        // losers (e.g. a transitive dependency shared by two classifier-distinct variants of the same
+        // artifact) are retained in the graph as markers. Without this, conflict resolution under Maven 4
+        // prunes the duplicate node from all but one variant, and the exclusion is only applied to that
+        // single variant in the dependency-reduced-pom.
+        DefaultRepositorySystemSession verboseSession =
+                new DefaultRepositorySystemSession(session.getRepositorySession());
+        verboseSession.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, ConflictResolver.Verbosity.STANDARD);
+        CollectResult result = repositorySystem.collectDependencies(verboseSession, collectRequest);
         boolean modified = false;
         if (result.getRoot() != null) {
             for (DependencyNode n2 : result.getRoot().getChildren()) {
