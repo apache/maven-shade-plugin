@@ -84,6 +84,12 @@ mvn package
 *-----------------------------------------+--------------------------------------+
 | XmlAppendingTransformer                 | Adds XML content to an XML resource  | 
 *-----------------------------------------+--------------------------------------+
-Transformers in <<<org.apache.maven.plugins.shade.resource>>>
+| PropertiesTransformer                   | Merges properties files using an ordinal to resolve conflicts |
+*-----------------------------------------+--------------------------------------+
+| OpenWebBeansPropertiesTransformer       | Merges Apache OpenWebBeans configuration files |
+*-----------------------------------------+--------------------------------------+
+| MicroprofileConfigTransformer           | Merges Microprofile Config properties based on an ordinal |
+*-----------------------------------------+--------------------------------------+
+Transformers in <<<org.apache.maven.plugins.shade.resource>>> and <<<org.apache.maven.plugins.shade.resource.properties>>>
 
   For more information, see {{{./examples/resource-transformers.html}samples}}.

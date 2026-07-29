@@ -20,7 +20,7 @@ under the License.
 
 <faqs xmlns="http://maven.apache.org/FML/1.0.1"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/FML/1.0.1 http://maven.apache.org/xsd/fml-1.0.1.xsd"
+  xsi:schemaLocation="http://maven.apache.org/FML/1.0.1 https://maven.apache.org/xsd/fml-1.0.1.xsd"
   id="FAQ" 
   title="Frequently Asked Questions">
  <part id="general">
@@ -28,14 +28,14 @@ under the License.
      <question>Why Does My Second Shade Include The Results Of The First Execution?</question>
      <answer>
        <p>
-       By default, shade replaces with original jar with the result of shading.
+       By default, shade replaces the original jar with the result of shading.
        So, when a <code>pom.xml</code> includes two shades, 
-       the second shade execution will (by default) start from the result of the 
+       the second shade execution by default starts from the result of the 
        first shade execution.
        </p><p>
-       If you're looking for two independent shades then read 
+       If you're looking for two independent shades, then read 
        in <a href='shade-mojo.html'>shade:shade</a> about
-       ways choose a different name for your first shade.
+       ways to choose a different name for your first shade.
        </p>
      </answer>
    </faq>

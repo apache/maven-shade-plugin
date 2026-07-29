@@ -1,5 +1,5 @@
  ------
- Using an other Shader Implementation
+ Using another Shader Implementation
  ------
  Olivier Lamy
  ------
@@ -25,31 +25,34 @@
 
 Using your own Shader implementation
 
-  By default, the plugin provide a DefaultShader implementation but with version 1.6 you can use your own implementation.
+  By default, the plugin provides a DefaultShader implementation. You can, however, use your own implementation.
 
   Create a standard Maven project with your implementation.
 
+  Dependency for Plexus annotations:
+
 +-----
-
-Dependency to Plexus annotations
-
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-component-annotations</artifactId>
       <version>1.5.5</version>
     </dependency>
++-----
 
-Create your Shader
+  Create your Shader:
 
++-----
 @Component( role = Shader.class, hint = "mock" )
 public class MockShader
     implements Shader
 {
   // implement the interface here
 }
++-----
 
-// Use the plexus component metadata plugin in your job to generate Plexus metadata
+  Use the Plexus Component Metadata plugin in your build to generate Plexus metadata:
 
++-----
       <plugin>
         <groupId>org.codehaus.plexus</groupId>
         <artifactId>plexus-component-metadata</artifactId>

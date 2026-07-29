@@ -25,7 +25,7 @@
 
 Resource Transformers
 
-  Aggregating classes/resources from several artifacts into one uber JAR is straight forward as long as there is no
+  Aggregating classes/resources from several artifacts into one uber JAR is straightforward as long as there is no
   overlap. Otherwise, some kind of logic to merge resources from several JARs is required. This is where resource
   transformers kick in.
 
@@ -47,7 +47,7 @@ Resource Transformers
 *-----------------------------------------+------------------------------------------+
 | {{ManifestResourceTransformer}}         | Sets entries in the <<<MANIFEST>>>       |
 *-----------------------------------------+------------------------------------------+
-| {{PluginXmlResourceTransformer}}        | Aggregates Mavens <<<plugin.xml>>>       |
+| {{PluginXmlResourceTransformer}}        | Aggregates Maven's <<<plugin.xml>>>      |
 *-----------------------------------------+------------------------------------------+
 | {{ResourceBundleAppendingTransformer}}  | Merges ResourceBundles                  | 
 *-----------------------------------------+------------------------------------------+
@@ -100,13 +100,13 @@ Transformers in <<<org.apache.maven.plugins.shade.resource.properties>>> (availa
 </project>
 +-----
 
-  Since plugin version 1.3, this resource transformer will also update the descriptor to account for relocation of
+  Since plugin version 1.3, this resource transformer also updates the descriptor to account for relocation of
   component interfaces/implementations (if any).
 
 * Relocate classes of the Maven Plugin Descriptor with the {PluginXmlResourceTransformer}
 
-  With {{{http://maven.apache.org/plugin-tools/index.html}Plugin Tools 3.0}} annotations have been introduced. Now references 
-  to classes are no longer classnames as String, but the actual Class reference. When you wanted to relocate classes, you had to
+  With {{{https://maven.apache.org/plugin-tools/index.html}Plugin Tools 3.0}}, annotations were introduced. References 
+  to classes are now references to java.lang.Class objects rather than strings containing class names. When you wanted to relocate classes, you had to
   maintain the <<<META-INF/maven/plugin.xml>>> by hand, but now this can be done with the <<<PluginXmlResourceTransformer>>>  
 
 +-----
@@ -176,7 +176,7 @@ Transformers in <<<org.apache.maven.plugins.shade.resource.properties>>> (availa
 * Merging Content of Specific Files with {AppendingTransformer}, XmlAppendingTransformer and ResourceBundleAppendingTransformer
 
   Some jars contain additional resources (such as properties files) that have the same file name. To avoid overwriting, you can
-  opt to merge them by appending their content into one file. One good example for this is when aggregating both the spring-context 
+  merge them by appending their content. One good example of this is aggregating both the spring-context 
   and plexus-spring jars. Both of them have the <<<META-INF/spring.handlers>>> file which is used by Spring to handle XML schema 
   namespaces. You can merge the contents of all the files with that specific name using the <<<AppendingTransformer>>> as shown below:
   
@@ -525,7 +525,7 @@ Transformers in <<<org.apache.maven.plugins.shade.resource.properties>>> (availa
 
   The Apache Groovy language provides extension modules located at
   <<<META-INF/services/org.codehaus.groovy.runtime.ExtensionModule>>>, these modules use the property file format.
-  <<<GroovyResourceTransformer>>> automates the assembly of Groovy extension modules <<<NOTICE>>>.
+  <<<GroovyResourceTransformer>>> automates the assembly of Groovy extension module descriptors.
 
   For example, to simply merge the extension modules of several jars:
 

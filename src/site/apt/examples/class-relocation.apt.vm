@@ -81,10 +81,10 @@ Relocating Classes
       <pattern>org.codehaus.plexus.util</pattern>
       <shadedPattern>org.shaded.plexus.util</shadedPattern>
       <includes>
-        <include>org.codehaud.plexus.util.io.*</include>
+        <include>org.codehaus.plexus.util.io.*</include>
       </includes>
       <excludes>
-        <exclude>org.codehaud.plexus.util.io.*</exclude>
+        <exclude>org.codehaus.plexus.util.io.*</exclude>
       </excludes>
     </relocation>
   ...
