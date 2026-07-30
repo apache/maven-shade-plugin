@@ -28,6 +28,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -63,6 +64,25 @@ public class ApacheNoticeResourceTransformerTest {
         assertTrue(transformer.canTransformResource("META-INF/Notice.txt"));
         assertTrue(transformer.canTransformResource("META-INF/Notice.md"));
         assertFalse(transformer.canTransformResource("META-INF/MANIFEST.MF"));
+    }
+
+    @Test
+    public void testProjectNameDefaultsToMavenProjectName() {
+        transformer.setProjectNameIfUnset(null);
+        transformer.setProjectNameIfUnset(" ");
+        assertEquals("", transformer.projectName);
+
+        transformer.setProjectNameIfUnset("Maven Project Name");
+        assertEquals("Maven Project Name", transformer.projectName);
+    }
+
+    @Test
+    public void testConfiguredProjectNameTakesPrecedence() {
+        transformer.projectName = "Configured Project Name";
+
+        transformer.setProjectNameIfUnset("Maven Project Name");
+
+        assertEquals("Configured Project Name", transformer.projectName);
     }
 
     @Test

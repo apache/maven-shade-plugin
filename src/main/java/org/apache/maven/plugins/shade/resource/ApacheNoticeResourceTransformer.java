@@ -79,6 +79,19 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
 
     private static final String NOTICE_MD_PATH = "META-INF/NOTICE.md";
 
+    /**
+     * Uses the Maven project name when no project name was configured explicitly.
+     *
+     * @param projectName the Maven project name
+     */
+    public void setProjectNameIfUnset(String projectName) {
+        if (this.projectName.isEmpty()
+                && projectName != null
+                && !projectName.trim().isEmpty()) {
+            this.projectName = projectName;
+        }
+    }
+
     @Override
     public boolean canTransformResource(String resource) {
         return NOTICE_PATH.equalsIgnoreCase(resource)
