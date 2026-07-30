@@ -1,0 +1,200 @@
+---
+title: Merging Java Module Descriptors
+author:
+  - The Apache Maven Team
+date: 2026-07-30
+---
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+# Merging Java Module Descriptors
+
+By default, the plugin discards every root and versioned `module-info.class` from the inputs. This preserves the
+historical behavior: an unmodified descriptor would describe the original artifact rather than the contents of the
+shaded JAR.
+
+Modular projects can opt into descriptor merging:
+
+```xml
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <moduleInfoMode>merge</moduleInfoMode>
+              <moduleInfo>
+                <publicBoundary>merge</publicBoundary>
+                <analysisJdkToolchain>
+                  <version>21</version>
+                </analysisJdkToolchain>
+              </moduleInfo>
+              <relocations>
+                <relocation>
+                  <pattern>com.example.internal</pattern>
+                  <shadedPattern>com.example.shaded.internal</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
+```
+
+Merge mode models the shaded JAR as if the retained, relocated source files had been compiled together as one module.
+The primary artifact remains authoritative for the module name, version, main class, and, by default, the public
+boundary. Requirements on modules embedded in the shaded JAR are removed. The primary descriptor's external
+requirements keep their modifiers. An embedded descriptor's external `requires transitive` is changed to an ordinary
+requirement: embedding its implementation does not make its former API part of the primary module's API. Embedded
+`static` requirements remain static. Uses and providers are combined. Package and class names in all retained
+directives follow the configured relocations.
+
+`moduleInfo.publicBoundary` controls the public boundary:
+
+- `primary` (the default) retains only the primary descriptor's exports and opens.
+
+- `merge` also retains relocated exports and opens from embedded explicit modules. An automatic module exports and
+  opens all of its packages, so all of its retained packages are exported and opened in the combined module.
+
+This is a policy choice, not something bytecode analysis can infer. In particular, `merge` can expose packages which
+were implementation details of the primary project.
+
+## Explicit descriptor additions
+
+The nested `moduleInfo` configuration can describe decisions a source-level amalgamation would put in its new
+`module-info.java`:
+
+```xml
+<moduleInfo>
+  <publicBoundary>primary</publicBoundary>
+  <additionalExports>
+    <export>
+      <package>com.example.embedded.api</package>
+    </export>
+  </additionalExports>
+  <additionalOpens>
+    <open>
+      <package>com.example.model</package>
+      <targets>
+        <target>com.example.framework</target>
+      </targets>
+    </open>
+  </additionalOpens>
+  <additionalRequires>
+    <requirement>
+      <module>com.example.api</module>
+      <static>true</static>
+      <transitive>true</transitive>
+    </requirement>
+  </additionalRequires>
+  <additionalUses>
+    <use>com.example.spi.Plugin</use>
+  </additionalUses>
+  <dynamicUses>
+    <use>com.example.spi.DynamicPlugin</use>
+  </dynamicUses>
+</moduleInfo>
+```
+
+Additional package and class names are relocated like descriptor entries. An unqualified export or open is stronger
+than a qualified one; qualified target lists are combined. Additional requirements can promote an inferred or embedded
+ordinary requirement to `static`, `transitive`, or both. Requiring a module which is itself embedded is an error.
+
+An embedded automatic module has no descriptor from which requirements can be copied. The plugin therefore analyzes
+its retained, relocated bytecode and adds ordinary requirements for referenced classes owned by external modules.
+External dependency ownership is resolved from the project's complete resolved Java dependency hull, including
+archives excluded from the shaded output. Non-archive dependencies are ignored. Platform ownership is resolved exactly
+for each effective release from the selected JDK's `ct.sym` and `jmods` data.
+
+By default, analysis uses the JDK toolchain selected for the build, falling back to the JDK running Maven. A different
+JDK can be selected with `moduleInfo.analysisJdkToolchain` using the same requirement keys as `jdkToolchain` in the
+Compiler Plugin. The selected JDK must cover the highest class-file release retained in the shaded output. A missing
+class owner, ambiguous owner, unavailable release, or too-old JDK fails the build with the affected class and required
+JDK release. The plugin does not guess platform ownership from package names.
+
+Automatic-module provider configurations under `META-INF/services/` are converted to `provides` directives after
+filtering and relocation. Calls to the public `ServiceLoader.load*` methods are analyzed and class-literal service types
+are converted to `uses` directives, including values passed through local variables and branches. If a direct call
+determines its service type dynamically, all possible service types must be acknowledged in `moduleInfo.dynamicUses`.
+Otherwise the build fails because the automatic module's implicit service permission cannot be represented in an
+explicit descriptor. `additionalUses` adds uses not visible to the analyzer; `dynamicUses` both adds the directive and
+acknowledges that particular analysis boundary.
+
+This analysis covers bytecode-visible type references. Dependencies used only through reflection, method handles, or
+class-name strings cannot be inferred. Direct method-handle references to `ServiceLoader.load*` require `dynamicUses`
+for the same reason as dynamic calls. The plugin emits a warning when it analyzes an automatic module so this
+limitation remains visible.
+
+Filtering and minimization happen before the descriptor is written. The build fails when either operation removes a
+package exported or opened by the primary descriptor, its main class, or one of its provider classes. Providers from
+embedded descriptors whose implementations were removed are omitted with a warning.
+
+## Multi-release JARs and the modular floor
+
+Root descriptors and descriptors under `META-INF/versions/N/` are treated as cumulative release views. The plugin
+generates a new descriptor only where the effective module view changes. `ModulePackages` is rebuilt from the classes
+that remain in the shaded output.
+
+Some directives cannot safely be added to the earliest descriptor. For example, a provider implementation or a package
+which must be exported or opened may exist only in a later release directory. Providers and the public boundary
+describe the combined module and therefore need stable semantics. In these cases the plugin raises the **modular floor**
+to the first Java release where every invariant provider and public package is valid. A release-specific ordinary
+requirement on a `java.*` or `jdk.*` module, and release-specific `uses`, remain in only the releases where they are
+valid.
+
+Raising the floor does not raise the bytecode level of ordinary classes. Instead, no explicit descriptor is effective
+before that release. On those earlier Java releases the output is an automatic module. The plugin writes
+`Automatic-Module-Name` using the primary module name so that the name stays stable, and writes a detailed warning
+containing the original and new floors plus every provider or boundary change that caused the change. Providers whose
+classes exist in the JAR root are also exposed through `META-INF/services` so service loading continues to work while
+the JAR is automatic. A provider that exists only in a versioned directory below the new floor cannot be bridged because
+`META-INF/services` cannot be versioned. The build fails with the provider and affected releases instead of silently
+dropping it.
+
+If the primary descriptor itself requires a later class-file release, it is likewise placed in that versioned release
+directory. This lets the same JAR remain an automatic module on earlier Java releases instead of failing while reading
+an unsupported root descriptor.
+
+## Manifest and descriptor metadata
+
+In `merge` mode, the output has `Multi-Release: true` whenever the primary artifact or any selected embedded artifact is
+multi-release. This is independent of filters and relocations because versioned archive entries are interpreted only
+when the manifest enables them. An explicitly configured `Multi-Release: false` is overridden with a warning. Descriptor
+merging also enables the header when it emits a versioned descriptor. The default `discard` mode does not force this
+header and continues honoring explicit manifest configuration.
+
+The primary descriptor's `ModuleTarget` and `ModuleResolution` attributes are retained. `ModuleHashes` is dropped with a
+warning because changing the module contents invalidates the recorded hashes. Other unsupported descriptor attributes
+are dropped with a warning instead of being copied with stale constant-pool references.
+
+Source and test-source JAR requests always use `discard` because they do not contain compiled descriptors.

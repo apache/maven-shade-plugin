@@ -20,6 +20,7 @@ package org.apache.maven.plugins.shade.mojo;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -38,6 +39,8 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
+import org.apache.maven.plugins.shade.ModuleInfoConfiguration;
+import org.apache.maven.plugins.shade.ModuleInfoMode;
 import org.apache.maven.plugins.shade.ShadeRequest;
 import org.apache.maven.plugins.shade.Shader;
 import org.apache.maven.plugins.shade.filter.Filter;
@@ -48,6 +51,8 @@ import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
+import org.apache.maven.toolchain.Toolchain;
+import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.ContainerConfiguration;
 import org.codehaus.plexus.PlexusConstants;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -62,6 +67,7 @@ import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -105,6 +111,70 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         assertEquals(asList(testsTfr1, testsTfr2), m.invoke(mojo, "tests", asList(defaultTfr, testsTfr1, testsTfr2)));
         assertEquals(asList(testsTfr1, testsTfr2), m.invoke(mojo, "tests", asList(testsTfr1, defaultTfr, testsTfr2)));
         assertEquals(asList(testsTfr1, testsTfr2), m.invoke(mojo, "tests", asList(testsTfr1, testsTfr2, defaultTfr)));
+    }
+
+    public void testSourceRequestsDiscardModuleInfo() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "moduleInfoMode", ModuleInfoMode.merge);
+        Method method = ShadeMojo.class.getDeclaredMethod(
+                "createShadeSourcesRequest", String.class, Set.class, File.class, List.class, List.class, List.class);
+        method.setAccessible(true);
+
+        ShadeRequest request = (ShadeRequest) method.invoke(
+                mojo,
+                "sources-jar",
+                Collections.emptySet(),
+                new File("target/sources.jar"),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList());
+
+        assertEquals(ModuleInfoMode.discard, request.getModuleInfoMode());
+        assertTrue(request.getDependencyAnalysisArtifacts().isEmpty());
+    }
+
+    public void testSelectsConfiguredModuleInfoAnalysisJdkToolchain() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
+        configuration.setAnalysisJdkToolchain(Collections.singletonMap("version", "21"));
+        MavenSession session = mock(MavenSession.class);
+        ToolchainManager manager = mock(ToolchainManager.class);
+        Toolchain toolchain = mock(Toolchain.class);
+        File javaHome = new File(System.getProperty("java.home")).getCanonicalFile();
+        when(manager.getToolchains(session, "jdk", configuration.getAnalysisJdkToolchain()))
+                .thenReturn(Collections.singletonList(toolchain));
+        when(toolchain.findTool("javac")).thenReturn(new File(new File(javaHome, "bin"), "javac").getPath());
+        setVariableValueToObject(mojo, "moduleInfo", configuration);
+        setVariableValueToObject(mojo, "session", session);
+        setVariableValueToObject(mojo, "toolchainManager", manager);
+
+        Method method = ShadeMojo.class.getDeclaredMethod("resolveModuleInfoAnalysisJdkHome");
+        method.setAccessible(true);
+        assertEquals(javaHome, method.invoke(mojo));
+        verify(manager).getToolchains(session, "jdk", configuration.getAnalysisJdkToolchain());
+    }
+
+    public void testRejectsMissingModuleInfoAnalysisJdkToolchain() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
+        configuration.setAnalysisJdkToolchain(Collections.singletonMap("version", "99"));
+        MavenSession session = mock(MavenSession.class);
+        ToolchainManager manager = mock(ToolchainManager.class);
+        when(manager.getToolchains(session, "jdk", configuration.getAnalysisJdkToolchain()))
+                .thenReturn(Collections.emptyList());
+        setVariableValueToObject(mojo, "moduleInfo", configuration);
+        setVariableValueToObject(mojo, "session", session);
+        setVariableValueToObject(mojo, "toolchainManager", manager);
+
+        Method method = ShadeMojo.class.getDeclaredMethod("resolveModuleInfoAnalysisJdkHome");
+        method.setAccessible(true);
+        try {
+            method.invoke(mojo);
+            fail("Expected a missing toolchain failure");
+        } catch (InvocationTargetException e) {
+            assertTrue(e.getCause().getMessage().contains("No JDK toolchain matches"));
+            assertTrue(e.getCause().getMessage().contains("version=99"));
+        }
     }
 
     public void testShaderWithDefaultShadedPattern() throws Exception {

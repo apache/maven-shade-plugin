@@ -19,6 +19,7 @@
 package org.apache.maven.plugins.shade;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -35,6 +36,8 @@ public class ShadeRequest {
 
     private Set<File> jars;
 
+    private File primaryArtifact;
+
     private File uberJar;
 
     private List<Filter> filters;
@@ -44,6 +47,14 @@ public class ShadeRequest {
     private List<ResourceTransformer> resourceTransformers;
 
     private boolean shadeSourcesContent;
+
+    private ModuleInfoMode moduleInfoMode = ModuleInfoMode.discard;
+
+    private ModuleInfoConfiguration moduleInfoConfiguration = new ModuleInfoConfiguration();
+
+    private File moduleInfoAnalysisJdkHome;
+
+    private Set<File> dependencyAnalysisArtifacts = Collections.emptySet();
 
     public Set<File> getJars() {
         return jars;
@@ -56,6 +67,19 @@ public class ShadeRequest {
      */
     public void setJars(Set<File> jars) {
         this.jars = jars;
+    }
+
+    public File getPrimaryArtifact() {
+        return primaryArtifact;
+    }
+
+    /**
+     * Sets the artifact whose module descriptor defines the identity and public boundary of the shaded module.
+     *
+     * @param primaryArtifact the primary artifact, or {@code null} when the output has no primary artifact
+     */
+    public void setPrimaryArtifact(File primaryArtifact) {
+        this.primaryArtifact = primaryArtifact;
     }
 
     public File getUberJar() {
@@ -123,5 +147,59 @@ public class ShadeRequest {
      */
     public void setShadeSourcesContent(boolean shadeSourcesContent) {
         this.shadeSourcesContent = shadeSourcesContent;
+    }
+
+    public ModuleInfoMode getModuleInfoMode() {
+        return moduleInfoMode;
+    }
+
+    /**
+     * Sets how module descriptors are handled.
+     *
+     * @param moduleInfoMode module descriptor handling mode
+     */
+    public void setModuleInfoMode(ModuleInfoMode moduleInfoMode) {
+        this.moduleInfoMode = moduleInfoMode == null ? ModuleInfoMode.discard : moduleInfoMode;
+    }
+
+    public ModuleInfoConfiguration getModuleInfoConfiguration() {
+        return moduleInfoConfiguration;
+    }
+
+    /**
+     * Sets the choices used while constructing a merged descriptor.
+     *
+     * @param moduleInfoConfiguration module descriptor configuration
+     */
+    public void setModuleInfoConfiguration(ModuleInfoConfiguration moduleInfoConfiguration) {
+        this.moduleInfoConfiguration =
+                moduleInfoConfiguration == null ? new ModuleInfoConfiguration() : moduleInfoConfiguration;
+    }
+
+    public File getModuleInfoAnalysisJdkHome() {
+        return moduleInfoAnalysisJdkHome;
+    }
+
+    /**
+     * Sets the JDK home used to resolve platform-module ownership for automatic-module bytecode.
+     *
+     * @param moduleInfoAnalysisJdkHome analysis JDK home, or {@code null} to use the running JDK
+     */
+    public void setModuleInfoAnalysisJdkHome(File moduleInfoAnalysisJdkHome) {
+        this.moduleInfoAnalysisJdkHome = moduleInfoAnalysisJdkHome;
+    }
+
+    public Set<File> getDependencyAnalysisArtifacts() {
+        return dependencyAnalysisArtifacts;
+    }
+
+    /**
+     * Sets the complete binary dependency hull used to resolve module ownership during automatic-module analysis.
+     *
+     * @param dependencyAnalysisArtifacts resolved binary artifacts, including artifacts excluded from shading
+     */
+    public void setDependencyAnalysisArtifacts(Set<File> dependencyAnalysisArtifacts) {
+        this.dependencyAnalysisArtifacts =
+                dependencyAnalysisArtifacts == null ? Collections.<File>emptySet() : dependencyAnalysisArtifacts;
     }
 }
