@@ -50,6 +50,42 @@ under the License.
               <skipIfEmpty>false</skipIfEmpty>
             </configuration>
           </execution>
+          <execution>
+            <id>attach-sources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <classifier>sources</classifier>
+              <classesDirectory>${project.basedir}/payload</classesDirectory>
+              <skipIfEmpty>false</skipIfEmpty>
+            </configuration>
+          </execution>
+          <execution>
+            <id>attach-tests</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <classifier>tests</classifier>
+              <classesDirectory>${project.basedir}/payload</classesDirectory>
+              <skipIfEmpty>false</skipIfEmpty>
+            </configuration>
+          </execution>
+          <execution>
+            <id>attach-test-sources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <classifier>test-sources</classifier>
+              <classesDirectory>${project.basedir}/payload</classesDirectory>
+              <skipIfEmpty>false</skipIfEmpty>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -65,6 +101,9 @@ under the License.
             <configuration>
               <inputClassifier>thin</inputClassifier>
               <shadedArtifactAttached>true</shadedArtifactAttached>
+              <createSourcesJar>true</createSourcesJar>
+              <shadeTestJar>true</shadeTestJar>
+              <createTestSourcesJar>true</createTestSourcesJar>
               <createDependencyReducedPom>false</createDependencyReducedPom>
             </configuration>
           </execution>
