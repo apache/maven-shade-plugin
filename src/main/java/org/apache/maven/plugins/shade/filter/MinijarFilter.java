@@ -108,11 +108,7 @@ public class MinijarFilter implements Filter {
      * @since 3.7.0
      */
     public MinijarFilter(
-            MavenProject project,
-            Artifact artifact,
-            Log log,
-            List<SimpleFilter> simpleFilters,
-            Set<String> entryPoints)
+            MavenProject project, Artifact artifact, Log log, List<SimpleFilter> simpleFilters, Set<String> entryPoints)
             throws IOException {
         this.log = log;
 
@@ -121,8 +117,8 @@ public class MinijarFilter implements Filter {
         if (artifactFile != null) {
             Clazzpath cp = new Clazzpath();
 
-            ClazzpathUnit artifactUnit = cp.addClazzpathUnit(
-                    Files.newInputStream(artifactFile.toPath()), artifact.toString());
+            ClazzpathUnit artifactUnit =
+                    cp.addClazzpathUnit(Files.newInputStream(artifactFile.toPath()), artifact.toString());
 
             for (Artifact dependency : project.getArtifacts()) {
                 addDependencyToClasspath(cp, dependency);

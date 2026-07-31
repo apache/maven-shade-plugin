@@ -46,3 +46,16 @@ try {
 } finally {
     inputJar.close()
 }
+
+File pomInputFile = new File(basedir, "pom-input/target/pom-input-1.0-shaded.jar")
+assert pomInputFile.isFile()
+assert !new File(basedir, "pom-input/target/pom-input-1.0-shaded.pom").exists()
+
+JarFile pomInputJar = new JarFile(pomInputFile)
+try {
+    assert pomInputJar.getEntry("example.txt") != null
+} finally {
+    pomInputJar.close()
+}
+
+assert new File(basedir, "pom-input/pom.xml").text.startsWith("<?xml")

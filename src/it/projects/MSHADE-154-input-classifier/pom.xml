@@ -42,6 +42,7 @@ under the License.
   <modules>
     <module>dependency</module>
     <module>app</module>
+    <module>pom-input</module>
   </modules>
 
   <properties>
