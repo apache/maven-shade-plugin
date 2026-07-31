@@ -58,4 +58,17 @@ try {
     pomInputJar.close()
 }
 
+["sources", "tests", "test-sources"].each { classifier ->
+    File auxiliaryFile = new File(basedir, "pom-input/target/pom-input-1.0-shaded-${classifier}.jar")
+    assert auxiliaryFile.isFile()
+    assert !new File(basedir, "pom-input/target/pom-input-1.0-shaded-${classifier}.pom").exists()
+
+    JarFile auxiliaryJar = new JarFile(auxiliaryFile)
+    try {
+        assert auxiliaryJar.getEntry("example.txt") != null
+    } finally {
+        auxiliaryJar.close()
+    }
+}
+
 assert new File(basedir, "pom-input/pom.xml").text.startsWith("<?xml")

@@ -569,21 +569,21 @@ public class ShadeMojo extends AbstractMojo {
             }
 
             if (createSourcesJar) {
-                File file = shadedSourcesArtifactFile();
+                File file = shadedSourcesArtifactFile(inputArtifact);
                 if (file.isFile()) {
                     sourceArtifacts.add(file);
                 }
             }
 
             if (shadeTestJar) {
-                File file = shadedTestArtifactFile();
+                File file = shadedTestArtifactFile(inputArtifact);
                 if (file.isFile()) {
                     testArtifacts.add(file);
                 }
             }
 
             if (createTestSourcesJar) {
-                File file = shadedTestSourcesArtifactFile();
+                File file = shadedTestSourcesArtifactFile(inputArtifact);
                 if (file.isFile()) {
                     testSourceArtifacts.add(file);
                 }
@@ -607,9 +607,9 @@ public class ShadeMojo extends AbstractMojo {
         }
 
         File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier(inputArtifact);
-        File sourcesJar = shadedSourceArtifactFileWithClassifier();
-        File testJar = shadedTestArtifactFileWithClassifier();
-        File testSourcesJar = shadedTestSourceArtifactFileWithClassifier();
+        File sourcesJar = shadedSourceArtifactFileWithClassifier(inputArtifact);
+        File testJar = shadedTestArtifactFileWithClassifier(inputArtifact);
+        File testSourcesJar = shadedTestSourceArtifactFileWithClassifier(inputArtifact);
 
         // Now add our extra resources
         try {
@@ -690,7 +690,8 @@ public class ShadeMojo extends AbstractMojo {
 
                     // Also support the sources JAR
                     if (createSourcesJar) {
-                        finalFileName = finalName + "-sources.jar";
+                        finalFileName = finalName + "-sources."
+                                + inputArtifact.getArtifactHandler().getExtension();
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, sourcesJar);
                         sourcesJar = finalFile;
@@ -698,14 +699,16 @@ public class ShadeMojo extends AbstractMojo {
 
                     // Also support the test JAR
                     if (shadeTestJar) {
-                        finalFileName = finalName + "-tests.jar";
+                        finalFileName = finalName + "-tests."
+                                + inputArtifact.getArtifactHandler().getExtension();
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, testJar);
                         testJar = finalFile;
                     }
 
                     if (createTestSourcesJar) {
-                        finalFileName = finalName + "-test-sources.jar";
+                        finalFileName = finalName + "-test-sources."
+                                + inputArtifact.getArtifactHandler().getExtension();
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, testSourcesJar);
                         testSourcesJar = finalFile;
@@ -741,7 +744,7 @@ public class ShadeMojo extends AbstractMojo {
 
                     if (createSourcesJar) {
                         getLog().info("Replacing original source artifact with shaded source artifact.");
-                        File shadedSources = shadedSourcesArtifactFile();
+                        File shadedSources = shadedSourcesArtifactFile(inputArtifact);
 
                         replaceFile(shadedSources, sourcesJar);
 
@@ -750,7 +753,7 @@ public class ShadeMojo extends AbstractMojo {
 
                     if (shadeTestJar) {
                         getLog().info("Replacing original test artifact with shaded test artifact.");
-                        File shadedTests = shadedTestArtifactFile();
+                        File shadedTests = shadedTestArtifactFile(inputArtifact);
 
                         replaceFile(shadedTests, testJar);
 
@@ -759,7 +762,7 @@ public class ShadeMojo extends AbstractMojo {
 
                     if (createTestSourcesJar) {
                         getLog().info("Replacing original test source artifact " + "with shaded test source artifact.");
-                        File shadedTestSources = shadedTestSourcesArtifactFile();
+                        File shadedTestSources = shadedTestSourcesArtifactFile(inputArtifact);
 
                         replaceFile(shadedTestSources, testSourcesJar);
 
@@ -1321,36 +1324,33 @@ public class ShadeMojo extends AbstractMojo {
                 outputDirectory, name + "." + artifact.getArtifactHandler().getExtension());
     }
 
-    private File shadedSourceArtifactFileWithClassifier() {
-        return shadedArtifactFileWithClassifier("sources");
+    private File shadedSourceArtifactFileWithClassifier(Artifact artifact) {
+        return shadedArtifactFileWithClassifier(artifact, "sources");
     }
 
-    private File shadedTestSourceArtifactFileWithClassifier() {
-        return shadedArtifactFileWithClassifier("test-sources");
+    private File shadedTestSourceArtifactFileWithClassifier(Artifact artifact) {
+        return shadedArtifactFileWithClassifier(artifact, "test-sources");
     }
 
-    private File shadedArtifactFileWithClassifier(String classifier) {
-        Artifact artifact = project.getArtifact();
+    private File shadedArtifactFileWithClassifier(Artifact artifact, String classifier) {
         final String shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + shadedClassifierName + "-"
                 + classifier + "." + artifact.getArtifactHandler().getExtension();
         return new File(outputDirectory, shadedName);
     }
 
-    private File shadedTestArtifactFileWithClassifier() {
-        return shadedArtifactFileWithClassifier("tests");
+    private File shadedTestArtifactFileWithClassifier(Artifact artifact) {
+        return shadedArtifactFileWithClassifier(artifact, "tests");
     }
 
-    private File shadedSourcesArtifactFile() {
-        return shadedArtifactFile("sources");
+    private File shadedSourcesArtifactFile(Artifact artifact) {
+        return shadedArtifactFile(artifact, "sources");
     }
 
-    private File shadedTestSourcesArtifactFile() {
-        return shadedArtifactFile("test-sources");
+    private File shadedTestSourcesArtifactFile(Artifact artifact) {
+        return shadedArtifactFile(artifact, "test-sources");
     }
 
-    private File shadedArtifactFile(String classifier) {
-        Artifact artifact = project.getArtifact();
-
+    private File shadedArtifactFile(Artifact artifact, String classifier) {
         String shadedName;
 
         if (project.getBuild().getFinalName() != null) {
@@ -1364,8 +1364,8 @@ public class ShadeMojo extends AbstractMojo {
         return new File(outputDirectory, shadedName);
     }
 
-    private File shadedTestArtifactFile() {
-        return shadedArtifactFile("tests");
+    private File shadedTestArtifactFile(Artifact artifact) {
+        return shadedArtifactFile(artifact, "tests");
     }
 
     // We need to find the direct dependencies that have been included in the uber JAR so that we can modify the
