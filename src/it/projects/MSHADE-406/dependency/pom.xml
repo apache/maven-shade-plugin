@@ -31,6 +31,15 @@ under the License.
   <artifactId>dependency</artifactId>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/resources11</directory>
+        <targetPath>META-INF/versions/11</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

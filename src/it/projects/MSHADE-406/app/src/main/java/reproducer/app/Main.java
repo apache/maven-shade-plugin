@@ -18,10 +18,20 @@
  */
 package reproducer.app;
 
+import java.io.InputStream;
+import java.util.Properties;
+
 import reproducer.mr.Versioned;
 
 public final class Main {
-    public static void main(String[] args) {
-        System.out.println(Versioned.value());
+    public static void main(String[] args) throws Exception {
+        try (InputStream input = Versioned.class.getResourceAsStream("config.properties")) {
+            if (input == null) {
+                throw new IllegalStateException("Missing relocated resource");
+            }
+            Properties properties = new Properties();
+            properties.load(input);
+            System.out.println(Versioned.value() + ":" + properties.getProperty("value"));
+        }
     }
 }
