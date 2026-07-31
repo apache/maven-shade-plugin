@@ -27,9 +27,15 @@ try
     assert jar.getJarEntry( "reproducer/shaded/mr/Versioned.class" ) != null
     assert jar.getJarEntry(
             "META-INF/versions/11/reproducer/shaded/mr/Versioned.class" ) != null
+    assert jar.getJarEntry( "reproducer/shaded/mr/config.properties" ) != null
+    assert jar.getJarEntry(
+            "META-INF/versions/11/reproducer/shaded/mr/config.properties" ) != null
 
     assert jar.getJarEntry( "reproducer/mr/Versioned.class" ) == null
     assert jar.getJarEntry( "META-INF/versions/11/reproducer/mr/Versioned.class" ) == null
+    assert jar.getJarEntry( "reproducer/mr/config.properties" ) == null
+    assert jar.getJarEntry(
+            "META-INF/versions/11/reproducer/mr/config.properties" ) == null
 
     assert jar.getJarEntry( "reproducer/shaded/mr/Unused.class" ) == null
     assert jar.getJarEntry(
@@ -47,4 +53,4 @@ def process = new ProcessBuilder( java.absolutePath, "-jar", shadedJar.absoluteP
         .start()
 def output = process.inputStream.getText( "UTF-8" )
 assert process.waitFor() == 0 : output
-assert output.trim() == "java11"
+assert output.trim() == "java11:java11-resource"
