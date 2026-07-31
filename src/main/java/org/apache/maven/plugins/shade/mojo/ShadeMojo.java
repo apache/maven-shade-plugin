@@ -547,13 +547,15 @@ public class ShadeMojo extends AbstractMojo {
         Set<File> dependencyAnalysisArtifacts = new LinkedHashSet<>();
 
         Artifact inputArtifact = selectInputArtifact();
+        validateInputArtifactOutput(inputArtifact);
         ArtifactSelector artifactSelector = new ArtifactSelector(inputArtifact, artifactSet, shadedGroupFilter);
 
         if (artifactSelector.isSelected(inputArtifact) && !"pom".equals(inputArtifact.getType())) {
             if (invalidArtifact(inputArtifact)) {
                 if (isInputClassifierSet()) {
-                    throw new MojoExecutionException("Failed to create shaded artifact, attached artifact with classifier '"
-                            + inputClassifier.trim() + "' does not exist.");
+                    throw new MojoExecutionException(
+                            "Failed to create shaded artifact, attached artifact with classifier '"
+                                    + inputClassifier.trim() + "' does not exist.");
                 } else {
                     createErrorOutput();
                     throw new MojoExecutionException(
@@ -613,7 +615,7 @@ public class ShadeMojo extends AbstractMojo {
             getLog().info("No artifact matching artifactSet exclude " + pattern);
         }
 
-        File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier();
+        File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier(inputArtifact);
         File sourcesJar = shadedSourceArtifactFileWithClassifier();
         File testJar = shadedTestArtifactFileWithClassifier();
         File testSourcesJar = shadedTestSourceArtifactFileWithClassifier();
@@ -688,11 +690,9 @@ public class ShadeMojo extends AbstractMojo {
                 // rename the output file if a specific finalName is set
                 // but don't rename if the finalName is the <build><finalName>
                 // because this will be handled implicitly later
-                if (finalName != null
-                        && finalName.length() > 0 //
-                        && !finalName.equals(project.getBuild().getFinalName())) {
-                    String finalFileName = finalName + "."
-                            + project.getArtifact().getArtifactHandler().getExtension();
+                if (hasCustomFinalName()) {
+                    String finalFileName =
+                            finalName + "." + inputArtifact.getArtifactHandler().getExtension();
                     File finalFile = new File(outputDirectory, finalFileName);
                     replaceFile(finalFile, outputJar);
                     outputJar = finalFile;
@@ -725,8 +725,7 @@ public class ShadeMojo extends AbstractMojo {
 
                 if (shadedArtifactAttached) {
                     getLog().info("Attaching shaded artifact.");
-                    projectHelper.attachArtifact(
-                            project, project.getArtifact().getType(), shadedClassifierName, outputJar);
+                    projectHelper.attachArtifact(project, inputArtifact.getType(), shadedClassifierName, outputJar);
                     if (createSourcesJar) {
                         projectHelper.attachArtifact(
                                 project, "java-source", shadedClassifierName + "-sources", sourcesJar);
@@ -776,8 +775,7 @@ public class ShadeMojo extends AbstractMojo {
                     }
 
                     if (createTestSourcesJar) {
-                        getLog().info("Replacing original test source artifact "
-                                + "with shaded test source artifact.");
+                        getLog().info("Replacing original test source artifact " + "with shaded test source artifact.");
                         File shadedTestSources = shadedTestSourcesArtifactFile();
 
                         replaceFile(shadedTestSources, testSourcesJar);
@@ -830,6 +828,27 @@ public class ShadeMojo extends AbstractMojo {
 
     private boolean isInputClassifierSet() {
         return inputClassifier != null && !inputClassifier.trim().isEmpty();
+    }
+
+    void validateInputArtifactOutput(Artifact inputArtifact) throws MojoExecutionException {
+        if (outputFile != null || shadedArtifactAttached || hasCustomFinalName()) {
+            return;
+        }
+
+        Artifact mainArtifact = project.getArtifact();
+        String mainExtension = mainArtifact.getArtifactHandler().getExtension();
+        String inputExtension = inputArtifact.getArtifactHandler().getExtension();
+        if (!mainExtension.equals(inputExtension)) {
+            throw new MojoExecutionException("Cannot replace the project main artifact of type '"
+                    + mainArtifact.getType() + "' with the selected attached artifact of type '"
+                    + inputArtifact.getType() + "'. Configure shadedArtifactAttached=true or outputFile instead.");
+        }
+    }
+
+    private boolean hasCustomFinalName() {
+        return finalName != null
+                && !finalName.isEmpty()
+                && !finalName.equals(project.getBuild().getFinalName());
     }
 
     @SuppressWarnings("checkstyle:ParameterNumber")
@@ -1322,8 +1341,7 @@ public class ShadeMojo extends AbstractMojo {
         return new File(outputDirectory, project.getArtifact().getFile().getName());
     }
 
-    private File shadedArtifactFileWithClassifier() {
-        Artifact artifact = project.getArtifact();
+    private File shadedArtifactFileWithClassifier(Artifact artifact) {
         final String shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + shadedClassifierName + "."
                 + artifact.getArtifactHandler().getExtension();
         return new File(outputDirectory, shadedName);
@@ -1335,7 +1353,8 @@ public class ShadeMojo extends AbstractMojo {
         if (name == null || name.isEmpty()) {
             name = artifact.getArtifactId() + "-" + artifact.getVersion();
         }
-        return new File(outputDirectory, name + "." + artifact.getArtifactHandler().getExtension());
+        return new File(
+                outputDirectory, name + "." + artifact.getArtifactHandler().getExtension());
     }
 
     private File shadedSourceArtifactFileWithClassifier() {
