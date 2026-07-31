@@ -43,6 +43,7 @@ under the License.
     <module>dependency</module>
     <module>app</module>
     <module>pom-input</module>
+    <module>zip-input</module>
   </modules>
 
   <properties>

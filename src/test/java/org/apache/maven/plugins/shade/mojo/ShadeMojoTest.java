@@ -532,6 +532,7 @@ class ShadeMojoTest {
                 artifactSet, "includes", new LinkedHashSet<>(asList("org.slf4j:slf4j-api", "no.such:artifact")));
         setVariableValueToObject(artifactSet, "excludes", new LinkedHashSet<>(singletonList("no.such:other")));
         setVariableValueToObject(mojo, "project", mavenProject);
+        setVariableValueToObject(mojo, "artifactHandlerManager", artifactHandlerManager);
         setVariableValueToObject(mojo, "artifactSet", artifactSet);
         setVariableValueToObject(mojo, "shader", mock(Shader.class));
         setVariableValueToObject(mojo, "projectHelper", mock(MavenProjectHelper.class));

@@ -72,3 +72,28 @@ try {
 }
 
 assert new File(basedir, "pom-input/pom.xml").text.startsWith("<?xml")
+
+File zipInputFile = new File(basedir, "zip-input/target/zip-input-1.0-shaded.zip")
+assert zipInputFile.isFile()
+
+JarFile zipInput = new JarFile(zipInputFile)
+try {
+    assert zipInput.getEntry("example.txt") != null
+} finally {
+    zipInput.close()
+}
+
+["sources", "tests", "test-sources"].each { classifier ->
+    File auxiliaryFile = new File(basedir, "zip-input/target/zip-input-1.0-shaded-${classifier}.jar")
+    assert auxiliaryFile.isFile()
+    assert !new File(basedir, "zip-input/target/zip-input-1.0-shaded-${classifier}.zip").exists()
+
+    JarFile auxiliaryJar = new JarFile(auxiliaryFile)
+    try {
+        assert auxiliaryJar.getEntry("example.txt") != null
+    } finally {
+        auxiliaryJar.close()
+    }
+}
+
+assert new File(basedir, "zip-input/pom.xml").text.startsWith("<?xml")

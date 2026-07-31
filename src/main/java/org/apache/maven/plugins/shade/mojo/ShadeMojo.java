@@ -507,6 +507,7 @@ public class ShadeMojo extends AbstractMojo {
      * Used to look up the default classifier Maven associates with a dependency type (for example
      * {@code test-jar} implies classifier {@code tests}), so that the id computed for a POM-declared
      * dependency matches the id computed for the corresponding resolved artifact.
+     * Also provides the extensions of shaded auxiliary artifacts.
      */
     @Inject
     private ArtifactHandlerManager artifactHandlerManager;
@@ -578,21 +579,21 @@ public class ShadeMojo extends AbstractMojo {
             }
 
             if (createSourcesJar) {
-                File file = shadedSourcesArtifactFile(inputArtifact);
+                File file = shadedSourcesArtifactFile();
                 if (file.isFile()) {
                     sourceArtifacts.add(file);
                 }
             }
 
             if (shadeTestJar) {
-                File file = shadedTestArtifactFile(inputArtifact);
+                File file = shadedTestArtifactFile();
                 if (file.isFile()) {
                     testArtifacts.add(file);
                 }
             }
 
             if (createTestSourcesJar) {
-                File file = shadedTestSourcesArtifactFile(inputArtifact);
+                File file = shadedTestSourcesArtifactFile();
                 if (file.isFile()) {
                     testSourceArtifacts.add(file);
                 }
@@ -616,9 +617,9 @@ public class ShadeMojo extends AbstractMojo {
         }
 
         File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier(inputArtifact);
-        File sourcesJar = shadedSourceArtifactFileWithClassifier(inputArtifact);
-        File testJar = shadedTestArtifactFileWithClassifier(inputArtifact);
-        File testSourcesJar = shadedTestSourceArtifactFileWithClassifier(inputArtifact);
+        File sourcesJar = shadedSourceArtifactFileWithClassifier();
+        File testJar = shadedTestArtifactFileWithClassifier();
+        File testSourcesJar = shadedTestSourceArtifactFileWithClassifier();
 
         // Now add our extra resources
         try {
@@ -699,8 +700,7 @@ public class ShadeMojo extends AbstractMojo {
 
                     // Also support the sources JAR
                     if (createSourcesJar) {
-                        finalFileName = finalName + "-sources."
-                                + inputArtifact.getArtifactHandler().getExtension();
+                        finalFileName = finalName + "-sources." + artifactExtension("java-source");
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, sourcesJar);
                         sourcesJar = finalFile;
@@ -708,16 +708,14 @@ public class ShadeMojo extends AbstractMojo {
 
                     // Also support the test JAR
                     if (shadeTestJar) {
-                        finalFileName = finalName + "-tests."
-                                + inputArtifact.getArtifactHandler().getExtension();
+                        finalFileName = finalName + "-tests." + artifactExtension("test-jar");
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, testJar);
                         testJar = finalFile;
                     }
 
                     if (createTestSourcesJar) {
-                        finalFileName = finalName + "-test-sources."
-                                + inputArtifact.getArtifactHandler().getExtension();
+                        finalFileName = finalName + "-test-sources." + artifactExtension("java-source");
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, testSourcesJar);
                         testSourcesJar = finalFile;
@@ -761,7 +759,7 @@ public class ShadeMojo extends AbstractMojo {
 
                     if (createSourcesJar) {
                         getLog().info("Replacing original source artifact with shaded source artifact.");
-                        File shadedSources = shadedSourcesArtifactFile(inputArtifact);
+                        File shadedSources = shadedSourcesArtifactFile();
 
                         replaceFile(shadedSources, sourcesJar);
 
@@ -770,7 +768,7 @@ public class ShadeMojo extends AbstractMojo {
 
                     if (shadeTestJar) {
                         getLog().info("Replacing original test artifact with shaded test artifact.");
-                        File shadedTests = shadedTestArtifactFile(inputArtifact);
+                        File shadedTests = shadedTestArtifactFile();
 
                         replaceFile(shadedTests, testJar);
 
@@ -779,7 +777,7 @@ public class ShadeMojo extends AbstractMojo {
 
                     if (createTestSourcesJar) {
                         getLog().info("Replacing original test source artifact " + "with shaded test source artifact.");
-                        File shadedTestSources = shadedTestSourcesArtifactFile(inputArtifact);
+                        File shadedTestSources = shadedTestSourcesArtifactFile();
 
                         replaceFile(shadedTestSources, testSourcesJar);
 
@@ -1360,48 +1358,53 @@ public class ShadeMojo extends AbstractMojo {
                 outputDirectory, name + "." + artifact.getArtifactHandler().getExtension());
     }
 
-    private File shadedSourceArtifactFileWithClassifier(Artifact artifact) {
-        return shadedArtifactFileWithClassifier(artifact, "sources");
+    private File shadedSourceArtifactFileWithClassifier() {
+        return shadedArtifactFileWithClassifier("java-source", "sources");
     }
 
-    private File shadedTestSourceArtifactFileWithClassifier(Artifact artifact) {
-        return shadedArtifactFileWithClassifier(artifact, "test-sources");
+    private File shadedTestSourceArtifactFileWithClassifier() {
+        return shadedArtifactFileWithClassifier("java-source", "test-sources");
     }
 
-    private File shadedArtifactFileWithClassifier(Artifact artifact, String classifier) {
+    private File shadedArtifactFileWithClassifier(String type, String classifier) {
+        Artifact artifact = project.getArtifact();
         final String shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + shadedClassifierName + "-"
-                + classifier + "." + artifact.getArtifactHandler().getExtension();
+                + classifier + "." + artifactExtension(type);
         return new File(outputDirectory, shadedName);
     }
 
-    private File shadedTestArtifactFileWithClassifier(Artifact artifact) {
-        return shadedArtifactFileWithClassifier(artifact, "tests");
+    private File shadedTestArtifactFileWithClassifier() {
+        return shadedArtifactFileWithClassifier("test-jar", "tests");
     }
 
-    private File shadedSourcesArtifactFile(Artifact artifact) {
-        return shadedArtifactFile(artifact, "sources");
+    private File shadedSourcesArtifactFile() {
+        return shadedArtifactFile("java-source", "sources");
     }
 
-    private File shadedTestSourcesArtifactFile(Artifact artifact) {
-        return shadedArtifactFile(artifact, "test-sources");
+    private File shadedTestSourcesArtifactFile() {
+        return shadedArtifactFile("java-source", "test-sources");
     }
 
-    private File shadedArtifactFile(Artifact artifact, String classifier) {
+    private File shadedArtifactFile(String type, String classifier) {
+        Artifact artifact = project.getArtifact();
         String shadedName;
 
         if (project.getBuild().getFinalName() != null) {
-            shadedName = project.getBuild().getFinalName() + "-" + classifier + "."
-                    + artifact.getArtifactHandler().getExtension();
+            shadedName = project.getBuild().getFinalName() + "-" + classifier + "." + artifactExtension(type);
         } else {
-            shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + classifier + "."
-                    + artifact.getArtifactHandler().getExtension();
+            shadedName =
+                    shadedArtifactId + "-" + artifact.getVersion() + "-" + classifier + "." + artifactExtension(type);
         }
 
         return new File(outputDirectory, shadedName);
     }
 
-    private File shadedTestArtifactFile(Artifact artifact) {
-        return shadedArtifactFile(artifact, "tests");
+    private File shadedTestArtifactFile() {
+        return shadedArtifactFile("test-jar", "tests");
+    }
+
+    private String artifactExtension(String type) {
+        return artifactHandlerManager.getArtifactHandler(type).getExtension();
     }
 
     // We need to find the direct dependencies that have been included in the uber JAR so that we can modify the
