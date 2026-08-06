@@ -1,35 +1,29 @@
- ------
- Using an other Shader Implementation
- ------
- Olivier Lamy
- ------
- 2012-03-13
- ------
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
 
-~~ Licensed to the Apache Software Foundation (ASF) under one
-~~ or more contributor license agreements.  See the NOTICE file
-~~ distributed with this work for additional information
-~~ regarding copyright ownership.  The ASF licenses this file
-~~ to you under the Apache License, Version 2.0 (the
-~~ "License"); you may not use this file except in compliance
-~~ with the License.  You may obtain a copy of the License at
-~~
-~~   http://www.apache.org/licenses/LICENSE-2.0
-~~
-~~ Unless required by applicable law or agreed to in writing,
-~~ software distributed under the License is distributed on an
-~~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-~~ KIND, either express or implied.  See the License for the
-~~ specific language governing permissions and limitations
-~~ under the License.
+http://www.apache.org/licenses/LICENSE-2.0
 
-Using your own Shader implementation
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
 
-  By default, the plugin provide a DefaultShader implementation but with version 1.6 you can use your own implementation.
+# Using your own Shader implementation
 
-  Create a standard Maven project with your implementation.
+By default, the plugin provide a DefaultShader implementation but with version 1.6 you can use your own implementation.
 
-+-----
+Create a standard Maven project with your implementation.
+
+```unknown
 
 Dependency to Plexus annotations
 
@@ -62,11 +56,11 @@ public class MockShader
           </execution>
         </executions>
       </plugin>
-+-----
+```
 
-  Assuming your project has coordinate org.foo.bar:wine:1.0, you must add it as a dependency of the shade plugin.
+Assuming your project has coordinate org.foo.bar:wine:1.0, you must add it as a dependency of the shade plugin.
 
-+-----
+```xml
 <project>
   ...
   <build>
@@ -98,6 +92,6 @@ public class MockShader
   </build>
   ...
 </project>
-+-----
+```
 
-  Now the mojo will use your own implementation.
+Now the mojo will use your own implementation.

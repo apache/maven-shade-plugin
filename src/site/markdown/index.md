@@ -1,74 +1,45 @@
- ------
- Introduction
- ------
- Mauro Talevi
- ------
- 2013-07-22
- ------
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
 
-~~ Licensed to the Apache Software Foundation (ASF) under one
-~~ or more contributor license agreements.  See the NOTICE file
-~~ distributed with this work for additional information
-~~ regarding copyright ownership.  The ASF licenses this file
-~~ to you under the Apache License, Version 2.0 (the
-~~ "License"); you may not use this file except in compliance
-~~ with the License.  You may obtain a copy of the License at
-~~
-~~   http://www.apache.org/licenses/LICENSE-2.0
-~~
-~~ Unless required by applicable law or agreed to in writing,
-~~ software distributed under the License is distributed on an
-~~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-~~ KIND, either express or implied.  See the License for the
-~~ specific language governing permissions and limitations
-~~ under the License.
+http://www.apache.org/licenses/LICENSE-2.0
 
-${project.name}
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
 
- This plugin provides the capability to package the artifact in an uber-jar, including its dependencies and
- to <shade> - i.e. rename - the packages of some of the dependencies.
+# Apache Maven Shade Plugin
+This plugin provides the capability to package the artifact in an uber-jar, including its dependencies and to _shade_ - i.e. rename - the packages of some of the dependencies.
 
-* Goals Overview
+## Goals Overview
 
-  The Shade Plugin has a single goal:
+The Shade Plugin has a single goal:
 
-  * {{{./shade-mojo.html}shade:shade}} is bound to the <<<package>>> phase and
-  is used to create a shaded jar.
+- [shade:shade](./shade-mojo.html) is bound to the `package` phase and is used to create a shaded jar.
+## Usage
 
-* Usage
+General instructions on how to use the Shade Plugin can be found on the [usage page](./usage.html). Some more specific use cases are described in the examples given below.
 
-  General instructions on how to use the Shade Plugin can be found on the {{{./usage.html}usage page}}. Some more
-  specific use cases are described in the examples given below.
+In case you still have questions regarding the plugin's usage, please feel free to contact the [user mailing list](./mailing-lists.html). The posts to the mailing list are archived and could already contain the answer to your question as part of an older thread. Hence, it is also worth browsing/searching the [mail archive](./mail-lists.html).
 
-  In case you still have questions regarding the plugin's usage, please feel
-  free to contact the {{{./mailing-lists.html}user mailing list}}. The posts to the mailing list are archived and could
-  already contain the answer to your question as part of an older thread. Hence, it is also worth browsing/searching
-  the {{{./mail-lists.html}mail archive}}.
+If you feel like the plugin is missing a feature or has a defect, you can fill a feature request or bug report in our [issue tracker](./issue-management.html). When creating a new issue, please provide a comprehensive description of your concern. Especially for fixing bugs it is crucial that the developers can reproduce your problem. For this reason, entire debug logs, POMs or most preferably little demo projects attached to the issue are very much appreciated. Of course, patches are welcome, too. Contributors can check out the project from our [source repository](./scm.html) and will find supplementary information in the [guide to helping with Maven](http://maven.apache.org/guides/development/guide-helping.html).
 
-  If you feel like the plugin is missing a feature or has a defect, you can fill a feature request or bug report in our
-  {{{./issue-management.html}issue tracker}}. When creating a new issue, please provide a comprehensive description of your
-  concern. Especially for fixing bugs it is crucial that the developers can reproduce your problem. For this reason,
-  entire debug logs, POMs or most preferably little demo projects attached to the issue are very much appreciated.
-  Of course, patches are welcome, too. Contributors can check out the project from our
-  {{{./scm.html}source repository}} and will find supplementary information in the
-  {{{http://maven.apache.org/guides/development/guide-helping.html}guide to helping with Maven}}.
+## Examples
 
+To provide you with better understanding on some usages of the Shade Plugin, you can take a look into the following examples:
 
-* Examples
-
-  To provide you with better understanding on some usages of the Shade Plugin,
-  you can take a look into the following examples:
-
-  * {{{./examples/includes-excludes.html}Selecting Contents for Uber JAR}}
-
-  * {{{./examples/class-relocation.html}Relocating Classes}}
-
-  * {{{./examples/attached-artifact.html}Attaching the Shaded Artifact}}
-
-  * {{{./examples/executable-jar.html}Executable JAR}}
-
-  * {{{./examples/resource-transformers.html}Resource Transformers}}
-
-  * {{{./examples/use-shader-other-impl.html}Using another Shader implementation}}
-
-  []
+- [Selecting Contents for Uber JAR](./examples/includes-excludes.html)
+- [Relocating Classes](./examples/class-relocation.html)
+- [Attaching the Shaded Artifact](./examples/attached-artifact.html)
+- [Executable JAR](./examples/executable-jar.html)
+- [Resource Transformers](./examples/resource-transformers.html)
+- [Using another Shader implementation](./examples/use-shader-other-impl.html)
