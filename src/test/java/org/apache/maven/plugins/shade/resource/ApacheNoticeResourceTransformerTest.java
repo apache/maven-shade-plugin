@@ -25,12 +25,12 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test for {@link ApacheNoticeResourceTransformer}.
@@ -50,7 +50,7 @@ public class ApacheNoticeResourceTransformerTest {
         Locale.setDefault(new Locale("tr"));
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         transformer = new ApacheNoticeResourceTransformer();
     }

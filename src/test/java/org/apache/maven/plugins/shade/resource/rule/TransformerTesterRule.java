@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,46 +41,47 @@ import org.codehaus.plexus.component.configurator.converters.lookup.DefaultConve
 import org.codehaus.plexus.component.configurator.expression.DefaultExpressionEvaluator;
 import org.codehaus.plexus.configuration.DefaultPlexusConfiguration;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.InvocationInterceptor;
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class TransformerTesterRule implements TestRule {
+public class TransformerTesterRule implements InvocationInterceptor {
     @Override
-    public Statement apply(Statement base, Description description) {
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                TransformerTest spec = description.getAnnotation(TransformerTest.class);
-                if (spec == null) {
-                    base.evaluate();
-                    return;
-                }
+    public void interceptTestMethod(
+            Invocation<Void> invocation,
+            ReflectiveInvocationContext<Method> invocationContext,
+            ExtensionContext extensionContext)
+            throws Throwable {
+        TransformerTest spec = invocationContext.getExecutable().getAnnotation(TransformerTest.class);
+        if (spec == null) {
+            invocation.proceed();
+            return;
+        }
 
-                Map<String, String> jar;
-                try {
-                    ReproducibleResourceTransformer transformer = createTransformer(spec);
-                    visit(spec, transformer);
-                    jar = captureOutput(transformer);
-                } catch (Exception ex) {
-                    if (Exception.class.isAssignableFrom(spec.expectedException())) {
-                        assertTrue(
-                                ex.getClass().getName(),
-                                spec.expectedException().isAssignableFrom(ex.getClass()));
-                        return;
-                    } else {
-                        throw ex;
-                    }
-                }
-                asserts(spec, jar);
+        Map<String, String> jar;
+        try {
+            ReproducibleResourceTransformer transformer = createTransformer(spec);
+            visit(spec, transformer);
+            jar = captureOutput(transformer);
+        } catch (Exception ex) {
+            if (Exception.class.isAssignableFrom(spec.expectedException())) {
+                assertTrue(
+                        spec.expectedException().isAssignableFrom(ex.getClass()),
+                        ex.getClass().getName());
+                invocation.proceed();
+                return;
+            } else {
+                throw ex;
             }
-        };
+        }
+        asserts(spec, jar);
+        invocation.proceed();
     }
 
     private void asserts(TransformerTest spec, Map<String, String> jar) {
@@ -88,10 +90,10 @@ public class TransformerTesterRule implements TestRule {
         }
         for (final Resource expected : spec.expected()) {
             final String content = jar.get(expected.path());
-            assertNotNull(expected.path(), content);
+            assertNotNull(content, expected.path());
             assertTrue(
-                    expected.path() + ", expected=" + expected.content() + ", actual=" + content,
-                    content.replace(System.lineSeparator(), "\n").matches(expected.content()));
+                    content.replace(System.lineSeparator(), "\n").matches(expected.content()),
+                    expected.path() + ", expected=" + expected.content() + ", actual=" + content);
         }
     }
 
