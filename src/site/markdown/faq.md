@@ -1,4 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
+---
+title: Frequently Asked Questions
+---
+
 <!--
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -18,26 +21,20 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-<faqs xmlns="http://maven.apache.org/FML/1.0.1"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/FML/1.0.1 http://maven.apache.org/xsd/fml-1.0.1.xsd"
-  id="FAQ" 
-  title="Frequently Asked Questions">
- <part id="general">
-   <faq id="two-executions">
-     <question>Why Does My Second Shade Include The Results Of The First Execution?</question>
-     <answer>
-       <p>
-       By default, shade replaces with original jar with the result of shading.
-       So, when a <code>pom.xml</code> includes two shades, 
-       the second shade execution will (by default) start from the result of the 
-       first shade execution.
-       </p><p>
-       If you're looking for two independent shades then read 
-       in <a href='shade-mojo.html'>shade:shade</a> about
-       ways choose a different name for your first shade.
-       </p>
-     </answer>
-   </faq>
- </part>
-</faqs>
+<a name="top"></a>
+
+# Frequently Asked Questions
+
+1. [Why Does My Second Shade Include The Results Of The First Execution?](#two-executions)
+
+<a name="two-executions"></a>
+
+### Why Does My Second Shade Include The Results Of The First Execution?
+
+By default, shade replaces with original jar with the result of shading.
+So, when a `pom.xml` includes two shades, the second shade execution will
+(by default) start from the result of the first shade execution.
+
+If you're looking for two independent shades then read in
+[shade:shade](shade-mojo.html) about ways choose a different name for your
+first shade.
