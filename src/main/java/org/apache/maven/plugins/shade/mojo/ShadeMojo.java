@@ -1230,8 +1230,17 @@ public class ShadeMojo extends AbstractMojo {
 
                     parentFile = parentFile.getCanonicalFile();
 
-                    String relPath = RelativizePath.convertToRelativePath(parentFile, f);
-                    model.getParent().setRelativePath(relPath);
+                    File actualParentFile =
+                            project.getParent() != null ? project.getParent().getFile() : null;
+                    if (parentFileIsTheConfiguredRelativePath(parentFile, actualParentFile)) {
+                        String relPath = RelativizePath.convertToRelativePath(parentFile, f);
+                        model.getParent().setRelativePath(relPath);
+                    } else {
+                        // ../pom.xml is a different GAV (or missing). An empty
+                        // relativePath stops Maven 4 from walking into that POM
+                        // and reporting a false parent cycle.
+                        model.getParent().setRelativePath("");
+                    }
                 }
 
                 try {
@@ -1257,6 +1266,23 @@ public class ShadeMojo extends AbstractMojo {
             }
 
             project.setFile(dependencyReducedPomLocation);
+        }
+    }
+
+    /**
+     * Keep a local relativePath only when it really points at the parent POM.
+     * Otherwise Maven 4 treats the default {@code ..} as the parent and reports
+     * a cycle against a sibling POM that happens to share the same parent GAV.
+     */
+    static boolean parentFileIsTheConfiguredRelativePath(File configured, File actual) {
+        try {
+            return actual != null
+                    && configured != null
+                    && actual.isFile()
+                    && configured.isFile()
+                    && actual.getCanonicalFile().equals(configured.getCanonicalFile());
+        } catch (IOException e) {
+            return false;
         }
     }
 
