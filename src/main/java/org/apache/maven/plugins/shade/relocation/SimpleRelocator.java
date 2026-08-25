@@ -36,9 +36,12 @@ import org.slf4j.LoggerFactory;
 public class SimpleRelocator implements Relocator {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleRelocator.class);
     /**
-     * Match dot, slash or space at end of string
+     * Matches <ul>
+     *     <li>either dot,</li>
+     *     <li>or space at the end of a string, where string does NOT end with operator (generic type, binary, trinary).</li>
+     * </ul>
      */
-    private static final Pattern RX_ENDS_WITH_DOT_SLASH_SPACE = Pattern.compile("[./ ]$");
+    private static final Pattern RX_ENDS_WITH_DOT_OR_SPACE_WITHOUT_OPERATOR = Pattern.compile("(\\.|[^<>?:+\\-*/^|&] )$");
 
     /**
      * Match <ul>
@@ -50,7 +53,7 @@ public class SimpleRelocator implements Relocator {
      * at end of string
      */
     private static final Pattern RX_ENDS_WITH_JAVA_KEYWORD = Pattern.compile(
-            "\\b(import|package|public|protected|private|static|final|synchronized|abstract|volatile|extends|implements|throws) $"
+            "\\b(import|package|public|protected|private|static|final|synchronized|abstract|volatile|extends|implements|instanceof|throws|throw|return|new|case) $"
                     + "|"
                     + "\\{@link( \\*)* $"
                     + "|"
@@ -320,7 +323,7 @@ public class SimpleRelocator implements Relocator {
                 isFirstSnippet = false;
             } else {
                 String previousSnippetOneLine = previousSnippet.replaceAll("\\s+", " ");
-                boolean afterDotSlashSpace = RX_ENDS_WITH_DOT_SLASH_SPACE
+                boolean afterDotSlashSpace = RX_ENDS_WITH_DOT_OR_SPACE_WITHOUT_OPERATOR
                         .matcher(previousSnippetOneLine)
                         .find();
                 boolean afterJavaKeyWord = RX_ENDS_WITH_JAVA_KEYWORD
