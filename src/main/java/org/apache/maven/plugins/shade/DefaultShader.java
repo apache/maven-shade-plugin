@@ -141,6 +141,8 @@ public class DefaultShader implements Shader {
         Set<String> resources = new HashSet<>();
 
         ManifestResourceTransformer manifestTransformer = null;
+        String forceAutomaticModuleName = null;
+        boolean forceMultiRelease = false;
         ServicesResourceTransformer servicesTransformer = null;
         List<ResourceTransformer> transformers = new ArrayList<>(shadeRequest.getResourceTransformers());
         for (Iterator<ResourceTransformer> it = transformers.iterator(); it.hasNext(); ) {
@@ -167,7 +169,7 @@ public class DefaultShader implements Shader {
                 if (manifestTransformer == null) {
                     manifestTransformer = new ManifestResourceTransformer();
                 }
-                manifestTransformer.setForceAutomaticModuleName(moduleInfoProcessor.getPrimaryModuleName());
+                forceAutomaticModuleName = moduleInfoProcessor.getPrimaryModuleName();
             }
         }
 
@@ -185,7 +187,7 @@ public class DefaultShader implements Shader {
                                 + multiReleaseInputs.get(0) + " is a multi-release JAR.");
                     }
                 }
-                manifestTransformer.setForceMultiRelease(true);
+                forceMultiRelease = true;
             }
         }
 
@@ -196,7 +198,8 @@ public class DefaultShader implements Shader {
 
         try (JarOutputStream out =
                 new JarOutputStream(new BufferedOutputStream(new CachingOutputStream(shadeRequest.getUberJar())))) {
-            goThroughAllJarEntriesForManifestTransformer(shadeRequest, resources, manifestTransformer, out);
+            goThroughAllJarEntriesForManifestTransformer(
+                    shadeRequest, resources, manifestTransformer, forceMultiRelease, forceAutomaticModuleName, out);
 
             // CHECKSTYLE_OFF: MagicNumber
             Map<String, HashSet<File>> duplicates = new HashMap<>();
@@ -571,6 +574,8 @@ public class DefaultShader implements Shader {
             ShadeRequest shadeRequest,
             Set<String> resources,
             ManifestResourceTransformer manifestTransformer,
+            boolean forceMultiRelease,
+            String forceAutomaticModuleName,
             JarOutputStream jos)
             throws IOException {
         if (manifestTransformer != null) {
@@ -605,6 +610,8 @@ public class DefaultShader implements Shader {
                 }
             }
             if (manifestTransformer.hasTransformedResource()) {
+                manifestTransformer.setForceMultiRelease(forceMultiRelease);
+                manifestTransformer.setForceAutomaticModuleName(forceAutomaticModuleName);
                 manifestTransformer.modifyOutputStream(jos);
             }
         }
