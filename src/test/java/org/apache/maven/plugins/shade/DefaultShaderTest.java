@@ -1233,6 +1233,9 @@ public class DefaultShaderTest {
                 new SimpleRelocator("app.versioned", "hidden.app.versioned", null, null),
                 new SimpleRelocator("dep", "hidden.dep", null, null)));
         request.setResourceTransformers(Collections.emptyList());
+        ModuleInfoConfiguration moduleInfo = new ModuleInfoConfiguration();
+        moduleInfo.setModuleName("shaded.app.module");
+        request.setModuleInfoConfiguration(moduleInfo);
         request.setUberJar(shadedFile);
 
         newShader().shade(request);
@@ -1240,19 +1243,20 @@ public class DefaultShaderTest {
         try (JarFile shadedJar = new JarFile(shadedFile)) {
             assertEquals("true", shadedJar.getManifest().getMainAttributes().getValue("Multi-Release"));
             assertEquals(
-                    "app.module", shadedJar.getManifest().getMainAttributes().getValue("Automatic-Module-Name"));
+                    "shaded.app.module",
+                    shadedJar.getManifest().getMainAttributes().getValue("Automatic-Module-Name"));
             assertEquals(
                     Collections.singleton("java.base"),
-                    readModuleRequirements(shadedJar, "module-info.class", "app.module"));
+                    readModuleRequirements(shadedJar, "module-info.class", "shaded.app.module"));
             assertEquals(
                     new LinkedHashSet<>(Arrays.asList("java.base", "jdk.unsupported")),
-                    readModuleRequirements(shadedJar, "META-INF/versions/17/module-info.class", "app.module"));
+                    readModuleRequirements(shadedJar, "META-INF/versions/17/module-info.class", "shaded.app.module"));
             Set<String> expectedPackages =
                     new LinkedHashSet<>(Arrays.asList("app/api", "hidden/app/versioned", "hidden/dep/api"));
-            assertEquals(expectedPackages, readModulePackages(shadedJar, "module-info.class", "app.module"));
+            assertEquals(expectedPackages, readModulePackages(shadedJar, "module-info.class", "shaded.app.module"));
             assertEquals(
                     expectedPackages,
-                    readModulePackages(shadedJar, "META-INF/versions/17/module-info.class", "app.module"));
+                    readModulePackages(shadedJar, "META-INF/versions/17/module-info.class", "shaded.app.module"));
             assertTrue(shadedJar.getJarEntry("META-INF/versions/17/hidden/app/versioned/Feature.class") != null);
             assertTrue(shadedJar.getJarEntry("hidden/dep/api/Dependency.class") != null);
             assertTrue(shadedJar.getJarEntry("META-INF/versions/17/app/versioned/Feature.class") == null);

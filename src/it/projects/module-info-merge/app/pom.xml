@@ -55,6 +55,7 @@ under the License.
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <moduleInfoMode>merge</moduleInfoMode>
               <moduleInfo>
+                <moduleName>shaded.app.module</moduleName>
                 <publicBoundary>merge</publicBoundary>
                 <additionalRequires>
                   <requirement>

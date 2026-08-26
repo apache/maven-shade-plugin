@@ -18,6 +18,8 @@
  */
 package org.apache.maven.plugins.shade;
 
+import javax.lang.model.SourceVersion;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,8 @@ import java.util.Set;
  * Additional choices used while constructing the module descriptor for amalgamated shaded contents.
  */
 public class ModuleInfoConfiguration {
+    private String moduleName;
+
     private String publicBoundary = ModuleInfoPublicBoundary.PRIMARY.name();
 
     private Map<String, String> analysisJdkToolchain = Collections.emptyMap();
@@ -40,6 +44,26 @@ public class ModuleInfoConfiguration {
     private Set<String> additionalUses = Collections.emptySet();
 
     private Set<String> dynamicUses = Collections.emptySet();
+
+    public String getModuleName() {
+        return moduleName;
+    }
+
+    public void setModuleName(String moduleName) {
+        this.moduleName = moduleName;
+    }
+
+    static boolean isValidModuleName(String moduleName) {
+        if (moduleName == null || !SourceVersion.isName(moduleName)) {
+            return false;
+        }
+        for (String identifier : moduleName.split("[.]", -1)) {
+            if ("_".equals(identifier)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     public ModuleInfoPublicBoundary getPublicBoundary() {
         return ModuleInfoPublicBoundary.fromString(publicBoundary);

@@ -169,7 +169,7 @@ public class DefaultShader implements Shader {
                 if (manifestTransformer == null) {
                     manifestTransformer = new ManifestResourceTransformer();
                 }
-                forceAutomaticModuleName = moduleInfoProcessor.getPrimaryModuleName();
+                forceAutomaticModuleName = moduleInfoProcessor.getOutputModuleName();
             }
         }
 

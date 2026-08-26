@@ -35,6 +35,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.junit.jupiter.api.Assumptions;
@@ -51,6 +52,7 @@ import org.slf4j.Logger;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -58,6 +60,49 @@ import static org.mockito.Mockito.when;
 public class ModuleInfoConfigurationTest {
     @TempDir
     File temporaryFolder;
+
+    @Test
+    public void overridesOutputModuleNameAndRemovesOriginalSelfRequirement() throws Exception {
+        File primary = primaryModule("dep.module");
+        File dependency = newFile("dependency.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(dependency.toPath()))) {
+            writeDescriptor(output, "dep.module", new String[] {"app.module"}, null);
+        }
+
+        ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
+        configuration.setModuleName("shaded.app.module");
+        File shadedFile = newFile("shaded.jar");
+        ShadeRequest request = moduleRequest(primary, shadedFile, dependency);
+        request.setModuleInfoConfiguration(configuration);
+
+        shade(request);
+
+        try (JarFile shadedJar = new JarFile(shadedFile)) {
+            assertEquals("shaded.app.module", readModuleName(shadedJar));
+            assertEquals(
+                    "shaded.app.module",
+                    shadedJar.getManifest().getMainAttributes().getValue("Automatic-Module-Name"));
+            Set<String> requirements =
+                    readRequirementAccess(shadedJar, "shaded.app.module").keySet();
+            assertFalse(requirements.contains("app.module"));
+            assertFalse(requirements.contains("dep.module"));
+        }
+    }
+
+    @Test
+    public void rejectsInvalidOutputModuleNames() throws Exception {
+        File primary = primaryModule();
+        int index = 0;
+        for (String invalid : Arrays.asList("", "bad-name", "int.module", "_")) {
+            ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
+            configuration.setModuleName(invalid);
+            ShadeRequest request = moduleRequest(primary, newFile("invalid-" + index++ + ".jar"));
+            request.setModuleInfoConfiguration(configuration);
+
+            MojoExecutionException exception = assertThrows(MojoExecutionException.class, () -> shade(request));
+            assertTrue(exception.getMessage().contains("Invalid moduleInfo.moduleName '" + invalid + "'"));
+        }
+    }
 
     @Test
     public void mergesExplicitAndAutomaticModuleBoundariesWhenRequested() throws Exception {
@@ -513,8 +558,13 @@ public class ModuleInfoConfigurationTest {
     }
 
     private static Map<String, Integer> readRequirementAccess(JarFile jar) throws IOException {
+        return readRequirementAccess(jar, "app.module");
+    }
+
+    private static Map<String, Integer> readRequirementAccess(JarFile jar, String expectedModuleName)
+            throws IOException {
         Map<String, Integer> requirements = new HashMap<>();
-        readModule(jar, new ModuleVisitor(Opcodes.ASM9) {
+        readModule(jar, expectedModuleName, new ModuleVisitor(Opcodes.ASM9) {
             @Override
             public void visitRequire(String module, int access, String version) {
                 requirements.put(module, access);
@@ -524,10 +574,19 @@ public class ModuleInfoConfigurationTest {
     }
 
     private static void readModule(JarFile jar, ModuleVisitor visitor) throws IOException {
-        readModule(jar, visitor, null);
+        readModule(jar, "app.module", visitor, null);
     }
 
     private static void readModule(JarFile jar, ModuleVisitor visitor, int[] moduleAccess) throws IOException {
+        readModule(jar, "app.module", visitor, moduleAccess);
+    }
+
+    private static void readModule(JarFile jar, String expectedModuleName, ModuleVisitor visitor) throws IOException {
+        readModule(jar, expectedModuleName, visitor, null);
+    }
+
+    private static void readModule(JarFile jar, String expectedModuleName, ModuleVisitor visitor, int[] moduleAccess)
+            throws IOException {
         JarEntry entry = requireNonNull(jar.getJarEntry("module-info.class"), "module-info.class in " + jar.getName());
         try (InputStream input = jar.getInputStream(entry)) {
             new ClassReader(input)
@@ -535,7 +594,7 @@ public class ModuleInfoConfigurationTest {
                             new ClassVisitor(Opcodes.ASM9) {
                                 @Override
                                 public ModuleVisitor visitModule(String name, int access, String version) {
-                                    assertEquals("app.module", name);
+                                    assertEquals(expectedModuleName, name);
                                     if (moduleAccess != null) {
                                         moduleAccess[0] = access;
                                     }
@@ -544,6 +603,24 @@ public class ModuleInfoConfigurationTest {
                             },
                             0);
         }
+    }
+
+    private static String readModuleName(JarFile jar) throws IOException {
+        String[] moduleName = new String[1];
+        JarEntry entry = requireNonNull(jar.getJarEntry("module-info.class"), "module-info.class in " + jar.getName());
+        try (InputStream input = jar.getInputStream(entry)) {
+            new ClassReader(input)
+                    .accept(
+                            new ClassVisitor(Opcodes.ASM9) {
+                                @Override
+                                public ModuleVisitor visitModule(String name, int access, String version) {
+                                    moduleName[0] = name;
+                                    return null;
+                                }
+                            },
+                            0);
+        }
+        return moduleName[0];
     }
 
     private enum Directive {

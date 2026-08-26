@@ -27,7 +27,7 @@ under the License.
 # Merging Java Module Descriptors
 
 By default, the plugin discards every root and versioned `module-info.class` from the inputs. This preserves the
-historical behavior: an unmodified descriptor would describe the original artifact rather than the contents of the
+historical behavior: an unmodified descriptor describes the original artifact rather than the contents of the
 shaded JAR.
 
 Modular projects can opt into descriptor merging:
@@ -50,6 +50,7 @@ Modular projects can opt into descriptor merging:
             <configuration>
               <moduleInfoMode>merge</moduleInfoMode>
               <moduleInfo>
+                <moduleName>com.example.shaded.application</moduleName>
                 <publicBoundary>merge</publicBoundary>
                 <analysisJdkToolchain>
                   <version>21</version>
@@ -72,12 +73,14 @@ Modular projects can opt into descriptor merging:
 ```
 
 Merge mode models the shaded JAR as if the retained, relocated source files had been compiled together as one module.
-The primary artifact remains authoritative for the module name, version, main class, and, by default, the public
-boundary. Requirements on modules embedded in the shaded JAR are removed. The primary descriptor's external
-requirements keep their modifiers. An embedded descriptor's external `requires transitive` is changed to an ordinary
-requirement: embedding its implementation does not make its former API part of the primary module's API. Embedded
-`static` requirements remain static. Uses and providers are combined. Package and class names in all retained
-directives follow the configured relocations.
+The primary artifact supplies the default module name and remains authoritative for the version, main class, and, by
+default, the public boundary. `moduleInfo.moduleName` can replace the module name in every generated descriptor and in
+the `Automatic-Module-Name` manifest entry; when omitted, the primary module name is preserved. Requirements on
+modules embedded in the shaded JAR are removed. The primary descriptor's external requirements keep their modifiers.
+An embedded descriptor's external `requires transitive` is changed to an ordinary requirement: embedding its
+implementation does not make its former API part of the primary module's API. Embedded `static` requirements remain
+static. Uses and providers are combined. Package and class names in all retained directives follow the configured
+relocations. The configured module name is not relocated.
 
 `moduleInfo.publicBoundary` controls the public boundary:
 
@@ -174,12 +177,12 @@ valid.
 
 Raising the floor does not raise the bytecode level of ordinary classes. Instead, no explicit descriptor is effective
 before that release. On those earlier Java releases the output is an automatic module. The plugin writes
-`Automatic-Module-Name` using the primary module name so that the name stays stable, and writes a detailed warning
-containing the original and new floors plus every provider or boundary change that caused the change. Providers whose
-classes exist in the JAR root are also exposed through `META-INF/services` so service loading continues to work while
-the JAR is automatic. A provider that exists only in a versioned directory below the new floor cannot be bridged because
-`META-INF/services` cannot be versioned. The build fails with the provider and affected releases instead of silently
-dropping it.
+`Automatic-Module-Name` using the effective output module name so that the name stays stable, and writes a detailed
+warning containing the original and new floors plus every provider or boundary change that caused the change.
+Providers whose classes exist in the JAR root are also exposed through `META-INF/services` so service loading continues
+to work while the JAR is automatic. A provider that exists only in a versioned directory below the new floor cannot be
+bridged because `META-INF/services` cannot be versioned. The build fails with the provider and affected releases instead
+of silently dropping it.
 
 If the primary descriptor itself requires a later class-file release, it is likewise placed in that versioned release
 directory. This lets the same JAR remain an automatic module on earlier Java releases instead of failing while reading

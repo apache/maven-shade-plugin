@@ -342,8 +342,9 @@ public class ShadeMojo extends AbstractMojo {
 
     /**
      * Controls how compiled Java module descriptors are handled. The {@code discard} mode preserves the historical
-     * behavior. The {@code merge} mode retains the primary artifact's module identity and public boundary while
-     * incorporating requirements and service declarations from embedded artifacts.
+     * behavior. The {@code merge} mode retains the primary artifact's module identity by default and its public
+     * boundary while incorporating requirements and service declarations from embedded artifacts. The output module
+     * name can be changed with {@code moduleInfo.moduleName}.
      *
      * @see <a href="https://maven.apache.org/plugins/maven-shade-plugin/examples/module-info-merging.html">Merging Java
      * Module Descriptors</a>

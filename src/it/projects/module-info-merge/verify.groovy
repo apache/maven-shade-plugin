@@ -24,12 +24,14 @@ import java.util.jar.JarFile
 def shaded = new File( basedir, "app/target/app-1.0.jar" )
 assert shaded.isFile()
 
-def reference = ModuleFinder.of( shaded.toPath() ).find( "app.module" ).orElseThrow {
-    new AssertionError( "The shaded JAR is not the app.module module" )
+def shadedFinder = ModuleFinder.of( shaded.toPath() )
+assert !shadedFinder.find( "app.module" ).isPresent()
+def reference = shadedFinder.find( "shaded.app.module" ).orElseThrow {
+    new AssertionError( "The shaded JAR is not the shaded.app.module module" )
 }
 def descriptor = reference.descriptor()
 
-assert descriptor.name() == "app.module"
+assert descriptor.name() == "shaded.app.module"
 assert descriptor.requires()*.name().contains( "external.module" )
 assert descriptor.requires()*.name().contains( "java.sql" )
 assert !descriptor.requires()*.name().contains( "automatic.module" )
@@ -62,20 +64,20 @@ assert external.isFile()
 
 def finder = ModuleFinder.of( shaded.toPath(), external.toPath() )
 def configuration = ModuleLayer.boot().configuration()
-        .resolve( finder, ModuleFinder.of(), [ "app.module" ] as Set )
+        .resolve( finder, ModuleFinder.of(), [ "shaded.app.module" ] as Set )
 def layer = ModuleLayer.boot().defineModulesWithOneLoader(
         configuration, ClassLoader.getSystemClassLoader() )
-def library = layer.findLoader( "app.module" ).loadClass( "shaded.library.Library" )
-assert library.module.name == "app.module"
+def library = layer.findLoader( "shaded.app.module" ).loadClass( "shaded.library.Library" )
+assert library.module.name == "shaded.app.module"
 def automaticLibrary =
-        Class.forName( "shaded.automatic.AutomaticLibrary", true, layer.findLoader( "app.module" ) )
-assert automaticLibrary.module.name == "app.module"
-def application = layer.findLoader( "app.module" ).loadClass( "app.api.Application" )
+        Class.forName( "shaded.automatic.AutomaticLibrary", true, layer.findLoader( "shaded.app.module" ) )
+assert automaticLibrary.module.name == "shaded.app.module"
+def application = layer.findLoader( "shaded.app.module" ).loadClass( "app.api.Application" )
 def thread = Thread.currentThread()
 def contextLoader = thread.contextClassLoader
 try
 {
-    thread.contextClassLoader = layer.findLoader( "app.module" )
+    thread.contextClassLoader = layer.findLoader( "shaded.app.module" )
     assert application.getMethod( "loadAutomaticService" ).invoke( null ) == "automatic"
 }
 finally
@@ -96,7 +98,7 @@ try
     assert jar.getJarEntry( "embedded/api/Library.class" ) == null
     assert jar.getJarEntry( "embedded/internal/Provider.class" ) == null
     assert jar.getJarEntry( "automatic/library/AutomaticLibrary.class" ) == null
-    assert jar.manifest.mainAttributes.getValue( "Automatic-Module-Name" ) == "app.module"
+    assert jar.manifest.mainAttributes.getValue( "Automatic-Module-Name" ) == "shaded.app.module"
     assert jar.manifest.mainAttributes.getValue( "Multi-Release" ) == "true"
 }
 finally

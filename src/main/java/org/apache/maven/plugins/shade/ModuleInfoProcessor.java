@@ -112,6 +112,8 @@ final class ModuleInfoProcessor {
 
     private String primaryModuleName;
 
+    private String outputModuleName;
+
     private boolean multiReleaseOutput;
 
     private int modularFloor;
@@ -141,6 +143,7 @@ final class ModuleInfoProcessor {
             }
         }
         determinePrimaryModuleName();
+        determineOutputModuleName();
         multiReleaseOutput |= primaryRootDescriptorRequiresVersionedOutput();
     }
 
@@ -153,8 +156,8 @@ final class ModuleInfoProcessor {
         return SERVICE_CONFIGURATION.matcher(name).matches();
     }
 
-    String getPrimaryModuleName() {
-        return primaryModuleName;
+    String getOutputModuleName() {
+        return outputModuleName;
     }
 
     boolean hasPrimaryModule() {
@@ -287,7 +290,7 @@ final class ModuleInfoProcessor {
         validateConfiguredRequirements(candidates);
         SortedSet<String> allPackages = collectAllPackages(candidates);
         if (allPackages.contains("")) {
-            throw new MojoExecutionException("Cannot create module " + primaryModuleName
+            throw new MojoExecutionException("Cannot create module " + outputModuleName
                     + ": the shaded JAR contains a class in the unnamed package.");
         }
         for (MergedDescriptor descriptor : candidates) {
@@ -534,7 +537,7 @@ final class ModuleInfoProcessor {
     private MergedDescriptor mergeRelease(int release, DescriptorEntry primaryEntry) throws MojoExecutionException {
         ModuleDescriptorData primary = primaryEntry.descriptor;
         MergedDescriptor result = new MergedDescriptor(release, primaryEntry);
-        result.name = primary.name;
+        result.name = outputModuleName;
         result.access = primary.access;
         result.version = primary.version;
         result.classVersion = primary.classVersion;
@@ -552,6 +555,7 @@ final class ModuleInfoProcessor {
         }
         embeddedNames.remove(null);
         embeddedNames.add(primaryModuleName);
+        embeddedNames.add(outputModuleName);
 
         for (Export export : primary.exports.values()) {
             String packaze = relocatePackage(export.packaze);
@@ -746,7 +750,7 @@ final class ModuleInfoProcessor {
         if (!owners.isEmpty()) {
             target.uses.add(service);
             String owner = owners.first();
-            if (!"java.base".equals(owner) && !primaryModuleName.equals(owner)) {
+            if (!"java.base".equals(owner) && !isAmalgamatedModuleName(owner)) {
                 target.requires.merge(owner, new Require(owner, 0, null), Require::strongest);
             }
         }
@@ -966,7 +970,7 @@ final class ModuleInfoProcessor {
                             + toClassName(reference) + ", which is owned by multiple modules " + owners + '.');
                 }
                 String module = owners.first();
-                if ("java.base".equals(module) || primaryModuleName.equals(module)) {
+                if ("java.base".equals(module) || isAmalgamatedModuleName(module)) {
                     continue;
                 }
                 target.requires.merge(module, new Require(module, 0, null), Require::strongest);
@@ -1133,7 +1137,7 @@ final class ModuleInfoProcessor {
             for (String provider : provides.getValue()) {
                 int available = firstAvailableRelease(provider, candidates);
                 if (available < 0) {
-                    throw new MojoExecutionException("Cannot create module " + primaryModuleName + ": provider class "
+                    throw new MojoExecutionException("Cannot create module " + outputModuleName + ": provider class "
                             + provider + " is absent.");
                 }
                 if (available > earliestRelease) {
@@ -1149,7 +1153,7 @@ final class ModuleInfoProcessor {
             int available = firstAvailablePackageRelease(packaze, candidates);
             if (available < 0) {
                 throw new MojoExecutionException(
-                        "Cannot export package " + packaze + " from " + primaryModuleName + ": the package is absent.");
+                        "Cannot export package " + packaze + " from " + outputModuleName + ": the package is absent.");
             }
             if (available > earliestRelease) {
                 reasons.add(FloorReason.exportedPackage(packaze, available));
@@ -1160,7 +1164,7 @@ final class ModuleInfoProcessor {
             int available = firstAvailablePackageRelease(packaze, candidates);
             if (available < 0) {
                 throw new MojoExecutionException(
-                        "Cannot open package " + packaze + " from " + primaryModuleName + ": the package is absent.");
+                        "Cannot open package " + packaze + " from " + outputModuleName + ": the package is absent.");
             }
             if (available > earliestRelease) {
                 reasons.add(FloorReason.openPackage(packaze, available));
@@ -1190,7 +1194,7 @@ final class ModuleInfoProcessor {
             if (provider.getValue() < floor && !hasRootClass(provider.getKey().provider)) {
                 throw new MojoExecutionException("Provider " + provider.getKey().provider + " for "
                         + provider.getKey().service + " first available in Java " + provider.getValue()
-                        + " cannot be exposed while " + primaryModuleName + " is automatic below its Java " + floor
+                        + " cannot be exposed while " + outputModuleName + " is automatic below its Java " + floor
                         + " modular floor: META-INF/services cannot be versioned.");
             }
         }
@@ -1235,10 +1239,10 @@ final class ModuleInfoProcessor {
         if (modularFloor <= earliestRelease) {
             return;
         }
-        logger.warn("Raising the module descriptor floor for " + primaryModuleName + " from Java " + earliestRelease
+        logger.warn("Raising the module descriptor floor for " + outputModuleName + " from Java " + earliestRelease
                 + " to Java " + modularFloor + '.');
         logger.warn("No explicit module descriptor will be effective on Java " + earliestRelease + " through "
-                + (modularFloor - 1) + "; the JAR will be the automatic module " + primaryModuleName
+                + (modularFloor - 1) + "; the JAR will be the automatic module " + outputModuleName
                 + " on those releases.");
         logger.warn("Automatic-Module-Name has been set to keep the module name stable.");
         logger.warn("Reasons:");
@@ -1449,6 +1453,25 @@ final class ModuleInfoProcessor {
             throw new MojoExecutionException("Primary artifact " + primaryArtifact + " declares Automatic-Module-Name "
                     + primary.automaticModuleName + " but its descriptor declares " + primaryModuleName + '.');
         }
+    }
+
+    private void determineOutputModuleName() throws MojoExecutionException {
+        if (primaryModuleName == null) {
+            return;
+        }
+        String configuredModuleName = configuration.getModuleName();
+        if (configuredModuleName == null) {
+            outputModuleName = primaryModuleName;
+        } else if (!ModuleInfoConfiguration.isValidModuleName(configuredModuleName)) {
+            throw new MojoExecutionException(
+                    "Invalid moduleInfo.moduleName '" + configuredModuleName + "': expected a qualified Java name.");
+        } else {
+            outputModuleName = configuredModuleName;
+        }
+    }
+
+    private boolean isAmalgamatedModuleName(String moduleName) {
+        return primaryModuleName.equals(moduleName) || outputModuleName.equals(moduleName);
     }
 
     private boolean primaryRootDescriptorRequiresVersionedOutput() {
