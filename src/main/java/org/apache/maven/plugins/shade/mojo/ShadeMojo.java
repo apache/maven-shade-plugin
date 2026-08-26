@@ -350,7 +350,7 @@ public class ShadeMojo extends AbstractMojo {
      * @since 3.7.0
      */
     @Parameter(property = "shade.moduleInfoMode", defaultValue = "discard")
-    private ModuleInfoMode moduleInfoMode = ModuleInfoMode.discard;
+    private String moduleInfoMode = "discard";
 
     /**
      * Configures how the merged descriptor represents the amalgamated shaded contents.
@@ -786,9 +786,10 @@ public class ShadeMojo extends AbstractMojo {
         shadeRequest.setFilters(filters);
         shadeRequest.setRelocators(relocators);
         shadeRequest.setResourceTransformers(toResourceTransformers(shade, resourceTransformers));
-        shadeRequest.setModuleInfoMode(moduleInfoMode);
+        ModuleInfoMode parsedModuleInfoMode = ModuleInfoMode.fromString(moduleInfoMode);
+        shadeRequest.setModuleInfoMode(parsedModuleInfoMode);
         shadeRequest.setModuleInfoConfiguration(moduleInfo);
-        if (moduleInfoMode == ModuleInfoMode.merge && primaryArtifact != null) {
+        if (parsedModuleInfoMode == ModuleInfoMode.MERGE && primaryArtifact != null) {
             shadeRequest.setModuleInfoAnalysisJdkHome(resolveModuleInfoAnalysisJdkHome());
         }
         shadeRequest.setDependencyAnalysisArtifacts(dependencyAnalysisArtifacts);
@@ -812,7 +813,7 @@ public class ShadeMojo extends AbstractMojo {
                 relocators,
                 resourceTransformers,
                 Collections.<File>emptySet());
-        shadeSourcesRequest.setModuleInfoMode(ModuleInfoMode.discard);
+        shadeSourcesRequest.setModuleInfoMode(ModuleInfoMode.DISCARD);
         shadeSourcesRequest.setShadeSourcesContent(shadeSourcesContent);
         return shadeSourcesRequest;
     }

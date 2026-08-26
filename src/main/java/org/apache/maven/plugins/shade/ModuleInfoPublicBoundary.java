@@ -18,13 +18,34 @@
  */
 package org.apache.maven.plugins.shade;
 
+import java.util.Locale;
+
 /**
  * Controls which embedded package boundaries are retained in a merged module descriptor.
  */
 public enum ModuleInfoPublicBoundary {
     /** Retain only the primary artifact's exports and opens. */
-    primary,
+    PRIMARY,
 
     /** Merge the effective exports and opens of embedded explicit and automatic modules. */
-    merge
+    MERGE;
+
+    /**
+     * Parses a public boundary mode without regard to case.
+     *
+     * @param value public boundary mode
+     * @return parsed public boundary mode
+     * @throws IllegalArgumentException if the value is not a supported mode
+     */
+    public static ModuleInfoPublicBoundary fromString(String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Module info public boundary must not be null.");
+        }
+        try {
+            return valueOf(value.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Unknown module info public boundary '" + value + "'. Expected one of: primary, merge.");
+        }
+    }
 }

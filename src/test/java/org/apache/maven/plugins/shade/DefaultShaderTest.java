@@ -89,6 +89,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -586,7 +587,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Collections.emptyList());
         request.setResourceTransformers(Collections.singletonList(manifestTransformer));
@@ -626,7 +627,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Collections.emptyList());
         request.setResourceTransformers(Collections.emptyList());
@@ -927,7 +928,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Collections.singletonList(new SimpleRelocator("dep", "hidden.dep", null, null)));
         request.setResourceTransformers(Collections.emptyList());
@@ -1040,7 +1041,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Collections.singletonList(new SimpleRelocator("dep", "hidden.dep", null, null)));
         request.setResourceTransformers(Collections.emptyList());
@@ -1171,7 +1172,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Collections.emptyList());
         request.setResourceTransformers(Collections.emptyList());
@@ -1226,7 +1227,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Arrays.asList(
                 new SimpleRelocator("app.versioned", "hidden.app.versioned", null, null),
@@ -1276,7 +1277,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Collections.singleton(primary)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.singletonList(filter));
         request.setRelocators(Collections.emptyList());
         request.setResourceTransformers(Collections.emptyList());
@@ -1315,7 +1316,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Collections.singleton(primary)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Collections.emptyList());
         request.setResourceTransformers(Collections.emptyList());
@@ -1413,7 +1414,7 @@ public class DefaultShaderTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setDependencyAnalysisArtifacts(dependencyAnalysisArtifacts);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Collections.emptyList());
@@ -1881,6 +1882,7 @@ public class DefaultShaderTest {
         when(logger.isWarnEnabled()).thenReturn(true);
         doNothing().when(logger).debug(debugMessages.capture());
         doNothing().when(logger).warn(warnMessages.capture());
+        doNothing().when(logger).warn(warnMessages.capture(), any(Object.class));
         return logger;
     }
 

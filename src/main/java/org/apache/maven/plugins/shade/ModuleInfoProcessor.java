@@ -636,7 +636,7 @@ final class ModuleInfoProcessor {
     }
 
     private void addAutomaticBoundary(MergedDescriptor target, ArtifactData artifact, int release) {
-        if (configuration.getPublicBoundary() != ModuleInfoPublicBoundary.merge) {
+        if (configuration.getPublicBoundary() != ModuleInfoPublicBoundary.MERGE) {
             return;
         }
         for (String packaze : effectiveArtifactPackages(artifact.file, release)) {
@@ -651,7 +651,7 @@ final class ModuleInfoProcessor {
             ModuleDescriptorData descriptor,
             Set<String> embeddedNames,
             int release) {
-        if (configuration.getPublicBoundary() != ModuleInfoPublicBoundary.merge) {
+        if (configuration.getPublicBoundary() != ModuleInfoPublicBoundary.MERGE) {
             return;
         }
         Set<String> packages = effectivePackages(release);

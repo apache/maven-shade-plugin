@@ -48,7 +48,7 @@ public class ShadeRequest {
 
     private boolean shadeSourcesContent;
 
-    private ModuleInfoMode moduleInfoMode = ModuleInfoMode.discard;
+    private ModuleInfoMode moduleInfoMode = ModuleInfoMode.DISCARD;
 
     private ModuleInfoConfiguration moduleInfoConfiguration = new ModuleInfoConfiguration();
 
@@ -159,7 +159,7 @@ public class ShadeRequest {
      * @param moduleInfoMode module descriptor handling mode
      */
     public void setModuleInfoMode(ModuleInfoMode moduleInfoMode) {
-        this.moduleInfoMode = moduleInfoMode == null ? ModuleInfoMode.discard : moduleInfoMode;
+        this.moduleInfoMode = moduleInfoMode == null ? ModuleInfoMode.DISCARD : moduleInfoMode;
     }
 
     public ModuleInfoConfiguration getModuleInfoConfiguration() {

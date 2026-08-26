@@ -27,7 +27,7 @@ import java.util.Set;
  * Additional choices used while constructing the module descriptor for amalgamated shaded contents.
  */
 public class ModuleInfoConfiguration {
-    private ModuleInfoPublicBoundary publicBoundary = ModuleInfoPublicBoundary.primary;
+    private String publicBoundary = ModuleInfoPublicBoundary.PRIMARY.name();
 
     private Map<String, String> analysisJdkToolchain = Collections.emptyMap();
 
@@ -42,11 +42,11 @@ public class ModuleInfoConfiguration {
     private Set<String> dynamicUses = Collections.emptySet();
 
     public ModuleInfoPublicBoundary getPublicBoundary() {
-        return publicBoundary;
+        return ModuleInfoPublicBoundary.fromString(publicBoundary);
     }
 
-    public void setPublicBoundary(ModuleInfoPublicBoundary publicBoundary) {
-        this.publicBoundary = publicBoundary == null ? ModuleInfoPublicBoundary.primary : publicBoundary;
+    public void setPublicBoundary(String publicBoundary) {
+        this.publicBoundary = publicBoundary == null ? ModuleInfoPublicBoundary.PRIMARY.name() : publicBoundary;
     }
 
     public Map<String, String> getAnalysisJdkToolchain() {

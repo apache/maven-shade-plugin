@@ -115,7 +115,7 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
 
     public void testSourceRequestsDiscardModuleInfo() throws Exception {
         ShadeMojo mojo = new ShadeMojo();
-        setVariableValueToObject(mojo, "moduleInfoMode", ModuleInfoMode.merge);
+        setVariableValueToObject(mojo, "moduleInfoMode", "mErGe");
         Method method = ShadeMojo.class.getDeclaredMethod(
                 "createShadeSourcesRequest", String.class, Set.class, File.class, List.class, List.class, List.class);
         method.setAccessible(true);
@@ -129,7 +129,7 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
                 Collections.emptyList(),
                 Collections.emptyList());
 
-        assertEquals(ModuleInfoMode.discard, request.getModuleInfoMode());
+        assertEquals(ModuleInfoMode.DISCARD, request.getModuleInfoMode());
         assertTrue(request.getDependencyAnalysisArtifacts().isEmpty());
     }
 

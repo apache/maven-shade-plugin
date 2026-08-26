@@ -92,7 +92,7 @@ public class ModuleInfoConfigurationTest {
         File shadedFile = newFile("shaded.jar");
         ShadeRequest request = moduleRequest(primary, shadedFile, dependency, automatic);
         ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
-        configuration.setPublicBoundary(ModuleInfoPublicBoundary.merge);
+        configuration.setPublicBoundary("merge");
         request.setModuleInfoConfiguration(configuration);
         request.setRelocators(Collections.singletonList(new SimpleRelocator("dep", "hidden.dep", null, null)));
 
@@ -248,7 +248,7 @@ public class ModuleInfoConfigurationTest {
         ModuleInfoConfiguration.PackageDirective additionalOpen = new ModuleInfoConfiguration.PackageDirective();
         additionalOpen.setPackageName("app.api");
         ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
-        configuration.setPublicBoundary(ModuleInfoPublicBoundary.merge);
+        configuration.setPublicBoundary("merge");
         configuration.setAdditionalOpens(Collections.singletonList(additionalOpen));
 
         File shadedFile = newFile("shaded.jar");
@@ -274,7 +274,7 @@ public class ModuleInfoConfigurationTest {
         }
 
         ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
-        configuration.setPublicBoundary(ModuleInfoPublicBoundary.merge);
+        configuration.setPublicBoundary("merge");
 
         File shadedFile = newFile("shaded.jar");
         ShadeRequest request = moduleRequest(primary, shadedFile, dependency);
@@ -360,7 +360,7 @@ public class ModuleInfoConfigurationTest {
         ShadeRequest request = new ShadeRequest();
         request.setJars(jars);
         request.setPrimaryArtifact(primary);
-        request.setModuleInfoMode(ModuleInfoMode.merge);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
         request.setFilters(Collections.emptyList());
         request.setRelocators(Collections.emptyList());
         request.setResourceTransformers(Collections.emptyList());

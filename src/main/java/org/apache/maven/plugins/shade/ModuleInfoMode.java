@@ -18,13 +18,34 @@
  */
 package org.apache.maven.plugins.shade;
 
+import java.util.Locale;
+
 /**
  * Controls how module descriptors are handled while shading.
  */
 public enum ModuleInfoMode {
     /** Discard module descriptors, retaining the historical behavior. */
-    discard,
+    DISCARD,
 
     /** Merge module descriptors into the descriptor of the primary artifact. */
-    merge
+    MERGE;
+
+    /**
+     * Parses a module descriptor handling mode without regard to case.
+     *
+     * @param value module descriptor handling mode
+     * @return parsed module descriptor handling mode
+     * @throws IllegalArgumentException if the value is not a supported mode
+     */
+    public static ModuleInfoMode fromString(String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Module info mode must not be null.");
+        }
+        try {
+            return valueOf(value.toUpperCase(Locale.ROOT).trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Unknown module info mode '" + value + "'. Expected one of: discard, merge.");
+        }
+    }
 }
