@@ -34,25 +34,23 @@ import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MinijarFilterTest {
 
-    @Rule
-    public TemporaryFolder tempFolder =
-            TemporaryFolder.builder().assureDeletion().build();
+    @TempDir
+    File tempFolder;
 
     private File outputDirectory;
     private File emptyFile;
@@ -60,11 +58,11 @@ public class MinijarFilterTest {
     private Log log;
     private ArgumentCaptor<CharSequence> logCaptor;
 
-    @Before
+    @BeforeEach
     public void init() throws IOException {
-        this.outputDirectory = tempFolder.newFolder();
-        this.emptyFile = tempFolder.newFile();
-        this.jarFile = tempFolder.newFile();
+        this.outputDirectory = newFolder(tempFolder, "junit");
+        this.emptyFile = File.createTempFile("junit", null, tempFolder);
+        this.jarFile = File.createTempFile("junit", null, tempFolder);
         new JarOutputStream(Files.newOutputStream(this.jarFile.toPath())).close();
         this.log = mock(Log.class);
         logCaptor = ArgumentCaptor.forClass(CharSequence.class);
@@ -75,9 +73,7 @@ public class MinijarFilterTest {
      */
     @Test
     public void testWithMockProject() throws IOException {
-        assumeFalse(
-                "Expected to run under JDK8+",
-                System.getProperty("java.version").startsWith("1.7"));
+        assumeFalse(System.getProperty("java.version").startsWith("1.7"), "Expected to run under JDK8+");
 
         MavenProject mavenProject = mockProject(outputDirectory, emptyFile);
 
@@ -85,7 +81,7 @@ public class MinijarFilterTest {
 
         mf.finished();
 
-        verify(log, times(1)).info(logCaptor.capture());
+        verify(log).info(logCaptor.capture());
 
         assertEquals("Minimized 0 -> 0", logCaptor.getValue());
     }
@@ -100,10 +96,10 @@ public class MinijarFilterTest {
 
         mf.finished();
 
-        verify(log, times(1)).info(logCaptor.capture());
+        verify(log).info(logCaptor.capture());
 
         // verify no access to project's artifacts
-        verify(mavenProject, times(0)).getArtifacts();
+        verify(mavenProject, never()).getArtifacts();
 
         assertEquals("Minimized 0 -> 0", logCaptor.getValue());
     }
@@ -156,7 +152,7 @@ public class MinijarFilterTest {
 
         m.finished();
 
-        verify(log, times(1)).info(logCaptor.capture());
+        verify(log).info(logCaptor.capture());
 
         assertEquals("Minimized 51 -> 1 (1%)", logCaptor.getValue());
     }
@@ -167,8 +163,17 @@ public class MinijarFilterTest {
 
         m.finished();
 
-        verify(log, times(1)).info(logCaptor.capture());
+        verify(log).info(logCaptor.capture());
 
         assertEquals("Minimized 0 -> 0", logCaptor.getValue());
+    }
+
+    private static File newFolder(File root, String... subDirs) throws IOException {
+        String subFolder = String.join("/", subDirs);
+        File result = new File(root, subFolder);
+        if (!result.mkdirs()) {
+            throw new IOException("Couldn't create folders " + root);
+        }
+        return result;
     }
 }

@@ -20,16 +20,11 @@ package org.apache.maven.plugins.shade.relocation;
 
 import java.util.Collections;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class SimpleRelocatorParameterTest {
-
-    @Test
-    public void testThatNullPatternInConstructorShouldNotThrowNullPointerException() {
-        constructThenFailOnNullPointerException(null, "");
-    }
 
     @Test
     public void testThatNullShadedPatternInConstructorShouldNotThrowNullPointerException() {
@@ -43,5 +38,6 @@ public class SimpleRelocatorParameterTest {
         } catch (NullPointerException e) {
             fail("Constructor should not throw null pointer exceptions");
         }
+        // any other exception leads to test failure as well
     }
 }

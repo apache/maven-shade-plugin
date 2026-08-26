@@ -152,11 +152,7 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
     private String relocate(String originalValue, List<Relocator> relocators) {
         String newValue = originalValue;
         for (Relocator relocator : relocators) {
-            String value;
-            do {
-                value = newValue;
-                newValue = relocator.relocateClass(value);
-            } while (!value.equals(newValue));
+            newValue = relocator.relocateAllClasses(newValue);
         }
         return newValue;
     }

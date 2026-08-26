@@ -30,6 +30,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PushbackInputStream;
 import java.io.Writer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -56,9 +58,6 @@ import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 
-import org.apache.commons.compress.archivers.zip.ExtraFieldUtils;
-import org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp;
-import org.apache.commons.compress.archivers.zip.ZipExtraField;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
@@ -95,23 +94,41 @@ public class DefaultShader implements Shader {
 
     // workaround for MSHADE-420
     private long getTime(ZipEntry entry) {
-        if (entry.getExtra() != null) {
-            try {
-                ZipExtraField[] fields =
-                        ExtraFieldUtils.parse(entry.getExtra(), true, ExtraFieldUtils.UnparseableExtraField.SKIP);
-                for (ZipExtraField field : fields) {
-                    if (X5455_ExtendedTimestamp.HEADER_ID.equals(field.getHeaderId())) {
-                        // extended timestamp extra field: need to translate UTC to local time for Reproducible Builds
-                        Calendar cal = Calendar.getInstance();
-                        cal.setTimeInMillis(entry.getTime());
-                        return entry.getTime() - (cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET));
-                    }
+        if (entry.getLastModifiedTime() == null) {
+            return -1;
+        }
+        long mtime = entry.getLastModifiedTime().toMillis();
+        if (hasX5455ExtendedTimestamp(entry)) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(mtime);
+            mtime = mtime - (cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET));
+        }
+        return mtime;
+    }
+
+    /**
+     * Returns {@code true} if passed in {@link ZipEntry} has extra data that contains the extended timestamp (0x5455).
+     *
+     * @see <a href="https://commons.apache.org/proper/commons-compress/apidocs/org/apache/commons/compress/archivers/zip/X5455_ExtendedTimestamp.html">X5455_ExtendedTimestamp</a>
+     */
+    private static boolean hasX5455ExtendedTimestamp(ZipEntry zipEntry) {
+        if (zipEntry.getExtra() != null) {
+            ByteBuffer extraData = ByteBuffer.wrap(zipEntry.getExtra());
+            extraData.order(ByteOrder.LITTLE_ENDIAN);
+            while (extraData.hasRemaining()) {
+                int id = extraData.getShort() & 0xffff;
+                int length = extraData.getShort() & 0xffff;
+
+                if (id == 0x5455) {
+                    // Extended TS is present
+                    return true;
+                } else {
+                    // skip to next
+                    extraData.position(extraData.position() + length);
                 }
-            } catch (ZipException ze) {
-                // ignore
             }
         }
-        return entry.getTime();
+        return false;
     }
 
     public void shade(ShadeRequest shadeRequest) throws IOException, MojoExecutionException {

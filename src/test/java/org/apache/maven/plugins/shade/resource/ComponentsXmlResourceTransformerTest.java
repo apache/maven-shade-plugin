@@ -26,8 +26,8 @@ import org.codehaus.plexus.util.IOUtil;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLAssert;
 import org.custommonkey.xmlunit.XMLUnit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for {@link ComponentsXmlResourceTransformer}.
@@ -38,7 +38,7 @@ import org.junit.Test;
 public class ComponentsXmlResourceTransformerTest {
     private ComponentsXmlResourceTransformer transformer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         this.transformer = new ComponentsXmlResourceTransformer();
     }

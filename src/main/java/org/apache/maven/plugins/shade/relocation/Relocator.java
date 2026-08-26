@@ -30,7 +30,17 @@ public interface Relocator {
 
     boolean canRelocateClass(String clazz);
 
-    String relocateClass(String clazz);
+    /**
+     * Replace the first class pattern match in the given string
+     * @see #relocateAllClasses(String)
+     */
+    String relocateClass(String input);
 
     String applyToSourceContent(String sourceContent);
+
+    /**
+     * Replace all class pattern matches in the given input.
+     * @see #relocateClass(String)
+     */
+    String relocateAllClasses(String input);
 }

@@ -30,8 +30,8 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.codehaus.plexus.util.IOUtil;
 
 /**
  * Resources transformer that relocates classes in META-INF/services and appends entries in META-INF/services resources
@@ -97,7 +97,7 @@ public class ServicesResourceTransformer extends AbstractCompatibilityTransforme
             jarEntry.setTime(time);
             jos.putNextEntry(jarEntry);
 
-            IOUtils.writeLines(data, "\n", jos, StandardCharsets.UTF_8);
+            IOUtil.copy((String.join("\n", data) + "\n").getBytes(StandardCharsets.UTF_8), jos);
             jos.flush();
             data.clear();
         }

@@ -31,18 +31,15 @@ import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule;
 import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule.Property;
 import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule.Resource;
 import org.apache.maven.plugins.shade.resource.rule.TransformerTesterRule.TransformerTest;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(TransformerTesterRule.class)
 public class PropertiesTransformerTest {
-    @Rule
-    public final TestRule tester = new TransformerTesterRule();
-
     @Test
     public void propertiesRewritingIsStable() throws IOException {
         final Properties properties = new SortedProperties();

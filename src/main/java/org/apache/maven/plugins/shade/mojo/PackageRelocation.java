@@ -35,6 +35,8 @@ public class PackageRelocation {
 
     private boolean rawString;
 
+    private boolean shadeSerializedLambda;
+
     public String getPattern() {
         return pattern;
     }
@@ -53,5 +55,9 @@ public class PackageRelocation {
 
     public boolean isRawString() {
         return rawString;
+    }
+
+    public boolean isShadeSerializedLambda() {
+        return shadeSerializedLambda;
     }
 }

@@ -21,11 +21,11 @@ package org.apache.maven.plugins.shade.relocation;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test for {@link SimpleRelocator}.
@@ -155,6 +155,25 @@ public class SimpleRelocatorTest {
 
         relocator = new SimpleRelocator("org.foo", "private.stuff", null, null);
         assertEquals("private.stuff.bar.Class", relocator.relocateClass("org.foo.bar.Class"));
+        // make sure that "." does not match "x" in "orgxfoo.bar.Class"
+        assertEquals("orgxfoo.bar.Class", relocator.relocateClass("orgxfoo.bar.Class"));
+    }
+
+    @Test
+    public void testRelocateAllClasses() {
+        SimpleRelocator relocator;
+
+        relocator = new SimpleRelocator("org.foo", null, null, null);
+        assertEquals(
+                "hidden.org.foo.bar.Class, hidden.hidden.org.foo.bar.Class and hidden.org.foo.bar.Class",
+                relocator.relocateAllClasses("org.foo.bar.Class, hidden.org.foo.bar.Class and org.foo.bar.Class"));
+
+        relocator = new SimpleRelocator("org.foo", "private.stuff", null, null);
+        assertEquals(
+                "private.stuff.bar.Class, private.stuff.bar.Class and private.stuff.bar.Class",
+                relocator.relocateAllClasses("org.foo.bar.Class, private.stuff.bar.Class and org.foo.bar.Class"));
+        // make sure that "." does not match "x" in "orgxfoo.bar.Class"
+        assertEquals("orgxfoo.bar.Class", relocator.relocateClass("orgxfoo.bar.Class"));
     }
 
     @Test

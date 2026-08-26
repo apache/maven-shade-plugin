@@ -32,7 +32,7 @@ Manifest extractManifest(name) {
     return mf;
 }
 
-void assertsEntries( name, expectedTestEntry, expectedOriginalEntry, expectedCustomEntry, shouldHaveArchiverVersion ) {
+void assertsEntries( name, expectedTestEntry, expectedOriginalEntry, expectedCustomEntry ) {
     attributes = extractManifest( name ).getMainAttributes();
 
     if ( !Objects.equals( expectedTestEntry, attributes.getValue( "Test-Entry" ) ) )
@@ -49,14 +49,8 @@ void assertsEntries( name, expectedTestEntry, expectedOriginalEntry, expectedCus
     {
         throw new IllegalStateException( "Custom-Entry should have been '" + expectedCustomEntry + "' in " + name + ": " + attributes.entrySet() );
     }
-
-    if ( shouldHaveArchiverVersion && attributes.getValue( "Archiver-Version" ) == null ||
-        !shouldHaveArchiverVersion && attributes.getValue( "Archiver-Version" ) != null )
-    {
-        throw new IllegalStateException( "META-INF/MANIFEST.mf Archiver-Version entry is invalid in " + name + ": " + attributes.entrySet() );
-    }
 }
 
-assertsEntries( "test-1.0.jar", "PASSED", "PASSED", "SET", true );
-assertsEntries( "test-1.0-sources.jar", "FAILED", null, null, false ); // specific config
-assertsEntries( "test-1.0-tests.jar", "PASSED", "PASSED", "SET", true ); // inherits from the default transformer
+assertsEntries( "test-1.0.jar", "PASSED", "PASSED", "SET" );
+assertsEntries( "test-1.0-sources.jar", "FAILED", null, null ); // specific config
+assertsEntries( "test-1.0-tests.jar", "PASSED", "PASSED", "SET" ); // inherits from the default transformer

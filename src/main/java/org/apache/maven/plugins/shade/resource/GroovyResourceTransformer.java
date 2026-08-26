@@ -85,7 +85,7 @@ public class GroovyResourceTransformer extends AbstractCompatibilityTransformer 
 
     @Override
     public boolean hasTransformedResource() {
-        return extensionClassesList.size() > 0 && staticExtensionClassesList.size() > 0;
+        return extensionClassesList.size() > 0 || staticExtensionClassesList.size() > 0;
     }
 
     @Override
