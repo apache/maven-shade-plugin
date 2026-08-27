@@ -35,7 +35,7 @@ public class ShadeMojoParentPathTest {
     public void matchingParentFilesKeepTheRelativePath() throws Exception {
         File pom = new File(temporaryFolder, "pom.xml");
         Files.write(pom.toPath(), "<project/>".getBytes("UTF-8"));
-        assertTrue(ShadeMojo.parentFileIsTheConfiguredRelativePath(pom, pom));
+        assertTrue(ShadeMojo.isSameFile(pom, pom));
     }
 
     @Test
@@ -44,13 +44,13 @@ public class ShadeMojoParentPathTest {
         File siblingPom = new File(temporaryFolder, "pom.xml");
         Files.write(parentPom.toPath(), "<project/>".getBytes("UTF-8"));
         Files.write(siblingPom.toPath(), "<project/>".getBytes("UTF-8"));
-        assertFalse(ShadeMojo.parentFileIsTheConfiguredRelativePath(siblingPom, parentPom));
+        assertFalse(ShadeMojo.isSameFile(siblingPom, parentPom));
     }
 
     @Test
     public void missingActualParentDropsTheRelativePath() throws Exception {
         File siblingPom = new File(temporaryFolder, "pom.xml");
         Files.write(siblingPom.toPath(), "<project/>".getBytes("UTF-8"));
-        assertFalse(ShadeMojo.parentFileIsTheConfiguredRelativePath(siblingPom, null));
+        assertFalse(ShadeMojo.isSameFile(siblingPom, null));
     }
 }

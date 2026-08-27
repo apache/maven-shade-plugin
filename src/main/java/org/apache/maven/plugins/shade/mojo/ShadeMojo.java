@@ -1232,7 +1232,7 @@ public class ShadeMojo extends AbstractMojo {
 
                     File actualParentFile =
                             project.getParent() != null ? project.getParent().getFile() : null;
-                    if (parentFileIsTheConfiguredRelativePath(parentFile, actualParentFile)) {
+                    if (isSameFile(parentFile, actualParentFile)) {
                         String relPath = RelativizePath.convertToRelativePath(parentFile, f);
                         model.getParent().setRelativePath(relPath);
                     } else {
@@ -1270,11 +1270,9 @@ public class ShadeMojo extends AbstractMojo {
     }
 
     /**
-     * Keep a local relativePath only when it really points at the parent POM.
-     * Otherwise Maven 4 treats the default {@code ..} as the parent and reports
-     * a cycle against a sibling POM that happens to share the same parent GAV.
+     * True when the configured relativePath file is the project's parent POM.
      */
-    static boolean parentFileIsTheConfiguredRelativePath(File configured, File actual) {
+    static boolean isSameFile(File configured, File actual) {
         try {
             return actual != null
                     && configured != null
