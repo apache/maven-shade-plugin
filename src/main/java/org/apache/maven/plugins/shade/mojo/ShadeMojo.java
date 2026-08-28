@@ -1272,7 +1272,7 @@ public class ShadeMojo extends AbstractMojo {
     /**
      * True when the configured relativePath file is the project's parent POM.
      */
-    static boolean isSameFile(File configured, File actual) {
+    private static boolean isSameFile(File configured, File actual) {
         try {
             return actual != null
                     && configured != null
