@@ -30,23 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class PomWriterRelativePathTest {
     @Test
     public void emptyRelativePathIsWritten() throws Exception {
-        Model model = new Model();
-        model.setModelVersion("4.0.0");
-        model.setGroupId("g");
-        model.setArtifactId("a");
-        model.setVersion("1.0");
-        Parent parent = new Parent();
-        parent.setGroupId("pg");
-        parent.setArtifactId("pa");
-        parent.setVersion("1.0");
-        parent.setRelativePath("");
-        model.setParent(parent);
+        String xml = writeParentRelativePath("");
 
-        StringWriter writer = new StringWriter();
-        PomWriter.write(writer, model, true);
-        String xml = writer.toString();
-
-        assertTrue(xml.contains("<relativePath"), xml);
+        assertTrue(xml.contains("<relativePath />"), xml);
         assertFalse(xml.contains("<relativePath>../pom.xml</relativePath>"), xml);
     }
 
@@ -68,5 +54,31 @@ public class PomWriterRelativePathTest {
         String xml = writer.toString();
 
         assertFalse(xml.contains("relativePath"), xml);
+    }
+
+    @Test
+    public void customRelativePathIsWritten() throws Exception {
+        String xml = writeParentRelativePath("../parent/pom.xml");
+
+        assertTrue(xml.contains("<relativePath>../parent/pom.xml</relativePath>"), xml);
+        assertFalse(xml.contains("<relativePath />"), xml);
+    }
+
+    private static String writeParentRelativePath(String relativePath) throws Exception {
+        Model model = new Model();
+        model.setModelVersion("4.0.0");
+        model.setGroupId("g");
+        model.setArtifactId("a");
+        model.setVersion("1.0");
+        Parent parent = new Parent();
+        parent.setGroupId("pg");
+        parent.setArtifactId("pa");
+        parent.setVersion("1.0");
+        parent.setRelativePath(relativePath);
+        model.setParent(parent);
+
+        StringWriter writer = new StringWriter();
+        PomWriter.write(writer, model, true);
+        return writer.toString();
     }
 }
