@@ -33,10 +33,12 @@ import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.plugins.shade.ShadeRequest;
 import org.apache.maven.plugins.shade.Shader;
@@ -214,10 +216,11 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         filtersField.set(mojo, new ArchiveFilter[] {archiveFilter});
 
         // invoke getFilters()
-        Method getFilters = ShadeMojo.class.getDeclaredMethod("getFilters", List.class, ArtifactSelector.class);
+        Method getFilters =
+                ShadeMojo.class.getDeclaredMethod("getFilters", Artifact.class, List.class, ArtifactSelector.class);
         getFilters.setAccessible(true);
         ArtifactSelector selector = new ArtifactSelector(Collections.emptyList(), Collections.emptyList(), null);
-        List<Filter> filters = (List<Filter>) getFilters.invoke(mojo, Collections.emptyList(), selector);
+        List<Filter> filters = (List<Filter>) getFilters.invoke(mojo, artifact, Collections.emptyList(), selector);
 
         // assertions - there must be one filter
         assertEquals(1, filters.size());
@@ -226,6 +229,127 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         Filter filter = filters.get(0);
         assertTrue(filter.canFilter(new File("myfaces-impl-2.0.1-SNAPSHOT.jar"))); // binary jar
         assertTrue(filter.canFilter(new File("myfaces-impl-2.0.1-SNAPSHOT-sources.jar"))); // sources jar
+    }
+
+    public void testSelectMainArtifactByDefault() throws Exception {
+        TestMavenProject project = new TestMavenProject();
+        Artifact mainArtifact = newArtifact(null, "jar");
+        project.setArtifact(mainArtifact);
+
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "inputClassifier", "  ");
+
+        assertSame(mainArtifact, mojo.selectInputArtifact());
+    }
+
+    public void testSelectAttachedInputArtifact() throws Exception {
+        TestMavenProject project = new TestMavenProject();
+        project.setArtifact(newArtifact(null, "jar"));
+        Artifact attachedArtifact = newArtifact("thin", "jar");
+        project.setTestAttachedArtifacts(attachedArtifact);
+
+        ShadeMojo mojo = new ShadeMojo();
+        mojo.setLog(mock(org.apache.maven.plugin.logging.Log.class));
+        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "inputClassifier", "thin");
+
+        assertSame(attachedArtifact, mojo.selectInputArtifact());
+    }
+
+    public void testMissingInputClassifierFails() throws Exception {
+        TestMavenProject project = new TestMavenProject();
+        project.setArtifact(newArtifact(null, "jar"));
+
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "inputClassifier", "thin");
+
+        try {
+            mojo.selectInputArtifact();
+            fail("Expected missing input classifier to fail");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("No attached artifact with classifier 'thin' was found"));
+        }
+    }
+
+    public void testAmbiguousInputClassifierFails() throws Exception {
+        TestMavenProject project = new TestMavenProject();
+        project.setArtifact(newArtifact(null, "jar"));
+        project.setTestAttachedArtifacts(newArtifact("thin", "jar"), newArtifact("thin", "zip"));
+
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "inputClassifier", "thin");
+
+        try {
+            mojo.selectInputArtifact();
+            fail("Expected ambiguous input classifier to fail");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("Multiple attached artifacts with classifier 'thin' were found"));
+        }
+    }
+
+    public void testRejectIncompatibleInputArtifactReplacement() throws Exception {
+        TestMavenProject project = new TestMavenProject();
+        project.setArtifact(newArtifact(null, "pom"));
+        Artifact inputArtifact = newArtifact("thin", "jar");
+
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "project", project);
+
+        try {
+            mojo.validateInputArtifactOutput(inputArtifact);
+            fail("Expected incompatible input artifact replacement to fail");
+        } catch (MojoExecutionException e) {
+            assertTrue(e.getMessage().contains("main artifact of type 'pom'"));
+            assertTrue(e.getMessage().contains("attached artifact of type 'jar'"));
+            assertTrue(e.getMessage().contains("shadedArtifactAttached=true"));
+        }
+    }
+
+    public void testAllowIncompatibleInputArtifactAsAttachment() throws Exception {
+        TestMavenProject project = new TestMavenProject();
+        project.setArtifact(newArtifact(null, "pom"));
+
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "project", project);
+        setVariableValueToObject(mojo, "shadedArtifactAttached", true);
+
+        mojo.validateInputArtifactOutput(newArtifact("thin", "jar"));
+    }
+
+    public void testAllowCompatibleInputArtifactExtension() throws Exception {
+        TestMavenProject project = new TestMavenProject();
+        project.setArtifact(newArtifact(null, "maven-plugin", "jar"));
+
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "project", project);
+
+        mojo.validateInputArtifactOutput(newArtifact("thin", "jar"));
+    }
+
+    private Artifact newArtifact(String classifier, String type) throws Exception {
+        return newArtifact(classifier, type, type);
+    }
+
+    private Artifact newArtifact(String classifier, String type, String extension) {
+        DefaultArtifactHandler artifactHandler = new DefaultArtifactHandler(type);
+        artifactHandler.setExtension(extension);
+        return new DefaultArtifact(
+                "org.apache.maven.its",
+                "test-project",
+                VersionRange.createFromVersion("1.0"),
+                "compile",
+                type,
+                classifier,
+                artifactHandler);
+    }
+
+    private static class TestMavenProject extends MavenProject {
+        void setTestAttachedArtifacts(Artifact... artifacts) {
+            setAttachedArtifacts(Arrays.asList(artifacts));
+        }
     }
 
     public void shaderWithPattern(String shadedPattern, File jar) throws Exception {

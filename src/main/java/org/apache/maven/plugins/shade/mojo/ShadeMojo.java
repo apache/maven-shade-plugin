@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
@@ -235,6 +236,16 @@ public class ShadeMojo extends AbstractMojo {
      */
     @Parameter
     private String shadedGroupFilter;
+
+    /**
+     * The classifier of an attached artifact to use as the primary input for shading. When this parameter is omitted
+     * or blank, the project's main artifact is used. This parameter does not control the classifier of the shaded
+     * output; see {@link #shadedArtifactAttached} and {@link #shadedClassifierName} for that.
+     *
+     * @since 3.6.3
+     */
+    @Parameter
+    private String inputClassifier;
 
     /**
      * Defines whether the shaded artifact should be attached as classifier to the original artifact. If false, the
@@ -447,6 +458,9 @@ public class ShadeMojo extends AbstractMojo {
     private MavenProjectHelper projectHelper;
 
     @Inject
+    private ArtifactHandlerManager artifactHandlerManager;
+
+    @Inject
     private Shader shader;
 
     @Inject
@@ -483,17 +497,24 @@ public class ShadeMojo extends AbstractMojo {
         Set<File> testArtifacts = new LinkedHashSet<>();
         Set<File> testSourceArtifacts = new LinkedHashSet<>();
 
-        ArtifactSelector artifactSelector = new ArtifactSelector(project.getArtifact(), artifactSet, shadedGroupFilter);
+        Artifact inputArtifact = selectInputArtifact();
+        validateInputArtifactOutput(inputArtifact);
+        ArtifactSelector artifactSelector = new ArtifactSelector(inputArtifact, artifactSet, shadedGroupFilter);
 
-        if (artifactSelector.isSelected(project.getArtifact())
-                && !"pom".equals(project.getArtifact().getType())) {
-            if (invalidMainArtifact()) {
-                createErrorOutput();
-                throw new MojoExecutionException(
-                        "Failed to create shaded artifact, " + "project main artifact does not exist.");
+        if (artifactSelector.isSelected(inputArtifact) && !"pom".equals(inputArtifact.getType())) {
+            if (invalidArtifact(inputArtifact)) {
+                if (isInputClassifierSet()) {
+                    throw new MojoExecutionException(
+                            "Failed to create shaded artifact, attached artifact with classifier '"
+                                    + inputClassifier.trim() + "' does not exist.");
+                } else {
+                    createErrorOutput();
+                    throw new MojoExecutionException(
+                            "Failed to create shaded artifact, " + "project main artifact does not exist.");
+                }
             }
 
-            artifacts.add(project.getArtifact().getFile());
+            artifacts.add(inputArtifact.getFile());
 
             if (extraJars != null && !extraJars.isEmpty()) {
                 for (File extraJar : extraJars) {
@@ -531,14 +552,14 @@ public class ShadeMojo extends AbstractMojo {
         List<Artifact> processedArtifacts = processArtifactSelectors(
                 artifacts, artifactIds, sourceArtifacts, testArtifacts, testSourceArtifacts, artifactSelector);
 
-        File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier();
+        File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier(inputArtifact);
         File sourcesJar = shadedSourceArtifactFileWithClassifier();
         File testJar = shadedTestArtifactFileWithClassifier();
         File testSourcesJar = shadedTestSourceArtifactFileWithClassifier();
 
         // Now add our extra resources
         try {
-            List<Filter> filters = getFilters(processedArtifacts, artifactSelector);
+            List<Filter> filters = getFilters(inputArtifact, processedArtifacts, artifactSelector);
 
             List<Relocator> relocators = getRelocators();
 
@@ -591,18 +612,16 @@ public class ShadeMojo extends AbstractMojo {
                 // rename the output file if a specific finalName is set
                 // but don't rename if the finalName is the <build><finalName>
                 // because this will be handled implicitly later
-                if (finalName != null
-                        && finalName.length() > 0 //
-                        && !finalName.equals(project.getBuild().getFinalName())) {
-                    String finalFileName = finalName + "."
-                            + project.getArtifact().getArtifactHandler().getExtension();
+                if (hasCustomFinalName()) {
+                    String finalFileName =
+                            finalName + "." + inputArtifact.getArtifactHandler().getExtension();
                     File finalFile = new File(outputDirectory, finalFileName);
                     replaceFile(finalFile, outputJar);
                     outputJar = finalFile;
 
                     // Also support the sources JAR
                     if (createSourcesJar) {
-                        finalFileName = finalName + "-sources.jar";
+                        finalFileName = finalName + "-sources." + artifactExtension("java-source");
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, sourcesJar);
                         sourcesJar = finalFile;
@@ -610,14 +629,14 @@ public class ShadeMojo extends AbstractMojo {
 
                     // Also support the test JAR
                     if (shadeTestJar) {
-                        finalFileName = finalName + "-tests.jar";
+                        finalFileName = finalName + "-tests." + artifactExtension("test-jar");
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, testJar);
                         testJar = finalFile;
                     }
 
                     if (createTestSourcesJar) {
-                        finalFileName = finalName + "-test-sources.jar";
+                        finalFileName = finalName + "-test-sources." + artifactExtension("java-source");
                         finalFile = new File(outputDirectory, finalFileName);
                         replaceFile(finalFile, testSourcesJar);
                         testSourcesJar = finalFile;
@@ -628,8 +647,7 @@ public class ShadeMojo extends AbstractMojo {
 
                 if (shadedArtifactAttached) {
                     getLog().info("Attaching shaded artifact.");
-                    projectHelper.attachArtifact(
-                            project, project.getArtifact().getType(), shadedClassifierName, outputJar);
+                    projectHelper.attachArtifact(project, inputArtifact.getType(), shadedClassifierName, outputJar);
                     if (createSourcesJar) {
                         projectHelper.attachArtifact(
                                 project, "java-source", shadedClassifierName + "-sources", sourcesJar);
@@ -646,36 +664,37 @@ public class ShadeMojo extends AbstractMojo {
                 } else if (!renamed) {
                     getLog().info("Replacing original artifact with shaded artifact.");
                     File originalArtifact = project.getArtifact().getFile();
-                    if (originalArtifact != null) {
-                        replaceFile(originalArtifact, outputJar);
+                    if (originalArtifact == null || !originalArtifact.isFile()) {
+                        originalArtifact = mainArtifactFile();
+                    }
+                    replaceFile(originalArtifact, outputJar);
+                    project.getArtifact().setFile(originalArtifact);
 
-                        if (createSourcesJar) {
-                            getLog().info("Replacing original source artifact with shaded source artifact.");
-                            File shadedSources = shadedSourcesArtifactFile();
+                    if (createSourcesJar) {
+                        getLog().info("Replacing original source artifact with shaded source artifact.");
+                        File shadedSources = shadedSourcesArtifactFile();
 
-                            replaceFile(shadedSources, sourcesJar);
+                        replaceFile(shadedSources, sourcesJar);
 
-                            projectHelper.attachArtifact(project, "java-source", "sources", shadedSources);
-                        }
+                        projectHelper.attachArtifact(project, "java-source", "sources", shadedSources);
+                    }
 
-                        if (shadeTestJar) {
-                            getLog().info("Replacing original test artifact with shaded test artifact.");
-                            File shadedTests = shadedTestArtifactFile();
+                    if (shadeTestJar) {
+                        getLog().info("Replacing original test artifact with shaded test artifact.");
+                        File shadedTests = shadedTestArtifactFile();
 
-                            replaceFile(shadedTests, testJar);
+                        replaceFile(shadedTests, testJar);
 
-                            projectHelper.attachArtifact(project, "test-jar", shadedTests);
-                        }
+                        projectHelper.attachArtifact(project, "test-jar", shadedTests);
+                    }
 
-                        if (createTestSourcesJar) {
-                            getLog().info("Replacing original test source artifact "
-                                    + "with shaded test source artifact.");
-                            File shadedTestSources = shadedTestSourcesArtifactFile();
+                    if (createTestSourcesJar) {
+                        getLog().info("Replacing original test source artifact " + "with shaded test source artifact.");
+                        File shadedTestSources = shadedTestSourcesArtifactFile();
 
-                            replaceFile(shadedTestSources, testSourcesJar);
+                        replaceFile(shadedTestSources, testSourcesJar);
 
-                            projectHelper.attachArtifact(project, "java-source", "test-sources", shadedTestSources);
-                        }
+                        projectHelper.attachArtifact(project, "java-source", "test-sources", shadedTestSources);
                     }
                 }
             }
@@ -694,6 +713,56 @@ public class ShadeMojo extends AbstractMojo {
         getLog().error("  remove this binding from your POM such that the goal will be run in");
         getLog().error("  the proper phase.");
         getLog().error("- You removed the configuration of the maven-jar-plugin that produces the main artifact.");
+    }
+
+    Artifact selectInputArtifact() throws MojoExecutionException {
+        if (!isInputClassifierSet()) {
+            return project.getArtifact();
+        }
+
+        String classifier = inputClassifier.trim();
+        List<Artifact> matches = project.getAttachedArtifacts().stream()
+                .filter(artifact -> classifier.equals(artifact.getClassifier()))
+                .collect(Collectors.toList());
+
+        if (matches.isEmpty()) {
+            throw new MojoExecutionException("No attached artifact with classifier '" + classifier
+                    + "' was found. Ensure that the plugin producing the artifact runs before the Shade Plugin.");
+        }
+        if (matches.size() > 1) {
+            String artifacts = matches.stream().map(Artifact::getId).collect(Collectors.joining(", "));
+            throw new MojoExecutionException(
+                    "Multiple attached artifacts with classifier '" + classifier + "' were found: " + artifacts);
+        }
+
+        Artifact artifact = matches.get(0);
+        getLog().info("Using attached artifact " + artifact + " as the primary shade input.");
+        return artifact;
+    }
+
+    private boolean isInputClassifierSet() {
+        return inputClassifier != null && !inputClassifier.trim().isEmpty();
+    }
+
+    void validateInputArtifactOutput(Artifact inputArtifact) throws MojoExecutionException {
+        if (outputFile != null || shadedArtifactAttached || hasCustomFinalName()) {
+            return;
+        }
+
+        Artifact mainArtifact = project.getArtifact();
+        String mainExtension = mainArtifact.getArtifactHandler().getExtension();
+        String inputExtension = inputArtifact.getArtifactHandler().getExtension();
+        if (!mainExtension.equals(inputExtension)) {
+            throw new MojoExecutionException("Cannot replace the project main artifact of type '"
+                    + mainArtifact.getType() + "' with the selected attached artifact of type '"
+                    + inputArtifact.getType() + "'. Configure shadedArtifactAttached=true or outputFile instead.");
+        }
+    }
+
+    private boolean hasCustomFinalName() {
+        return finalName != null
+                && !finalName.isEmpty()
+                && !finalName.equals(project.getBuild().getFinalName());
     }
 
     private ShadeRequest shadeRequest(
@@ -863,9 +932,8 @@ public class ShadeMojo extends AbstractMojo {
         return processedArtifacts;
     }
 
-    private boolean invalidMainArtifact() {
-        return project.getArtifact().getFile() == null
-                || !project.getArtifact().getFile().isFile();
+    private boolean invalidArtifact(Artifact artifact) {
+        return artifact.getFile() == null || !artifact.getFile().isFile();
     }
 
     private void replaceFile(File oldFile, File newFile) throws MojoExecutionException {
@@ -976,7 +1044,8 @@ public class ShadeMojo extends AbstractMojo {
         return Arrays.asList(transformers);
     }
 
-    private List<Filter> getFilters(List<Artifact> artifactCollection, ArtifactSelector artifactSelector)
+    private List<Filter> getFilters(
+            Artifact inputArtifact, List<Artifact> artifactCollection, ArtifactSelector artifactSelector)
             throws MojoExecutionException {
         List<Filter> filters = new ArrayList<>();
         List<SimpleFilter> simpleFilters = new ArrayList<>();
@@ -984,8 +1053,8 @@ public class ShadeMojo extends AbstractMojo {
         if (this.filters != null && this.filters.length > 0) {
             Map<Artifact, ArtifactId> artifacts = new HashMap<>();
 
-            // artifactCollection does not contain project; that must also be subjected to filtering
-            artifacts.put(project.getArtifact(), new ArtifactId(project.getArtifact()));
+            // artifactCollection does not contain the primary input; that must also be subjected to filtering
+            artifacts.put(inputArtifact, new ArtifactId(inputArtifact));
 
             for (Artifact artifact : artifactCollection) {
                 if (artifactSelector.isSelected(artifact)) {
@@ -1044,11 +1113,10 @@ public class ShadeMojo extends AbstractMojo {
             if (entryPoints == null) {
                 entryPoints = new HashSet<>();
             }
-            getLog().info("Minimizing jar " + project.getArtifact()
-                    + (entryPoints.isEmpty() ? "" : " with entry points"));
+            getLog().info("Minimizing jar " + inputArtifact + (entryPoints.isEmpty() ? "" : " with entry points"));
 
             try {
-                filters.add(new MinijarFilter(project, getLog(), simpleFilters, entryPoints));
+                filters.add(new MinijarFilter(project, inputArtifact, getLog(), simpleFilters, entryPoints));
             } catch (IOException e) {
                 throw new MojoExecutionException("Failed to analyze class dependencies", e);
             }
@@ -1057,58 +1125,69 @@ public class ShadeMojo extends AbstractMojo {
         return filters;
     }
 
-    private File shadedArtifactFileWithClassifier() {
-        Artifact artifact = project.getArtifact();
+    private File shadedArtifactFileWithClassifier(Artifact artifact) {
         final String shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + shadedClassifierName + "."
                 + artifact.getArtifactHandler().getExtension();
         return new File(outputDirectory, shadedName);
     }
 
+    private File mainArtifactFile() {
+        Artifact artifact = project.getArtifact();
+        String name = project.getBuild().getFinalName();
+        if (name == null || name.isEmpty()) {
+            name = artifact.getArtifactId() + "-" + artifact.getVersion();
+        }
+        return new File(
+                outputDirectory, name + "." + artifact.getArtifactHandler().getExtension());
+    }
+
     private File shadedSourceArtifactFileWithClassifier() {
-        return shadedArtifactFileWithClassifier("sources");
+        return shadedArtifactFileWithClassifier("java-source", "sources");
     }
 
     private File shadedTestSourceArtifactFileWithClassifier() {
-        return shadedArtifactFileWithClassifier("test-sources");
+        return shadedArtifactFileWithClassifier("java-source", "test-sources");
     }
 
-    private File shadedArtifactFileWithClassifier(String classifier) {
+    private File shadedArtifactFileWithClassifier(String type, String classifier) {
         Artifact artifact = project.getArtifact();
         final String shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + shadedClassifierName + "-"
-                + classifier + "." + artifact.getArtifactHandler().getExtension();
+                + classifier + "." + artifactExtension(type);
         return new File(outputDirectory, shadedName);
     }
 
     private File shadedTestArtifactFileWithClassifier() {
-        return shadedArtifactFileWithClassifier("tests");
+        return shadedArtifactFileWithClassifier("test-jar", "tests");
     }
 
     private File shadedSourcesArtifactFile() {
-        return shadedArtifactFile("sources");
+        return shadedArtifactFile("java-source", "sources");
     }
 
     private File shadedTestSourcesArtifactFile() {
-        return shadedArtifactFile("test-sources");
+        return shadedArtifactFile("java-source", "test-sources");
     }
 
-    private File shadedArtifactFile(String classifier) {
+    private File shadedArtifactFile(String type, String classifier) {
         Artifact artifact = project.getArtifact();
-
         String shadedName;
 
         if (project.getBuild().getFinalName() != null) {
-            shadedName = project.getBuild().getFinalName() + "-" + classifier + "."
-                    + artifact.getArtifactHandler().getExtension();
+            shadedName = project.getBuild().getFinalName() + "-" + classifier + "." + artifactExtension(type);
         } else {
-            shadedName = shadedArtifactId + "-" + artifact.getVersion() + "-" + classifier + "."
-                    + artifact.getArtifactHandler().getExtension();
+            shadedName =
+                    shadedArtifactId + "-" + artifact.getVersion() + "-" + classifier + "." + artifactExtension(type);
         }
 
         return new File(outputDirectory, shadedName);
     }
 
     private File shadedTestArtifactFile() {
-        return shadedArtifactFile("tests");
+        return shadedArtifactFile("test-jar", "tests");
+    }
+
+    private String artifactExtension(String type) {
+        return artifactHandlerManager.getArtifactHandler(type).getExtension();
     }
 
     // We need to find the direct dependencies that have been included in the uber JAR so that we can modify the
