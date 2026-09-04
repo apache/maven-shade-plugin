@@ -327,11 +327,15 @@ public class MinijarFilter implements Filter {
 
     @Override
     public boolean isFiltered(String classFile) {
-        String className = classFile.replace('/', '.').replaceFirst("\\.class$", "");
-        Clazz clazz = new Clazz(className);
+        Clazz.ParsedFileName parsedFileName = Clazz.parseClassFileName(classFile);
+        if (parsedFileName == null) {
+            classesKept += 1;
+            return false;
+        }
+        Clazz clazz = new Clazz(parsedFileName.className);
 
         if (removable != null && removable.contains(clazz)) {
-            log.debug("Removing " + className);
+            log.debug("Removing " + parsedFileName.className);
             classesRemoved += 1;
             return true;
         }

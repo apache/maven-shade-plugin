@@ -168,14 +168,69 @@ public class ManifestResourceTransformerTest {
         }
     }
 
+    @Test
+    public void preserveMultiReleaseFromSubsequentManifest() throws Exception {
+        processManifest(createTestManifest(), Collections.<Relocator>emptyList());
+
+        Manifest dependencyManifest = new Manifest();
+        dependencyManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        dependencyManifest.getMainAttributes().putValue("Multi-Release", "true");
+        processManifest(dependencyManifest, Collections.<Relocator>emptyList());
+
+        try (JarInputStream jis =
+                new JarInputStream(new ByteArrayInputStream(writeOutput().toByteArray()))) {
+            assertEquals("true", jis.getManifest().getMainAttributes().getValue("Multi-Release"));
+        }
+    }
+
+    @Test
+    public void preserveExplicitMultiReleaseFalse() throws Exception {
+        Manifest projectManifest = createTestManifest();
+        projectManifest.getMainAttributes().putValue("Multi-Release", "false");
+        processManifest(projectManifest, Collections.<Relocator>emptyList());
+
+        Manifest dependencyManifest = new Manifest();
+        dependencyManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        dependencyManifest.getMainAttributes().putValue("Multi-Release", "true");
+        processManifest(dependencyManifest, Collections.<Relocator>emptyList());
+
+        try (JarInputStream jis =
+                new JarInputStream(new ByteArrayInputStream(writeOutput().toByteArray()))) {
+            assertEquals("false", jis.getManifest().getMainAttributes().getValue("Multi-Release"));
+        }
+    }
+
+    @Test
+    public void preserveConfiguredMultiReleaseFalse() throws Exception {
+        processManifest(createTestManifest(), Collections.<Relocator>emptyList());
+
+        Manifest dependencyManifest = new Manifest();
+        dependencyManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        dependencyManifest.getMainAttributes().putValue("Multi-Release", "true");
+        processManifest(dependencyManifest, Collections.<Relocator>emptyList());
+        transformer.setManifestEntries(Collections.<String, Object>singletonMap("Multi-Release", "false"));
+
+        try (JarInputStream jis =
+                new JarInputStream(new ByteArrayInputStream(writeOutput().toByteArray()))) {
+            assertEquals("false", jis.getManifest().getMainAttributes().getValue("Multi-Release"));
+        }
+    }
+
     private ByteArrayOutputStream transform(final Manifest manifest, List<Relocator> relocators) throws IOException {
+        processManifest(manifest, relocators);
+        return writeOutput();
+    }
+
+    private void processManifest(final Manifest manifest, List<Relocator> relocators) throws IOException {
         final ByteArrayOutputStream mboas = new ByteArrayOutputStream();
         try (OutputStream mos = mboas) {
             manifest.write(mos);
         }
         transformer.processResource(
                 JarFile.MANIFEST_NAME, new ByteArrayInputStream(mboas.toByteArray()), relocators, 0);
+    }
 
+    private ByteArrayOutputStream writeOutput() throws IOException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (JarOutputStream jarOutputStream = new JarOutputStream(out)) {
             transformer.modifyOutputStream(jarOutputStream);
