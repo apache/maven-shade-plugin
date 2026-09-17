@@ -46,6 +46,7 @@ To provide you with better understanding on some usages of the Shade Plugin, you
 
 - [Selecting Contents for Uber JAR](./examples/includes-excludes.html)
 - [Relocating Classes](./examples/class-relocation.html)
+- [Merging Java Module Descriptors](./examples/module-info-merging.html)
 - [Attaching the Shaded Artifact](./examples/attached-artifact.html)
 - [Executable JAR](./examples/executable-jar.html)
 - [Resource Transformers](./examples/resource-transformers.html)

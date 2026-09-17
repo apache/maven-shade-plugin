@@ -38,13 +38,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
@@ -55,17 +58,27 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.AppendingTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ServicesResourceTransformer;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.Os;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.ByteVector;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
 import static java.util.Arrays.asList;
@@ -79,7 +92,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -93,7 +108,7 @@ public class DefaultShaderTest {
             new String[] {"org/codehaus/plexus/util/xml/Xpp3Dom", "org/codehaus/plexus/util/xml/pull.*"};
 
     @TempDir
-    static File temporaryFolder;
+    File temporaryFolder;
 
     private static final String NEWLINE = "\n";
 
@@ -508,6 +523,1199 @@ public class DefaultShaderTest {
     }
 
     @Test
+    public void preservesExplicitMultiReleaseFalseInDiscardMode() throws Exception {
+        File primary = createJar(newFile(temporaryFolder, "primary.jar"), false, "primary.txt");
+        File dependency = createJar(newFile(temporaryFolder, "dependency.jar"), true, "dependency.txt");
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+
+        ManifestResourceTransformer manifestTransformer = new ManifestResourceTransformer();
+        HashMap<String, Object> entries = new HashMap<>();
+        entries.put("Multi-Release", "false");
+        manifestTransformer.setManifestEntries(entries);
+
+        ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
+        shadeRequest.setPrimaryArtifact(primary);
+        shadeRequest.setFilters(Collections.emptyList());
+        shadeRequest.setRelocators(Collections.emptyList());
+        shadeRequest.setResourceTransformers(Collections.singletonList(manifestTransformer));
+        shadeRequest.setUberJar(shadedFile);
+
+        DefaultShader shader = newShader();
+        shader.shade(shadeRequest);
+
+        try (JarFile shadedJar = new JarFile(shadedFile)) {
+            assertEquals("false", shadedJar.getManifest().getMainAttributes().getValue("Multi-Release"));
+        }
+        assertFalse(warnMessages.getAllValues().stream()
+                .anyMatch(message -> message.contains("Multi-Release: false is overridden")));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void propagatesMultiReleaseFromEmbeddedJarInMergeMode() throws Exception {
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(
+                    output, "app.module", new String[] {"dep.module"}, new String[] {"app/api"}, null, null);
+            writeClass(output, "app/api/App");
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        Manifest dependencyManifest = new Manifest();
+        dependencyManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        dependencyManifest.getMainAttributes().putValue("Multi-Release", "true");
+        try (JarOutputStream output =
+                new JarOutputStream(Files.newOutputStream(dependency.toPath()), dependencyManifest)) {
+            writeModuleDescriptor(output, "dep.module", new String[0], new String[0], null, null);
+            writeClass(output, "META-INF/versions/11/dep/api/Dependency.class", "dep/api/Dependency", Opcodes.V11);
+        }
+
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+        ManifestResourceTransformer manifestTransformer = new ManifestResourceTransformer();
+        HashMap<String, Object> entries = new HashMap<>();
+        entries.put("Multi-Release", "false");
+        manifestTransformer.setManifestEntries(entries);
+
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setFilters(Collections.emptyList());
+        request.setRelocators(Collections.emptyList());
+        request.setResourceTransformers(Collections.singletonList(manifestTransformer));
+        request.setUberJar(shadedFile);
+
+        newShader().shade(request);
+
+        try (JarFile shadedJar = new JarFile(shadedFile)) {
+            assertEquals("true", shadedJar.getManifest().getMainAttributes().getValue("Multi-Release"));
+        }
+        assertThat(warnMessages.getAllValues(), hasItem(containsString("Multi-Release: false is overridden")));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void infersPlatformRequirementsFromAutomaticModules() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(
+                    output, "app.module", new String[] {"dep.auto"}, new String[] {"app/api"}, null, null);
+            writeClass(output, "app/api/App");
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        Manifest dependencyManifest = new Manifest();
+        dependencyManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        dependencyManifest.getMainAttributes().putValue("Automatic-Module-Name", "dep.auto");
+        try (JarOutputStream output =
+                new JarOutputStream(Files.newOutputStream(dependency.toPath()), dependencyManifest)) {
+            writeClassReferencing(output, "dep/AutomaticDependency", "java/sql/Driver");
+        }
+
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setFilters(Collections.emptyList());
+        request.setRelocators(Collections.emptyList());
+        request.setResourceTransformers(Collections.emptyList());
+        request.setUberJar(shadedFile);
+
+        newShader().shade(request);
+
+        try (JarFile shadedJar = new JarFile(shadedFile)) {
+            Set<String> requirements = readModuleRequirements(shadedJar, "module-info.class", "app.module");
+            assertTrue(requirements.contains("java.sql"));
+            assertFalse(requirements.contains("dep.auto"));
+        }
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void mergesAutomaticModuleServicesAndInfersServiceLoaderUses() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        Manifest manifest = automaticModuleManifest("dep.auto", false);
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(dependency.toPath()), manifest)) {
+            writeClass(output, "spi/FirstService");
+            writeClass(output, "spi/SecondService");
+            writeClass(output, "dep/Provider");
+            writeServiceLoaderConsumer(output, "dep/Consumer", "spi/FirstService", "spi/SecondService");
+            writeServiceConfiguration(output, "spi.FirstService", "dep.Provider");
+        }
+
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+        ShadeRequest request = moduleMergeRequest(primary, dependency, Collections.emptySet(), shadedFile);
+
+        newShader().shade(request);
+
+        try (JarFile shadedJar = new JarFile(shadedFile)) {
+            assertEquals(
+                    new LinkedHashSet<>(Arrays.asList("spi/FirstService", "spi/SecondService")),
+                    readModuleUses(shadedJar, "module-info.class", "app.module"));
+            assertEquals(
+                    Collections.singleton("dep/Provider"),
+                    readModuleProviders(shadedJar, "module-info.class", "app.module", "spi/FirstService"));
+        }
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void excludesFilteredAutomaticModuleServiceConfiguration() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        Manifest manifest = automaticModuleManifest("dep.auto", false);
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(dependency.toPath()), manifest)) {
+            writeClass(output, "spi/Service");
+            writeClass(output, "dep/Provider");
+            writeServiceConfiguration(output, "spi.Service", "dep.Provider");
+        }
+
+        Filter filter = mock(Filter.class);
+        when(filter.canFilter(dependency)).thenReturn(true);
+        when(filter.isFiltered("META-INF/services/spi.Service")).thenReturn(true);
+
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+        ShadeRequest request = moduleMergeRequest(primary, dependency, Collections.emptySet(), shadedFile);
+        request.setFilters(Collections.singletonList(filter));
+
+        newShader().shade(request);
+
+        try (JarFile shadedJar = new JarFile(shadedFile)) {
+            assertTrue(readModuleProviders(shadedJar, "module-info.class", "app.module", "spi/Service")
+                    .isEmpty());
+            assertTrue(shadedJar.getJarEntry("META-INF/services/spi.Service") == null);
+        }
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void failsWhenAutomaticModuleServiceLoaderUseIsDynamic() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        Manifest manifest = automaticModuleManifest("dep.auto", false);
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(dependency.toPath()), manifest)) {
+            writeDynamicServiceLoaderConsumer(output, "dep/DynamicConsumer");
+        }
+
+        ShadeRequest request =
+                moduleMergeRequest(primary, dependency, Collections.emptySet(), newFile(temporaryFolder, "shaded.jar"));
+
+        MojoExecutionException exception =
+                assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
+        assertThat(exception.getMessage(), containsString("dep.DynamicConsumer"));
+        assertThat(exception.getMessage(), containsString("ServiceLoader.load"));
+        assertThat(exception.getMessage(), containsString("service type cannot be determined"));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void failsWhenAutomaticModuleUsesServiceLoaderMethodHandle() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        Manifest manifest = automaticModuleManifest("dep.auto", false);
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(dependency.toPath()), manifest)) {
+            writeServiceLoaderMethodHandle(output, "dep/MethodHandleConsumer");
+        }
+
+        ShadeRequest request =
+                moduleMergeRequest(primary, dependency, Collections.emptySet(), newFile(temporaryFolder, "shaded.jar"));
+
+        MojoExecutionException exception =
+                assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
+        assertThat(exception.getMessage(), containsString("dep.MethodHandleConsumer"));
+        assertThat(exception.getMessage(), containsString("ServiceLoader method handle"));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void skipsNonArchiveDependencyAnalysisInputs() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+        File dependency = automaticModule(
+                newFile(temporaryFolder, "dependency.jar"), "dep.auto", "dep/AutomaticDependency", "java/sql/Driver");
+        File nativeLibrary = newFile(temporaryFolder, "libnative.so");
+        Files.write(nativeLibrary.toPath(), new byte[] {0x7f, 'E', 'L', 'F'});
+
+        ShadeRequest request = moduleMergeRequest(
+                primary, dependency, Collections.singleton(nativeLibrary), newFile(temporaryFolder, "shaded.jar"));
+
+        newShader().shade(request);
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void rejectsBytecodeNewerThanTheAnalysisJdk() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+        Assumptions.assumeTrue(runtimeFeature() < 26);
+
+        int futureRelease = runtimeFeature() + 1;
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+        File dependency = automaticMultiReleaseModule(
+                newFile(temporaryFolder, "dependency.jar"),
+                futureRelease,
+                "dep/FutureDependency",
+                "future/platform/Type");
+
+        ShadeRequest request =
+                moduleMergeRequest(primary, dependency, Collections.emptySet(), newFile(temporaryFolder, "shaded.jar"));
+
+        MojoExecutionException exception =
+                assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
+
+        assertThat(exception.getMessage(), containsString("requires Java " + futureRelease + " platform data"));
+        assertThat(exception.getMessage(), containsString("analysisJdkToolchain"));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void failsWhenAutomaticModuleReferenceCannotBeResolved() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+
+        File dependency = automaticModule(
+                newFile(temporaryFolder, "dependency.jar"), "dep.auto", "dep/AutomaticDependency", "missing/Type");
+
+        ShadeRequest request =
+                moduleMergeRequest(primary, dependency, Collections.emptySet(), newFile(temporaryFolder, "shaded.jar"));
+
+        MojoExecutionException exception =
+                assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
+        assertThat(exception.getMessage(), containsString("dep.AutomaticDependency"));
+        assertThat(exception.getMessage(), containsString("missing.Type"));
+        assertThat(exception.getMessage(), containsString("not present in the shaded output"));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void failsWhenAutomaticModuleReferenceHasAmbiguousOwners() throws Exception {
+        Assumptions.assumeTrue(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+
+        File dependency = automaticModule(
+                newFile(temporaryFolder, "dependency.jar"), "dep.auto", "dep/AutomaticDependency", "external/Type");
+        File externalOne =
+                automaticModule(newFile(temporaryFolder, "external-one.jar"), "external.one", "external/Type", null);
+        File externalTwo =
+                automaticModule(newFile(temporaryFolder, "external-two.jar"), "external.two", "external/Type", null);
+
+        ShadeRequest request = moduleMergeRequest(
+                primary,
+                dependency,
+                new LinkedHashSet<>(Arrays.asList(externalOne, externalTwo)),
+                newFile(temporaryFolder, "shaded.jar"));
+
+        MojoExecutionException exception =
+                assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
+        assertThat(exception.getMessage(), containsString("external.Type"));
+        assertThat(exception.getMessage(), containsString("external.one"));
+        assertThat(exception.getMessage(), containsString("external.two"));
+        assertThat(exception.getMessage(), containsString("owned by multiple modules"));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void failsAutomaticModuleInferenceWithoutModularAnalysisJdk() throws Exception {
+        Assumptions.assumeFalse(isModularRuntime());
+
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[] {"dep.auto"}, new String[0], null, null);
+        }
+        File dependency = automaticModule(
+                newFile(temporaryFolder, "dependency.jar"), "dep.auto", "dep/AutomaticDependency", "java/sql/Driver");
+        ShadeRequest request =
+                moduleMergeRequest(primary, dependency, Collections.emptySet(), newFile(temporaryFolder, "shaded.jar"));
+
+        MojoExecutionException exception =
+                assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
+        assertThat(exception.getMessage(), containsString("Invalid module-info analysis JDK"));
+        assertThat(exception.getMessage(), containsString("missing jmods/java.base.jmod"));
+        assertThat(exception.getMessage(), containsString("analysisJdkToolchain"));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void mergesModuleDescriptorsUsingPrimaryModuleBoundary() throws Exception {
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(
+                    output,
+                    "app.module",
+                    new String[] {"dep.module", "external.module"},
+                    new String[] {"app/api"},
+                    null,
+                    null);
+            writeClass(output, "app/api/App");
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(dependency.toPath()))) {
+            writeModuleDescriptor(
+                    output,
+                    "dep.module",
+                    new String[] {"external.module"},
+                    new String[] {"dep/api"},
+                    "spi/Service",
+                    "dep/internal/Provider");
+            writeClass(output, "dep/api/Dependency");
+            writeClass(output, "dep/internal/Provider");
+            writeClass(output, "dep/impl/Helper");
+        }
+
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setFilters(Collections.emptyList());
+        request.setRelocators(Collections.singletonList(new SimpleRelocator("dep", "hidden.dep", null, null)));
+        request.setResourceTransformers(Collections.emptyList());
+        request.setUberJar(shadedFile);
+
+        newShader().shade(request);
+
+        final Set<String> requires = new LinkedHashSet<>();
+        final Set<String> exports = new LinkedHashSet<>();
+        final Set<String> packages = new LinkedHashSet<>();
+        final Set<String> providers = new LinkedHashSet<>();
+        try (JarFile shadedJar = new JarFile(shadedFile);
+                InputStream descriptor = shadedJar.getInputStream(shadedJar.getJarEntry("module-info.class"))) {
+            new ClassReader(descriptor)
+                    .accept(
+                            new ClassVisitor(Opcodes.ASM9) {
+                                @Override
+                                public ModuleVisitor visitModule(String name, int access, String version) {
+                                    assertEquals("app.module", name);
+                                    return new ModuleVisitor(Opcodes.ASM9) {
+                                        @Override
+                                        public void visitRequire(String module, int access, String version) {
+                                            requires.add(module);
+                                        }
+
+                                        @Override
+                                        public void visitExport(String packaze, int access, String... modules) {
+                                            exports.add(packaze);
+                                        }
+
+                                        @Override
+                                        public void visitPackage(String packaze) {
+                                            packages.add(packaze);
+                                        }
+
+                                        @Override
+                                        public void visitProvide(String service, String... implementations) {
+                                            providers.addAll(Arrays.asList(implementations));
+                                        }
+                                    };
+                                }
+                            },
+                            0);
+
+            assertEquals(
+                    "app.module", shadedJar.getManifest().getMainAttributes().getValue("Automatic-Module-Name"));
+            assertTrue(shadedJar.getEntry("hidden/dep/internal/Provider.class") != null);
+            assertTrue(shadedJar.getEntry("hidden/dep/impl/Helper.class") != null);
+        }
+
+        assertTrue(requires.contains("java.base"));
+        assertTrue(requires.contains("external.module"));
+        assertFalse(requires.contains("dep.module"));
+        assertEquals(Collections.singleton("app/api"), exports);
+        assertEquals(
+                new LinkedHashSet<>(
+                        Arrays.asList("app/api", "hidden/dep/api", "hidden/dep/impl", "hidden/dep/internal")),
+                packages);
+        assertEquals(Collections.singleton("hidden/dep/internal/Provider"), providers);
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void raisesModuleFloorForLaterProvidersAndPlatformRequirements() throws Exception {
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(
+                    output, "app.module", new String[] {"dep.module"}, new String[] {"app/api"}, null, null);
+            writeClass(output, "app/api/App");
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        Manifest dependencyManifest = new Manifest();
+        dependencyManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        dependencyManifest.getMainAttributes().putValue("Multi-Release", "true");
+        dependencyManifest.getMainAttributes().putValue("Automatic-Module-Name", "dep.module");
+        try (JarOutputStream output =
+                new JarOutputStream(Files.newOutputStream(dependency.toPath()), dependencyManifest)) {
+            writeModuleDescriptor(
+                    output,
+                    "module-info.class",
+                    Opcodes.V9,
+                    "dep.module",
+                    new String[0],
+                    null,
+                    new String[0],
+                    "spi/Service",
+                    "dep/internal/StableProvider");
+            writeModuleDescriptor(
+                    output,
+                    "META-INF/versions/17/module-info.class",
+                    Opcodes.V17,
+                    "dep.module",
+                    new String[0],
+                    "jdk.incubator.vector",
+                    new String[0],
+                    "spi/Service",
+                    "dep/internal/StableProvider",
+                    "dep/versioned/LaterProvider");
+            writeClass(output, "dep/internal/StableProvider");
+            writeClass(
+                    output,
+                    "META-INF/versions/17/dep/versioned/LaterProvider.class",
+                    "dep/versioned/LaterProvider",
+                    Opcodes.V17);
+        }
+
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setFilters(Collections.emptyList());
+        request.setRelocators(Collections.singletonList(new SimpleRelocator("dep", "hidden.dep", null, null)));
+        request.setResourceTransformers(Collections.emptyList());
+        request.setUberJar(shadedFile);
+
+        newShader().shade(request);
+
+        final Set<String> requirements = new LinkedHashSet<>();
+        final Set<String> packages = new LinkedHashSet<>();
+        final Set<String> providers = new LinkedHashSet<>();
+        try (JarFile shadedJar = new JarFile(shadedFile)) {
+            assertEquals("true", shadedJar.getManifest().getMainAttributes().getValue("Multi-Release"));
+            assertEquals(
+                    "app.module", shadedJar.getManifest().getMainAttributes().getValue("Automatic-Module-Name"));
+            assertTrue(shadedJar.getJarEntry("module-info.class") == null);
+            assertTrue(shadedJar.getJarEntry("META-INF/versions/17/module-info.class") != null);
+            assertTrue(shadedJar.getJarEntry("META-INF/versions/17/hidden/dep/versioned/LaterProvider.class") != null);
+
+            try (InputStream descriptor =
+                    shadedJar.getInputStream(shadedJar.getJarEntry("META-INF/versions/17/module-info.class"))) {
+                new ClassReader(descriptor)
+                        .accept(
+                                new ClassVisitor(Opcodes.ASM9) {
+                                    @Override
+                                    public ModuleVisitor visitModule(String name, int access, String version) {
+                                        assertEquals("app.module", name);
+                                        return new ModuleVisitor(Opcodes.ASM9) {
+                                            @Override
+                                            public void visitRequire(String module, int access, String version) {
+                                                if (!"java.base".equals(module)) {
+                                                    requirements.add(module);
+                                                    assertEquals(0, access & Opcodes.ACC_TRANSITIVE);
+                                                }
+                                            }
+
+                                            @Override
+                                            public void visitPackage(String packaze) {
+                                                packages.add(packaze);
+                                            }
+
+                                            @Override
+                                            public void visitProvide(String service, String... implementations) {
+                                                providers.addAll(Arrays.asList(implementations));
+                                            }
+                                        };
+                                    }
+                                },
+                                0);
+            }
+
+            JarEntry service = shadedJar.getJarEntry("META-INF/services/spi.Service");
+            assertTrue(service != null);
+            List<String> serviceProviders = new BufferedReader(
+                            new InputStreamReader(shadedJar.getInputStream(service), StandardCharsets.UTF_8))
+                    .lines()
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("hidden.dep.internal.StableProvider"), serviceProviders);
+        }
+
+        assertEquals(Collections.singleton("jdk.incubator.vector"), requirements);
+        assertEquals(
+                new LinkedHashSet<>(Arrays.asList("app/api", "hidden/dep/internal", "hidden/dep/versioned")), packages);
+        assertEquals(
+                new LinkedHashSet<>(
+                        Arrays.asList("hidden/dep/internal/StableProvider", "hidden/dep/versioned/LaterProvider")),
+                providers);
+        assertThat(
+                warnMessages.getAllValues(),
+                hasItems(
+                        containsString("Raising the module descriptor floor for app.module from Java 9 to Java 17"),
+                        containsString("provider hidden.dep.versioned.LaterProvider for spi.Service")));
+        assertFalse(warnMessages.getAllValues().stream()
+                .anyMatch(message -> message.contains("transitive platform requirement jdk.incubator.vector")));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void failsWhenVersionedProviderCannotBeBridgedBelowRaisedFloor() throws Exception {
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(
+                    output, "app.module", new String[] {"dep.module"}, new String[] {"app/api"}, null, null);
+            writeClass(output, "app/api/App");
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        Manifest dependencyManifest = new Manifest();
+        dependencyManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        dependencyManifest.getMainAttributes().putValue("Multi-Release", "true");
+        try (JarOutputStream output =
+                new JarOutputStream(Files.newOutputStream(dependency.toPath()), dependencyManifest)) {
+            writeModuleDescriptor(
+                    output, "module-info.class", Opcodes.V9, "dep.module", new String[0], null, new String[0], null);
+            writeModuleDescriptor(
+                    output,
+                    "META-INF/versions/11/module-info.class",
+                    Opcodes.V11,
+                    "dep.module",
+                    new String[0],
+                    null,
+                    new String[0],
+                    "spi/Service",
+                    "dep/versioned/Provider11");
+            writeModuleDescriptor(
+                    output,
+                    "META-INF/versions/17/module-info.class",
+                    Opcodes.V17,
+                    "dep.module",
+                    new String[0],
+                    null,
+                    new String[0],
+                    "spi/Service",
+                    "dep/versioned/Provider11",
+                    "dep/versioned/Provider17");
+            writeClass(
+                    output,
+                    "META-INF/versions/11/dep/versioned/Provider11.class",
+                    "dep/versioned/Provider11",
+                    Opcodes.V11);
+            writeClass(
+                    output,
+                    "META-INF/versions/17/dep/versioned/Provider17.class",
+                    "dep/versioned/Provider17",
+                    Opcodes.V17);
+        }
+
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setFilters(Collections.emptyList());
+        request.setRelocators(Collections.emptyList());
+        request.setResourceTransformers(Collections.emptyList());
+        request.setUberJar(newFile(temporaryFolder, "shaded.jar"));
+
+        MojoExecutionException exception =
+                assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
+        assertThat(exception.getMessage(), containsString("dep.versioned.Provider11"));
+        assertThat(exception.getMessage(), containsString("cannot be exposed while app.module is automatic"));
+        assertThat(exception.getMessage(), containsString("META-INF/services cannot be versioned"));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void writesRootAndVersionedModuleDescriptors() throws Exception {
+        File primary = newFile(temporaryFolder, "primary.jar");
+        Manifest primaryManifest = new Manifest();
+        primaryManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        primaryManifest.getMainAttributes().putValue("Multi-Release", "true");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()), primaryManifest)) {
+            writeModuleDescriptor(
+                    output,
+                    "module-info.class",
+                    Opcodes.V9,
+                    "app.module",
+                    new String[] {"dep.module"},
+                    null,
+                    new String[] {"app/api"},
+                    null);
+            writeModuleDescriptor(
+                    output,
+                    "META-INF/versions/17/module-info.class",
+                    Opcodes.V17,
+                    "app.module",
+                    new String[] {"dep.module", "jdk.unsupported"},
+                    null,
+                    new String[] {"app/api"},
+                    null);
+            writeClass(output, "app/api/App");
+            writeClass(
+                    output, "META-INF/versions/17/app/versioned/Feature.class", "app/versioned/Feature", Opcodes.V17);
+        }
+
+        File dependency = newFile(temporaryFolder, "dependency.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(dependency.toPath()))) {
+            writeModuleDescriptor(output, "dep.module", new String[0], new String[0], null, null);
+            writeClass(output, "dep/api/Dependency");
+        }
+
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setFilters(Collections.emptyList());
+        request.setRelocators(Arrays.asList(
+                new SimpleRelocator("app.versioned", "hidden.app.versioned", null, null),
+                new SimpleRelocator("dep", "hidden.dep", null, null)));
+        request.setResourceTransformers(Collections.emptyList());
+        ModuleInfoConfiguration moduleInfo = new ModuleInfoConfiguration();
+        moduleInfo.setModuleName("shaded.app.module");
+        request.setModuleInfoConfiguration(moduleInfo);
+        request.setUberJar(shadedFile);
+
+        newShader().shade(request);
+
+        try (JarFile shadedJar = new JarFile(shadedFile)) {
+            assertEquals("true", shadedJar.getManifest().getMainAttributes().getValue("Multi-Release"));
+            assertEquals(
+                    "shaded.app.module",
+                    shadedJar.getManifest().getMainAttributes().getValue("Automatic-Module-Name"));
+            assertEquals(
+                    Collections.singleton("java.base"),
+                    readModuleRequirements(shadedJar, "module-info.class", "shaded.app.module"));
+            assertEquals(
+                    new LinkedHashSet<>(Arrays.asList("java.base", "jdk.unsupported")),
+                    readModuleRequirements(shadedJar, "META-INF/versions/17/module-info.class", "shaded.app.module"));
+            Set<String> expectedPackages =
+                    new LinkedHashSet<>(Arrays.asList("app/api", "hidden/app/versioned", "hidden/dep/api"));
+            assertEquals(expectedPackages, readModulePackages(shadedJar, "module-info.class", "shaded.app.module"));
+            assertEquals(
+                    expectedPackages,
+                    readModulePackages(shadedJar, "META-INF/versions/17/module-info.class", "shaded.app.module"));
+            assertTrue(shadedJar.getJarEntry("META-INF/versions/17/hidden/app/versioned/Feature.class") != null);
+            assertTrue(shadedJar.getJarEntry("hidden/dep/api/Dependency.class") != null);
+            assertTrue(shadedJar.getJarEntry("META-INF/versions/17/app/versioned/Feature.class") == null);
+            assertTrue(shadedJar.getJarEntry("dep/api/Dependency.class") == null);
+        }
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void failsWhenFilteringInvalidatesPrimaryModuleExports() throws Exception {
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            writeModuleDescriptor(output, "app.module", new String[0], new String[] {"app/api"}, null, null);
+            writeClass(output, "app/api/App");
+        }
+
+        Filter filter = mock(Filter.class);
+        when(filter.canFilter(primary)).thenReturn(true);
+        when(filter.isFiltered("app/api/App.class")).thenReturn(true);
+
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Collections.singleton(primary)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setFilters(Collections.singletonList(filter));
+        request.setRelocators(Collections.emptyList());
+        request.setResourceTransformers(Collections.emptyList());
+        request.setUberJar(newFile(temporaryFolder, "shaded.jar"));
+
+        MojoExecutionException exception =
+                assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
+        assertThat(
+                exception.getMessage(),
+                containsString("exported package app.api from the primary descriptor is absent"));
+
+        temporaryFolder.delete();
+    }
+
+    @Test
+    public void preservesModuleTargetAndResolutionButDropsHashes() throws Exception {
+        File primary = newFile(temporaryFolder, "primary.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(primary.toPath()))) {
+            ClassWriter writer = new ClassWriter(0);
+            writer.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
+            ModuleVisitor module = writer.visitModule("app.module", 0, null);
+            module.visitRequire("java.base", Opcodes.ACC_MANDATED, null);
+            module.visitExport("app/api", 0);
+            module.visitPackage("app/api");
+            module.visitEnd();
+            writer.visitAttribute(new TestModuleTargetAttribute("linux-amd64"));
+            writer.visitAttribute(new TestModuleResolutionAttribute(1));
+            writer.visitAttribute(new TestModuleHashesAttribute());
+            writer.visitEnd();
+            output.putNextEntry(new JarEntry("module-info.class"));
+            output.write(writer.toByteArray());
+            writeClass(output, "app/api/App");
+        }
+
+        File shadedFile = newFile(temporaryFolder, "shaded.jar");
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Collections.singleton(primary)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setFilters(Collections.emptyList());
+        request.setRelocators(Collections.emptyList());
+        request.setResourceTransformers(Collections.emptyList());
+        request.setUberJar(shadedFile);
+
+        newShader().shade(request);
+
+        final TestModuleTargetAttribute[] target = new TestModuleTargetAttribute[1];
+        final TestModuleResolutionAttribute[] resolution = new TestModuleResolutionAttribute[1];
+        final Set<String> otherAttributes = new LinkedHashSet<>();
+        try (JarFile shadedJar = new JarFile(shadedFile);
+                InputStream descriptor = shadedJar.getInputStream(shadedJar.getJarEntry("module-info.class"))) {
+            new ClassReader(descriptor)
+                    .accept(
+                            new ClassVisitor(Opcodes.ASM9) {
+                                @Override
+                                public void visitAttribute(Attribute attribute) {
+                                    if (attribute instanceof TestModuleTargetAttribute) {
+                                        target[0] = (TestModuleTargetAttribute) attribute;
+                                    } else if (attribute instanceof TestModuleResolutionAttribute) {
+                                        resolution[0] = (TestModuleResolutionAttribute) attribute;
+                                    } else {
+                                        otherAttributes.add(attribute.type);
+                                    }
+                                }
+                            },
+                            new Attribute[] {
+                                new TestModuleTargetAttribute(),
+                                new TestModuleResolutionAttribute(),
+                                new TestModuleHashesAttribute()
+                            },
+                            0);
+        }
+
+        assertEquals("linux-amd64", target[0].targetPlatform);
+        assertEquals(1, resolution[0].resolutionFlags);
+        assertFalse(otherAttributes.contains("ModuleHashes"));
+        assertThat(warnMessages.getAllValues(), hasItem(containsString("Dropping ModuleHashes")));
+
+        temporaryFolder.delete();
+    }
+
+    private File createJar(File file, boolean multiRelease, String entryName) throws IOException {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        if (multiRelease) {
+            manifest.getMainAttributes().putValue("Multi-Release", "true");
+        }
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(file.toPath()), manifest)) {
+            output.putNextEntry(new JarEntry(entryName));
+            output.write(entryName.getBytes(StandardCharsets.UTF_8));
+        }
+        return file;
+    }
+
+    private File automaticModule(File file, String moduleName, String className, String referencedClass)
+            throws IOException {
+        Manifest manifest = automaticModuleManifest(moduleName, false);
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(file.toPath()), manifest)) {
+            if (referencedClass == null) {
+                writeClass(output, className);
+            } else {
+                writeClassReferencing(output, className, referencedClass);
+            }
+        }
+        return file;
+    }
+
+    private File automaticMultiReleaseModule(File file, int release, String className, String referencedClass)
+            throws IOException {
+        Manifest manifest = automaticModuleManifest("dep.auto", true);
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(file.toPath()), manifest)) {
+            writeClassReferencing(
+                    output,
+                    "META-INF/versions/" + release + '/' + className + ".class",
+                    className,
+                    referencedClass,
+                    release + 44);
+        }
+        return file;
+    }
+
+    private Manifest automaticModuleManifest(String moduleName, boolean multiRelease) {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        manifest.getMainAttributes().putValue("Automatic-Module-Name", moduleName);
+        if (multiRelease) {
+            manifest.getMainAttributes().putValue("Multi-Release", "true");
+        }
+        return manifest;
+    }
+
+    private ShadeRequest moduleMergeRequest(
+            File primary, File dependency, Set<File> dependencyAnalysisArtifacts, File output) {
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(new LinkedHashSet<>(Arrays.asList(primary, dependency)));
+        request.setPrimaryArtifact(primary);
+        request.setModuleInfoMode(ModuleInfoMode.MERGE);
+        request.setDependencyAnalysisArtifacts(dependencyAnalysisArtifacts);
+        request.setFilters(Collections.emptyList());
+        request.setRelocators(Collections.emptyList());
+        request.setResourceTransformers(Collections.emptyList());
+        request.setUberJar(output);
+        return request;
+    }
+
+    private boolean isModularRuntime() {
+        return !System.getProperty("java.specification.version").startsWith("1.");
+    }
+
+    private int runtimeFeature() {
+        String version = System.getProperty("java.specification.version");
+        return Integer.parseInt(version.startsWith("1.") ? version.substring(2) : version);
+    }
+
+    private void writeModuleDescriptor(
+            JarOutputStream output,
+            String moduleName,
+            String[] requires,
+            String[] exports,
+            String service,
+            String provider)
+            throws IOException {
+        writeModuleDescriptor(
+                output, "module-info.class", Opcodes.V9, moduleName, requires, null, exports, service, provider);
+    }
+
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    private void writeModuleDescriptor(
+            JarOutputStream output,
+            String entryName,
+            int classVersion,
+            String moduleName,
+            String[] requires,
+            String transitiveRequirement,
+            String[] exports,
+            String service,
+            String... providers)
+            throws IOException {
+        ClassWriter writer = new ClassWriter(0);
+        writer.visit(classVersion, Opcodes.ACC_MODULE, "module-info", null, null, null);
+        ModuleVisitor module = writer.visitModule(moduleName, 0, null);
+        module.visitRequire("java.base", Opcodes.ACC_MANDATED, null);
+        for (String requirement : requires) {
+            module.visitRequire(requirement, 0, null);
+        }
+        if (transitiveRequirement != null) {
+            module.visitRequire(transitiveRequirement, Opcodes.ACC_TRANSITIVE, null);
+        }
+        for (String exportedPackage : exports) {
+            module.visitExport(exportedPackage, 0);
+            module.visitPackage(exportedPackage);
+        }
+        if (service != null) {
+            module.visitUse(service);
+            module.visitProvide(service, providers);
+            for (String provider : providers) {
+                module.visitPackage(provider.substring(0, provider.lastIndexOf('/')));
+            }
+        }
+        module.visitEnd();
+        writer.visitEnd();
+
+        output.putNextEntry(new JarEntry(entryName));
+        output.write(writer.toByteArray());
+    }
+
+    private void writeClass(JarOutputStream output, String name) throws IOException {
+        writeClass(output, name + ".class", name, Opcodes.V9);
+    }
+
+    private void writeClassReferencing(JarOutputStream output, String name, String referencedClass) throws IOException {
+        writeClassReferencing(output, name + ".class", name, referencedClass, Opcodes.V9);
+    }
+
+    private void writeClassReferencing(
+            JarOutputStream output, String entryName, String name, String referencedClass, int classVersion)
+            throws IOException {
+        ClassWriter writer = new ClassWriter(0);
+        writer.visit(classVersion, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
+        writer.visitField(Opcodes.ACC_PRIVATE, "reference", 'L' + referencedClass + ';', null, null)
+                .visitEnd();
+        writer.visitEnd();
+        output.putNextEntry(new JarEntry(entryName));
+        output.write(writer.toByteArray());
+    }
+
+    private void writeServiceLoaderConsumer(
+            JarOutputStream output, String name, String firstService, String secondService) throws IOException {
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        writer.visit(Opcodes.V9, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
+        MethodVisitor method = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "load", "(Z)V", null, null);
+        method.visitCode();
+        Label second = new Label();
+        Label join = new Label();
+        method.visitVarInsn(Opcodes.ILOAD, 0);
+        method.visitJumpInsn(Opcodes.IFEQ, second);
+        method.visitLdcInsn(Type.getObjectType(firstService));
+        method.visitJumpInsn(Opcodes.GOTO, join);
+        method.visitLabel(second);
+        method.visitLdcInsn(Type.getObjectType(secondService));
+        method.visitLabel(join);
+        method.visitVarInsn(Opcodes.ASTORE, 1);
+        method.visitVarInsn(Opcodes.ALOAD, 1);
+        method.visitMethodInsn(
+                Opcodes.INVOKESTATIC,
+                "java/util/ServiceLoader",
+                "load",
+                "(Ljava/lang/Class;)Ljava/util/ServiceLoader;",
+                false);
+        method.visitInsn(Opcodes.POP);
+        method.visitLdcInsn(Type.getObjectType(firstService));
+        method.visitInsn(Opcodes.ACONST_NULL);
+        method.visitMethodInsn(
+                Opcodes.INVOKESTATIC,
+                "java/util/ServiceLoader",
+                "load",
+                "(Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/util/ServiceLoader;",
+                false);
+        method.visitInsn(Opcodes.POP);
+        method.visitInsn(Opcodes.ACONST_NULL);
+        method.visitLdcInsn(Type.getObjectType(secondService));
+        method.visitMethodInsn(
+                Opcodes.INVOKESTATIC,
+                "java/util/ServiceLoader",
+                "load",
+                "(Ljava/lang/ModuleLayer;Ljava/lang/Class;)Ljava/util/ServiceLoader;",
+                false);
+        method.visitInsn(Opcodes.POP);
+        method.visitLdcInsn(Type.getObjectType(firstService));
+        method.visitMethodInsn(
+                Opcodes.INVOKESTATIC,
+                "java/util/ServiceLoader",
+                "loadInstalled",
+                "(Ljava/lang/Class;)Ljava/util/ServiceLoader;",
+                false);
+        method.visitInsn(Opcodes.POP);
+        method.visitInsn(Opcodes.RETURN);
+        method.visitMaxs(0, 0);
+        method.visitEnd();
+        writer.visitEnd();
+        output.putNextEntry(new JarEntry(name + ".class"));
+        output.write(writer.toByteArray());
+    }
+
+    private void writeDynamicServiceLoaderConsumer(JarOutputStream output, String name) throws IOException {
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        writer.visit(Opcodes.V9, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
+        MethodVisitor method =
+                writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "load", "(Ljava/lang/Class;)V", null, null);
+        method.visitCode();
+        method.visitVarInsn(Opcodes.ALOAD, 0);
+        method.visitMethodInsn(
+                Opcodes.INVOKESTATIC,
+                "java/util/ServiceLoader",
+                "load",
+                "(Ljava/lang/Class;)Ljava/util/ServiceLoader;",
+                false);
+        method.visitInsn(Opcodes.POP);
+        method.visitInsn(Opcodes.RETURN);
+        method.visitMaxs(0, 0);
+        method.visitEnd();
+        writer.visitEnd();
+        output.putNextEntry(new JarEntry(name + ".class"));
+        output.write(writer.toByteArray());
+    }
+
+    private void writeServiceLoaderMethodHandle(JarOutputStream output, String name) throws IOException {
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        writer.visit(Opcodes.V9, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
+        MethodVisitor method =
+                writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "reference", "()V", null, null);
+        method.visitCode();
+        method.visitLdcInsn(new Handle(
+                Opcodes.H_INVOKESTATIC,
+                "java/util/ServiceLoader",
+                "load",
+                "(Ljava/lang/Class;)Ljava/util/ServiceLoader;",
+                false));
+        method.visitInsn(Opcodes.POP);
+        method.visitInsn(Opcodes.RETURN);
+        method.visitMaxs(0, 0);
+        method.visitEnd();
+        writer.visitEnd();
+        output.putNextEntry(new JarEntry(name + ".class"));
+        output.write(writer.toByteArray());
+    }
+
+    private void writeServiceConfiguration(JarOutputStream output, String service, String... providers)
+            throws IOException {
+        output.putNextEntry(new JarEntry("META-INF/services/" + service));
+        output.write((String.join("\n", providers) + '\n').getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void writeClass(JarOutputStream output, String entryName, String name, int classVersion)
+            throws IOException {
+        ClassWriter writer = new ClassWriter(0);
+        writer.visit(classVersion, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null);
+        writer.visitEnd();
+        output.putNextEntry(new JarEntry(entryName));
+        output.write(writer.toByteArray());
+    }
+
+    private Set<String> readModuleRequirements(JarFile jar, String entryName, String expectedModuleName)
+            throws IOException {
+        Set<String> requirements = new LinkedHashSet<>();
+        JarEntry entry = requireNonNull(jar.getJarEntry(entryName), entryName + " in " + jar.getName());
+        try (InputStream descriptor = jar.getInputStream(entry)) {
+            new ClassReader(descriptor)
+                    .accept(
+                            new ClassVisitor(Opcodes.ASM9) {
+                                @Override
+                                public ModuleVisitor visitModule(String name, int access, String version) {
+                                    assertEquals(expectedModuleName, name);
+                                    return new ModuleVisitor(Opcodes.ASM9) {
+                                        @Override
+                                        public void visitRequire(String module, int access, String version) {
+                                            requirements.add(module);
+                                        }
+                                    };
+                                }
+                            },
+                            0);
+        }
+        return requirements;
+    }
+
+    private Set<String> readModulePackages(JarFile jar, String entryName, String expectedModuleName)
+            throws IOException {
+        Set<String> packages = new LinkedHashSet<>();
+        JarEntry entry = requireNonNull(jar.getJarEntry(entryName), entryName + " in " + jar.getName());
+        try (InputStream descriptor = jar.getInputStream(entry)) {
+            new ClassReader(descriptor)
+                    .accept(
+                            new ClassVisitor(Opcodes.ASM9) {
+                                @Override
+                                public ModuleVisitor visitModule(String name, int access, String version) {
+                                    assertEquals(expectedModuleName, name);
+                                    return new ModuleVisitor(Opcodes.ASM9) {
+                                        @Override
+                                        public void visitPackage(String packaze) {
+                                            packages.add(packaze);
+                                        }
+                                    };
+                                }
+                            },
+                            0);
+        }
+        return packages;
+    }
+
+    private Set<String> readModuleUses(JarFile jar, String entryName, String expectedModuleName) throws IOException {
+        Set<String> uses = new LinkedHashSet<>();
+        JarEntry entry = requireNonNull(jar.getJarEntry(entryName), entryName + " in " + jar.getName());
+        try (InputStream descriptor = jar.getInputStream(entry)) {
+            new ClassReader(descriptor)
+                    .accept(
+                            new ClassVisitor(Opcodes.ASM9) {
+                                @Override
+                                public ModuleVisitor visitModule(String name, int access, String version) {
+                                    assertEquals(expectedModuleName, name);
+                                    return new ModuleVisitor(Opcodes.ASM9) {
+                                        @Override
+                                        public void visitUse(String service) {
+                                            uses.add(service);
+                                        }
+                                    };
+                                }
+                            },
+                            0);
+        }
+        return uses;
+    }
+
+    private Set<String> readModuleProviders(
+            JarFile jar, String entryName, String expectedModuleName, String expectedService) throws IOException {
+        Set<String> providers = new LinkedHashSet<>();
+        JarEntry entry = requireNonNull(jar.getJarEntry(entryName), entryName + " in " + jar.getName());
+        try (InputStream descriptor = jar.getInputStream(entry)) {
+            new ClassReader(descriptor)
+                    .accept(
+                            new ClassVisitor(Opcodes.ASM9) {
+                                @Override
+                                public ModuleVisitor visitModule(String name, int access, String version) {
+                                    assertEquals(expectedModuleName, name);
+                                    return new ModuleVisitor(Opcodes.ASM9) {
+                                        @Override
+                                        public void visitProvide(String service, String... implementations) {
+                                            if (expectedService.equals(service)) {
+                                                providers.addAll(Arrays.asList(implementations));
+                                            }
+                                        }
+                                    };
+                                }
+                            },
+                            0);
+        }
+        return providers;
+    }
+
+    @Test
     public void testShaderWithSmallEntries() throws Exception {
         File temporaryFolder = Files.createTempDirectory("junit").toFile();
 
@@ -587,6 +1795,75 @@ public class DefaultShaderTest {
         s.shade(shadeRequest);
     }
 
+    private static final class TestModuleTargetAttribute extends Attribute {
+        private String targetPlatform;
+
+        private TestModuleTargetAttribute() {
+            this(null);
+        }
+
+        private TestModuleTargetAttribute(String targetPlatform) {
+            super("ModuleTarget");
+            this.targetPlatform = targetPlatform;
+        }
+
+        @Override
+        protected Attribute read(
+                ClassReader classReader,
+                int offset,
+                int length,
+                char[] charBuffer,
+                int codeAttributeOffset,
+                Label[] labels) {
+            return new TestModuleTargetAttribute(classReader.readUTF8(offset, charBuffer));
+        }
+
+        @Override
+        protected ByteVector write(ClassWriter classWriter, byte[] code, int codeLength, int maxStack, int maxLocals) {
+            return new ByteVector().putShort(classWriter.newUTF8(targetPlatform));
+        }
+    }
+
+    private static final class TestModuleResolutionAttribute extends Attribute {
+        private int resolutionFlags;
+
+        private TestModuleResolutionAttribute() {
+            this(0);
+        }
+
+        private TestModuleResolutionAttribute(int resolutionFlags) {
+            super("ModuleResolution");
+            this.resolutionFlags = resolutionFlags;
+        }
+
+        @Override
+        protected Attribute read(
+                ClassReader classReader,
+                int offset,
+                int length,
+                char[] charBuffer,
+                int codeAttributeOffset,
+                Label[] labels) {
+            return new TestModuleResolutionAttribute(classReader.readUnsignedShort(offset));
+        }
+
+        @Override
+        protected ByteVector write(ClassWriter classWriter, byte[] code, int codeLength, int maxStack, int maxLocals) {
+            return new ByteVector().putShort(resolutionFlags);
+        }
+    }
+
+    private static final class TestModuleHashesAttribute extends Attribute {
+        private TestModuleHashesAttribute() {
+            super("ModuleHashes");
+        }
+
+        @Override
+        protected ByteVector write(ClassWriter classWriter, byte[] code, int codeLength, int maxStack, int maxLocals) {
+            return new ByteVector().putShort(classWriter.newUTF8("SHA-256")).putShort(0);
+        }
+    }
+
     private DefaultShader newShader() {
         return new DefaultShader(mockLogger());
     }
@@ -603,6 +1880,7 @@ public class DefaultShaderTest {
         when(logger.isWarnEnabled()).thenReturn(true);
         doNothing().when(logger).debug(debugMessages.capture());
         doNothing().when(logger).warn(warnMessages.capture());
+        doNothing().when(logger).warn(warnMessages.capture(), any(Object.class));
         return logger;
     }
 

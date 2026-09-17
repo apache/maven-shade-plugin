@@ -38,6 +38,7 @@ under the License.
     <menu name="Examples">
       <item name="Selecting Contents for Uber JAR" href="examples/includes-excludes.html"/>
       <item name="Relocating Classes" href="examples/class-relocation.html"/>
+      <item name="Merging Java Module Descriptors" href="examples/module-info-merging.html"/>
       <item name="Attaching the Shaded Artifact" href="examples/attached-artifact.html"/>
       <item name="Executable JAR" href="examples/executable-jar.html"/>
       <item name="Resource Transformers" href="examples/resource-transformers.html"/>

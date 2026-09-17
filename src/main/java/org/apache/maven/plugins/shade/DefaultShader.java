@@ -52,6 +52,7 @@ import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
@@ -64,6 +65,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ReproducibleResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
+import org.apache.maven.plugins.shade.resource.ServicesResourceTransformer;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.io.CachingOutputStream;
 import org.objectweb.asm.ClassReader;
@@ -81,6 +83,9 @@ import org.slf4j.LoggerFactory;
 @Named
 public class DefaultShader implements Shader {
     private static final int BUFFER_SIZE = 32 * 1024;
+
+    private static final Pattern VERSIONED_CLASS_ENTRY =
+            Pattern.compile("^(META-INF/versions/[1-9][0-9]*/)(.+[.]class)$");
 
     private final Logger logger;
 
@@ -135,12 +140,54 @@ public class DefaultShader implements Shader {
         Set<String> resources = new HashSet<>();
 
         ManifestResourceTransformer manifestTransformer = null;
+        String forceAutomaticModuleName = null;
+        boolean forceMultiRelease = false;
+        ServicesResourceTransformer servicesTransformer = null;
         List<ResourceTransformer> transformers = new ArrayList<>(shadeRequest.getResourceTransformers());
         for (Iterator<ResourceTransformer> it = transformers.iterator(); it.hasNext(); ) {
             ResourceTransformer transformer = it.next();
             if (transformer instanceof ManifestResourceTransformer) {
                 manifestTransformer = (ManifestResourceTransformer) transformer;
                 it.remove();
+            } else if (transformer instanceof ServicesResourceTransformer) {
+                servicesTransformer = (ServicesResourceTransformer) transformer;
+            }
+        }
+
+        ModuleInfoProcessor moduleInfoProcessor = null;
+        if (shadeRequest.getModuleInfoMode() == ModuleInfoMode.MERGE) {
+            moduleInfoProcessor = new ModuleInfoProcessor(shadeRequest, logger);
+            if (manifestTransformer != null && manifestTransformer.isMultiReleaseExplicitlyEnabled()) {
+                moduleInfoProcessor.enableMultiReleaseOutput();
+            }
+            if (servicesTransformer == null) {
+                servicesTransformer = new ServicesResourceTransformer();
+                transformers.add(servicesTransformer);
+            }
+            if (moduleInfoProcessor.hasPrimaryModule()) {
+                if (manifestTransformer == null) {
+                    manifestTransformer = new ManifestResourceTransformer();
+                }
+                forceAutomaticModuleName = moduleInfoProcessor.getOutputModuleName();
+            }
+        }
+
+        if (moduleInfoProcessor != null) {
+            List<File> multiReleaseInputs = findMultiReleaseInputs(shadeRequest);
+            if (!multiReleaseInputs.isEmpty() || moduleInfoProcessor.requiresMultiReleaseOutput()) {
+                if (manifestTransformer == null) {
+                    manifestTransformer = new ManifestResourceTransformer();
+                } else if (manifestTransformer.isMultiReleaseExplicitlyDisabled()) {
+                    if (multiReleaseInputs.isEmpty()) {
+                        logger.warn("Configured Multi-Release: false is overridden because module descriptor merging "
+                                + "produces versioned output.");
+                    } else {
+                        logger.warn(
+                                "Configured Multi-Release: false is overridden because shaded input {} is a multi-release JAR.",
+                                multiReleaseInputs.get(0));
+                    }
+                }
+                forceMultiRelease = true;
             }
         }
 
@@ -151,13 +198,14 @@ public class DefaultShader implements Shader {
 
         try (JarOutputStream out =
                 new JarOutputStream(new BufferedOutputStream(new CachingOutputStream(shadeRequest.getUberJar())))) {
-            goThroughAllJarEntriesForManifestTransformer(shadeRequest, resources, manifestTransformer, out);
+            goThroughAllJarEntriesForManifestTransformer(
+                    shadeRequest, resources, manifestTransformer, forceMultiRelease, forceAutomaticModuleName, out);
 
             // CHECKSTYLE_OFF: MagicNumber
             Map<String, HashSet<File>> duplicates = new HashMap<>();
             // CHECKSTYLE_ON: MagicNumber
 
-            shadeJars(shadeRequest, resources, transformers, out, duplicates, packageMapper);
+            shadeJars(shadeRequest, resources, transformers, out, duplicates, packageMapper, moduleInfoProcessor);
 
             // CHECKSTYLE_OFF: MagicNumber
             Map<Collection<File>, HashSet<String>> overlapping = new HashMap<>();
@@ -177,6 +225,10 @@ public class DefaultShader implements Shader {
                 showOverlappingWarning();
             }
 
+            if (moduleInfoProcessor != null) {
+                moduleInfoProcessor.writeDescriptors(out, servicesTransformer);
+            }
+
             for (ResourceTransformer transformer : transformers) {
                 if (transformer.hasTransformedResource()) {
                     transformer.modifyOutputStream(out);
@@ -187,6 +239,30 @@ public class DefaultShader implements Shader {
         for (Filter filter : shadeRequest.getFilters()) {
             filter.finished();
         }
+    }
+
+    private List<File> findMultiReleaseInputs(ShadeRequest shadeRequest) throws IOException {
+        List<File> result = new ArrayList<>();
+        for (File jar : shadeRequest.getJars()) {
+            Manifest manifest = null;
+            if (jar.isDirectory()) {
+                File manifestFile = new File(jar, JarFile.MANIFEST_NAME);
+                if (manifestFile.isFile()) {
+                    try (InputStream input = Files.newInputStream(manifestFile.toPath())) {
+                        manifest = new Manifest(input);
+                    }
+                }
+            } else {
+                try (JarFile jarFile = newJarFile(jar)) {
+                    manifest = jarFile.getManifest();
+                }
+            }
+            if (manifest != null
+                    && "true".equalsIgnoreCase(manifest.getMainAttributes().getValue("Multi-Release"))) {
+                result.add(jar);
+            }
+        }
+        return result;
     }
 
     /**
@@ -248,13 +324,18 @@ public class DefaultShader implements Shader {
             List<ResourceTransformer> transformers,
             JarOutputStream jos,
             Map<String, HashSet<File>> duplicates,
-            DefaultPackageMapper packageMapper)
+            DefaultPackageMapper packageMapper,
+            ModuleInfoProcessor moduleInfoProcessor)
             throws IOException {
         for (File jar : shadeRequest.getJars()) {
 
             logger.debug("Processing JAR " + jar);
 
             List<Filter> jarFilters = getFilters(jar, shadeRequest.getFilters());
+            if (moduleInfoProcessor != null) {
+                // Class analysis depends on the effective descriptor view, so select descriptors first.
+                moduleInfoProcessor.selectDescriptors(jar, jarFilters);
+            }
             if (jar.isDirectory()) {
                 shadeDir(
                         shadeRequest,
@@ -266,9 +347,19 @@ public class DefaultShader implements Shader {
                         jar,
                         jar,
                         "",
-                        jarFilters);
+                        jarFilters,
+                        moduleInfoProcessor);
             } else {
-                shadeJar(shadeRequest, resources, transformers, packageMapper, jos, duplicates, jar, jarFilters);
+                shadeJar(
+                        shadeRequest,
+                        resources,
+                        transformers,
+                        packageMapper,
+                        jos,
+                        duplicates,
+                        jar,
+                        jarFilters,
+                        moduleInfoProcessor);
             }
         }
     }
@@ -284,7 +375,8 @@ public class DefaultShader implements Shader {
             File jar,
             File current,
             String prefix,
-            List<Filter> jarFilters)
+            List<Filter> jarFilters,
+            ModuleInfoProcessor moduleInfoProcessor)
             throws IOException {
         final File[] children = current.listFiles();
         if (children == null) {
@@ -304,14 +396,24 @@ public class DefaultShader implements Shader {
                             jar,
                             file,
                             prefix + file.getName() + '/',
-                            jarFilters);
+                            jarFilters,
+                            moduleInfoProcessor);
                     continue;
                 } catch (Exception e) {
                     throw new IOException(String.format("Problem shading JAR %s entry %s: %s", current, name, e), e);
                 }
             }
-            if (isFiltered(jarFilters, name) || isExcludedEntry(name)) {
+            if (moduleInfoProcessor != null && ModuleInfoProcessor.isModuleInfo(name)) {
                 continue;
+            }
+            if (isFiltered(jarFilters, name)) {
+                continue;
+            }
+            if (isExcludedEntry(name)) {
+                continue;
+            }
+            if (moduleInfoProcessor != null && ModuleInfoProcessor.isServiceConfiguration(name)) {
+                moduleInfoProcessor.includeServiceConfiguration(jar, name);
             }
 
             try {
@@ -331,7 +433,8 @@ public class DefaultShader implements Shader {
                         },
                         name,
                         file.lastModified(),
-                        -1 /*ignore*/);
+                        -1 /*ignore*/,
+                        moduleInfoProcessor);
             } catch (Exception e) {
                 throw new IOException(String.format("Problem shading JAR %s entry %s: %s", current, name, e), e);
             }
@@ -347,7 +450,8 @@ public class DefaultShader implements Shader {
             JarOutputStream jos,
             Map<String, HashSet<File>> duplicates,
             File jar,
-            List<Filter> jarFilters)
+            List<Filter> jarFilters,
+            ModuleInfoProcessor moduleInfoProcessor)
             throws IOException {
         try (JarFile jarFile = newJarFile(jar)) {
 
@@ -356,8 +460,20 @@ public class DefaultShader implements Shader {
 
                 String name = entry.getName();
 
-                if (entry.isDirectory() || isFiltered(jarFilters, name) || isExcludedEntry(name)) {
+                if (entry.isDirectory()) {
                     continue;
+                }
+                if (moduleInfoProcessor != null && ModuleInfoProcessor.isModuleInfo(name)) {
+                    continue;
+                }
+                if (isFiltered(jarFilters, name)) {
+                    continue;
+                }
+                if (isExcludedEntry(name)) {
+                    continue;
+                }
+                if (moduleInfoProcessor != null && ModuleInfoProcessor.isServiceConfiguration(name)) {
+                    moduleInfoProcessor.includeServiceConfiguration(jar, name);
                 }
 
                 try {
@@ -377,7 +493,8 @@ public class DefaultShader implements Shader {
                             },
                             name,
                             getTime(entry),
-                            entry.getMethod());
+                            entry.getMethod(),
+                            moduleInfoProcessor);
                 } catch (Exception e) {
                     throw new IOException(String.format("Problem shading JAR %s entry %s: %s", jar, name, e), e);
                 }
@@ -393,7 +510,7 @@ public class DefaultShader implements Shader {
             return true;
         }
 
-        if ("module-info.class".equals(name)) {
+        if (ModuleInfoProcessor.isModuleInfo(name)) {
             logger.warn("Discovered module-info.class. " + "Shading will break its strong encapsulation.");
             return true;
         }
@@ -412,7 +529,8 @@ public class DefaultShader implements Shader {
             Callable<InputStream> inputProvider,
             String name,
             long time,
-            int method)
+            int method,
+            ModuleInfoProcessor moduleInfoProcessor)
             throws Exception {
         try (InputStream in = inputProvider.call()) {
             String mappedName = packageMapper.map(name, true, false);
@@ -428,7 +546,7 @@ public class DefaultShader implements Shader {
 
             duplicates.computeIfAbsent(name, k -> new HashSet<>()).add(jar);
             if (name.endsWith(".class")) {
-                addRemappedClass(jos, jar, name, time, in, packageMapper);
+                addRemappedClass(jos, jar, name, time, in, packageMapper, moduleInfoProcessor);
             } else if (shadeRequest.isShadeSourcesContent() && name.endsWith(".java")) {
                 // Avoid duplicates
                 if (resources.contains(mappedName)) {
@@ -456,10 +574,26 @@ public class DefaultShader implements Shader {
             ShadeRequest shadeRequest,
             Set<String> resources,
             ManifestResourceTransformer manifestTransformer,
+            boolean forceMultiRelease,
+            String forceAutomaticModuleName,
             JarOutputStream jos)
             throws IOException {
         if (manifestTransformer != null) {
             for (File jar : shadeRequest.getJars()) {
+                if (jar.isDirectory()) {
+                    File manifestFile = new File(jar, JarFile.MANIFEST_NAME);
+                    if (manifestFile.isFile()) {
+                        resources.add(JarFile.MANIFEST_NAME);
+                        try (InputStream input = Files.newInputStream(manifestFile.toPath())) {
+                            manifestTransformer.processResource(
+                                    JarFile.MANIFEST_NAME,
+                                    input,
+                                    shadeRequest.getRelocators(),
+                                    manifestFile.lastModified());
+                        }
+                    }
+                    continue;
+                }
                 try (JarFile jarFile = newJarFile(jar)) {
                     for (Enumeration<JarEntry> en = jarFile.entries(); en.hasMoreElements(); ) {
                         JarEntry entry = en.nextElement();
@@ -476,6 +610,8 @@ public class DefaultShader implements Shader {
                 }
             }
             if (manifestTransformer.hasTransformedResource()) {
+                manifestTransformer.setForceMultiRelease(forceMultiRelease);
+                manifestTransformer.setForceAutomaticModuleName(forceAutomaticModuleName);
                 manifestTransformer.modifyOutputStream(jos);
             }
         }
@@ -589,20 +725,32 @@ public class DefaultShader implements Shader {
         resources.add(name);
     }
 
-    private void addRemappedClass(
-            JarOutputStream jos, File jar, String name, long time, InputStream is, DefaultPackageMapper packageMapper)
+    private String addRemappedClass(
+            JarOutputStream jos,
+            File jar,
+            String name,
+            long time,
+            InputStream is,
+            DefaultPackageMapper packageMapper,
+            ModuleInfoProcessor moduleInfoProcessor)
             throws IOException, MojoExecutionException {
         if (packageMapper.relocators.isEmpty()) {
             try {
                 JarEntry entry = new JarEntry(name);
                 entry.setTime(time);
                 jos.putNextEntry(entry);
-                IOUtil.copy(is, jos);
+                if (moduleInfoProcessor == null) {
+                    IOUtil.copy(is, jos);
+                } else {
+                    byte[] classBytes = IOUtil.toByteArray(is);
+                    jos.write(classBytes);
+                    moduleInfoProcessor.recordClass(jar, name, classBytes);
+                }
+                return name;
             } catch (ZipException e) {
                 logger.debug("We have a duplicate " + name + " in " + jar);
+                return null;
             }
-
-            return;
         }
 
         // Keep the original class, in case nothing was relocated by ShadeClassRemapper. This avoids binary
@@ -639,7 +787,7 @@ public class DefaultShader implements Shader {
         }
 
         // Need to take the .class off for remapping evaluation
-        String mappedName = packageMapper.map(name.substring(0, name.indexOf('.')), true, false);
+        String mappedName = mapClassEntry(name, packageMapper);
 
         try {
             // Now we put it back on so the class file is written out with the right extension.
@@ -648,9 +796,26 @@ public class DefaultShader implements Shader {
             jos.putNextEntry(entry);
 
             jos.write(renamedClass);
+            if (moduleInfoProcessor != null) {
+                moduleInfoProcessor.recordClass(jar, mappedName + ".class", renamedClass);
+            }
+            return mappedName + ".class";
         } catch (ZipException e) {
             logger.debug("We have a duplicate " + mappedName + " in " + jar);
+            return null;
         }
+    }
+
+    private static String mapClassEntry(String name, DefaultPackageMapper packageMapper) {
+        Matcher versionedClass = VERSIONED_CLASS_ENTRY.matcher(name);
+        String prefix = "";
+        String classEntry = name;
+        if (versionedClass.matches()) {
+            prefix = versionedClass.group(1);
+            classEntry = versionedClass.group(2);
+        }
+        return prefix
+                + packageMapper.map(classEntry.substring(0, classEntry.length() - ".class".length()), true, false);
     }
 
     private boolean isFiltered(List<Filter> filters, String name) {
