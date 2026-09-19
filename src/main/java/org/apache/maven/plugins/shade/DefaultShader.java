@@ -52,6 +52,7 @@ import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
@@ -81,6 +82,12 @@ import org.slf4j.LoggerFactory;
 @Named
 public class DefaultShader implements Shader {
     private static final int BUFFER_SIZE = 32 * 1024;
+
+    private static final Pattern MULTI_RELEASE_ENTRY_PATH =
+            Pattern.compile("^(META-INF/versions/(?:9|[1-9][0-9]+)/)(.+)$");
+
+    private static final Pattern VERSIONED_MODULE_INFO =
+            Pattern.compile("^META-INF/versions/(?:9|[1-9][0-9]+)/module-info[.]class$");
 
     private final Logger logger;
 
@@ -142,6 +149,9 @@ public class DefaultShader implements Shader {
                 manifestTransformer = (ManifestResourceTransformer) transformer;
                 it.remove();
             }
+        }
+        if (manifestTransformer == null && containsMultiReleaseJar(shadeRequest.getJars())) {
+            manifestTransformer = new ManifestResourceTransformer();
         }
 
         final DefaultPackageMapper packageMapper = new DefaultPackageMapper(shadeRequest.getRelocators());
@@ -393,7 +403,8 @@ public class DefaultShader implements Shader {
             return true;
         }
 
-        if ("module-info.class".equals(name)) {
+        if ("module-info.class".equals(name)
+                || VERSIONED_MODULE_INFO.matcher(name).matches()) {
             logger.warn("Discovered module-info.class. " + "Shading will break its strong encapsulation.");
             return true;
         }
@@ -415,7 +426,7 @@ public class DefaultShader implements Shader {
             int method)
             throws Exception {
         try (InputStream in = inputProvider.call()) {
-            String mappedName = packageMapper.map(name, true, false);
+            String mappedName = ArchiveEntry.parse(name).map(packageMapper);
 
             int idx = mappedName.lastIndexOf('/');
             if (idx != -1) {
@@ -460,25 +471,69 @@ public class DefaultShader implements Shader {
             throws IOException {
         if (manifestTransformer != null) {
             for (File jar : shadeRequest.getJars()) {
-                try (JarFile jarFile = newJarFile(jar)) {
-                    for (Enumeration<JarEntry> en = jarFile.entries(); en.hasMoreElements(); ) {
-                        JarEntry entry = en.nextElement();
-                        String resource = entry.getName();
-                        if (manifestTransformer.canTransformResource(resource)) {
-                            resources.add(resource);
-                            try (InputStream inputStream = jarFile.getInputStream(entry)) {
-                                manifestTransformer.processResource(
-                                        resource, inputStream, shadeRequest.getRelocators(), getTime(entry));
-                            }
-                            break;
+                if (jar.isDirectory()) {
+                    File manifestFile = new File(jar, JarFile.MANIFEST_NAME);
+                    if (manifestFile.isFile()) {
+                        resources.add(JarFile.MANIFEST_NAME);
+                        try (InputStream inputStream = Files.newInputStream(manifestFile.toPath())) {
+                            manifestTransformer.processResource(
+                                    JarFile.MANIFEST_NAME,
+                                    inputStream,
+                                    shadeRequest.getRelocators(),
+                                    manifestFile.lastModified());
                         }
                     }
+                } else {
+                    processManifest(jar, shadeRequest, resources, manifestTransformer);
                 }
             }
             if (manifestTransformer.hasTransformedResource()) {
                 manifestTransformer.modifyOutputStream(jos);
             }
         }
+    }
+
+    private void processManifest(
+            File jar, ShadeRequest shadeRequest, Set<String> resources, ManifestResourceTransformer manifestTransformer)
+            throws IOException {
+        try (JarFile jarFile = newJarFile(jar)) {
+            for (Enumeration<JarEntry> en = jarFile.entries(); en.hasMoreElements(); ) {
+                JarEntry entry = en.nextElement();
+                String resource = entry.getName();
+                if (manifestTransformer.canTransformResource(resource)) {
+                    resources.add(resource);
+                    try (InputStream inputStream = jarFile.getInputStream(entry)) {
+                        manifestTransformer.processResource(
+                                resource, inputStream, shadeRequest.getRelocators(), getTime(entry));
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private boolean containsMultiReleaseJar(Collection<File> jars) throws IOException {
+        for (File jar : jars) {
+            Manifest manifest;
+            if (jar.isDirectory()) {
+                File manifestFile = new File(jar, JarFile.MANIFEST_NAME);
+                if (!manifestFile.isFile()) {
+                    continue;
+                }
+                try (InputStream inputStream = Files.newInputStream(manifestFile.toPath())) {
+                    manifest = new Manifest(inputStream);
+                }
+            } else {
+                try (JarFile jarFile = newJarFile(jar)) {
+                    manifest = jarFile.getManifest();
+                }
+            }
+            if (manifest != null
+                    && Boolean.parseBoolean(manifest.getMainAttributes().getValue("Multi-Release"))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void showOverlappingWarning() {
@@ -619,7 +674,8 @@ public class DefaultShader implements Shader {
         // that use the constant pool to determine the dependencies of a class.
         ClassWriter cw = new ClassWriter(0);
 
-        final String pkg = name.substring(0, name.lastIndexOf('/') + 1);
+        ArchiveEntry classEntry = ArchiveEntry.parse(name);
+        final String pkg = classEntry.logicalName.substring(0, classEntry.logicalName.lastIndexOf('/') + 1);
         final ShadeClassRemapper cv = new ShadeClassRemapper(cw, pkg, packageMapper);
 
         try {
@@ -638,18 +694,43 @@ public class DefaultShader implements Shader {
             renamedClass = originalClass;
         }
 
-        // Need to take the .class off for remapping evaluation
-        String mappedName = packageMapper.map(name.substring(0, name.indexOf('.')), true, false);
+        String mappedName = classEntry.mapClass(packageMapper);
 
         try {
-            // Now we put it back on so the class file is written out with the right extension.
-            JarEntry entry = new JarEntry(mappedName + ".class");
+            JarEntry entry = new JarEntry(mappedName);
             entry.setTime(time);
             jos.putNextEntry(entry);
 
             jos.write(renamedClass);
         } catch (ZipException e) {
             logger.debug("We have a duplicate " + mappedName + " in " + jar);
+        }
+    }
+
+    private static final class ArchiveEntry {
+        private final String versionPrefix;
+
+        private final String logicalName;
+
+        private ArchiveEntry(String versionPrefix, String logicalName) {
+            this.versionPrefix = versionPrefix;
+            this.logicalName = logicalName;
+        }
+
+        private static ArchiveEntry parse(String name) {
+            Matcher matcher = MULTI_RELEASE_ENTRY_PATH.matcher(name);
+            return matcher.matches()
+                    ? new ArchiveEntry(matcher.group(1), matcher.group(2))
+                    : new ArchiveEntry("", name);
+        }
+
+        private String map(PackageMapper packageMapper) {
+            return versionPrefix + packageMapper.map(logicalName, true, false);
+        }
+
+        private String mapClass(PackageMapper packageMapper) {
+            String name = logicalName.substring(0, logicalName.length() - ".class".length());
+            return versionPrefix + packageMapper.map(name, true, false) + ".class";
         }
     }
 

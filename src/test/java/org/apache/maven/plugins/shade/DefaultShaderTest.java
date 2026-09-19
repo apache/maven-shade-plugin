@@ -45,6 +45,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
@@ -149,6 +150,32 @@ public class DefaultShaderTest {
             }
         }
         assertEquals(3 /* 1 | 2 */, result);
+    }
+
+    @Test
+    public void testMultiReleaseManifestIsPropagatedWithoutTransformer() throws Exception {
+        TemporaryFolder temporaryFolder = new TemporaryFolder();
+        try {
+            temporaryFolder.create();
+            File projectJar = createJar(temporaryFolder.newFile("project.jar"), false);
+            File dependencyJar = createJar(temporaryFolder.newFile("dependency.jar"), true);
+            File shadedJar = temporaryFolder.newFile("shaded.jar");
+
+            ShadeRequest shadeRequest = new ShadeRequest();
+            shadeRequest.setJars(new LinkedHashSet<>(Arrays.asList(projectJar, dependencyJar)));
+            shadeRequest.setRelocators(Collections.emptyList());
+            shadeRequest.setResourceTransformers(Collections.emptyList());
+            shadeRequest.setFilters(Collections.emptyList());
+            shadeRequest.setUberJar(shadedJar);
+
+            newShader().shade(shadeRequest);
+
+            try (JarFile jarFile = new JarFile(shadedJar)) {
+                assertEquals("true", jarFile.getManifest().getMainAttributes().getValue("Multi-Release"));
+            }
+        } finally {
+            temporaryFolder.delete();
+        }
     }
 
     @Test
@@ -555,6 +582,19 @@ public class DefaultShaderTest {
         jos.putNextEntry(entry);
         jos.write(entryBytes);
         jos.closeEntry();
+    }
+
+    private File createJar(File file, boolean multiRelease) throws IOException {
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().putValue("Manifest-Version", "1.0");
+        if (multiRelease) {
+            manifest.getMainAttributes().putValue("Multi-Release", "true");
+        }
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(file.toPath()), manifest)) {
+            jos.putNextEntry(new JarEntry((multiRelease ? "dependency" : "project") + ".txt"));
+            jos.closeEntry();
+        }
+        return file;
     }
 
     private void shaderWithPattern(String shadedPattern, File jar, String[] excludes) throws Exception {
