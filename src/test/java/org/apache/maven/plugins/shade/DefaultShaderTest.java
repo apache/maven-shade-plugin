@@ -72,11 +72,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Objects.requireNonNull;
 import static org.codehaus.plexus.util.FileUtils.forceMkdir;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -169,21 +164,29 @@ public class DefaultShaderTest {
         shadeRequest.setUberJar(new File("target/foo-custom_testOverlappingResourcesAreLogged.jar"));
         shader.shade(shadeRequest);
 
-        assertThat(
-                warnMessages.getAllValues(),
-                hasItem(containsString(
-                        "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:")));
-        assertThat(warnMessages.getAllValues(), hasItem(containsString("- META-INF/MANIFEST.MF")));
+        assertTrue(
+                warnMessages.getAllValues().stream()
+                        .anyMatch(
+                                m -> m.contains(
+                                        "plexus-utils-1.4.1.jar, test-project-1.0-SNAPSHOT.jar define 1 overlapping resource:")),
+                "expected a warning about the overlapping resource");
+        assertTrue(
+                warnMessages.getAllValues().stream().anyMatch(m -> m.contains("- META-INF/MANIFEST.MF")),
+                "expected a warning containing '- META-INF/MANIFEST.MF'");
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            assertThat(
-                    debugMessages.getAllValues(),
-                    hasItem(containsString(
-                            "We have a duplicate META-INF/MANIFEST.MF in src\\test\\jars\\plexus-utils-1.4.1.jar")));
+            assertTrue(
+                    debugMessages.getAllValues().stream()
+                            .anyMatch(
+                                    m -> m.contains(
+                                            "We have a duplicate META-INF/MANIFEST.MF in src\\test\\jars\\plexus-utils-1.4.1.jar")),
+                    "expected a debug message about the duplicate manifest");
         } else {
-            assertThat(
-                    debugMessages.getAllValues(),
-                    hasItem(containsString(
-                            "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar")));
+            assertTrue(
+                    debugMessages.getAllValues().stream()
+                            .anyMatch(
+                                    m -> m.contains(
+                                            "We have a duplicate META-INF/MANIFEST.MF in src/test/jars/plexus-utils-1.4.1.jar")),
+                    "expected a debug message about the duplicate manifest");
         }
     }
 
@@ -222,16 +225,19 @@ public class DefaultShaderTest {
             DefaultShader shaderWithTransformer = newShader();
             shaderWithTransformer.shade(shadeRequest);
 
-            assertThat(warnMessages.getAllValues().size(), is(0));
+            assertEquals(0, warnMessages.getAllValues().size());
 
             DefaultShader shaderWithoutTransformer = newShader();
             shadeRequest.setResourceTransformers(Collections.emptyList());
             shaderWithoutTransformer.shade(shadeRequest);
 
-            assertThat(
-                    warnMessages.getAllValues(),
-                    hasItems(containsString("j1.jar, j2.jar define 1 overlapping resource:")));
-            assertThat(warnMessages.getAllValues(), hasItems(containsString("- foo.txt")));
+            assertTrue(
+                    warnMessages.getAllValues().stream()
+                            .anyMatch(m -> m.contains("j1.jar, j2.jar define 1 overlapping resource:")),
+                    "expected a warning about the overlapping resource");
+            assertTrue(
+                    warnMessages.getAllValues().stream().anyMatch(m -> m.contains("- foo.txt")),
+                    "expected a warning containing '- foo.txt'");
         } finally {
             temporaryFolder.delete();
         }
