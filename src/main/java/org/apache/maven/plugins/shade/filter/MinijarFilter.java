@@ -95,15 +95,30 @@ public class MinijarFilter implements Filter {
      */
     public MinijarFilter(MavenProject project, Log log, List<SimpleFilter> simpleFilters, Set<String> entryPoints)
             throws IOException {
+        this(project, project.getArtifact(), log, simpleFilters, entryPoints);
+    }
+
+    /**
+     * @param project {@link MavenProject}
+     * @param artifact primary artifact to analyze
+     * @param log {@link Log}
+     * @param simpleFilters {@link SimpleFilter}
+     * @param entryPoints
+     * @throws IOException in case of errors.
+     * @since 3.6.3
+     */
+    public MinijarFilter(
+            MavenProject project, Artifact artifact, Log log, List<SimpleFilter> simpleFilters, Set<String> entryPoints)
+            throws IOException {
         this.log = log;
 
-        File artifactFile = project.getArtifact().getFile();
+        File artifactFile = artifact.getFile();
 
         if (artifactFile != null) {
             Clazzpath cp = new Clazzpath();
 
             ClazzpathUnit artifactUnit =
-                    cp.addClazzpathUnit(Files.newInputStream(artifactFile.toPath()), project.toString());
+                    cp.addClazzpathUnit(Files.newInputStream(artifactFile.toPath()), artifact.toString());
 
             for (Artifact dependency : project.getArtifacts()) {
                 addDependencyToClasspath(cp, dependency);
