@@ -21,16 +21,16 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "Main.class",
     "junit/framework/TestCase.class",
     "junit/swingui/icons/error.gif",
-};
+];
 
 String[] unwanted =
-{
+[
     "junit/swingui/TestRunner.class",
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 

@@ -21,15 +21,15 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "a.properties",
-};
+];
 
 String[] unwanted =
-{
+[
     "b.properties",
     "junit/framework/TestCase.class",
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 

@@ -20,15 +20,14 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "org/apache/maven/it/pi/Main.class",
     "org/apache/maven/it/pi/HaveOneClass.class",
     "org/apache/maven/it/pi/package-info.class",
-};
+];
 
 String[] unwanted =
-{
-};
+[] as String[];
 
 JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.jar" ) );
 

@@ -20,18 +20,18 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "Main.class",
     "SomeUsedClass.class",
     "x/y/z/SomeExemptedClass.class",
     "x/y/z/AnotherExemptedClass.class",
     "x/y/z/SomeDependencyOfExemptedClass.class"
-};
+];
 
 String[] unwanted =
-{
+[
     "SomeUnusedClass.class"
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.0.jar" ) );
 

@@ -23,11 +23,11 @@ import java.util.jar.*;
 import org.codehaus.plexus.util.*;
 
 String[] wanted =
-{
+[
     "org/apache/maven/plugins/shade/its/one/AppOne.class",
     "org/apache/maven/plugins/shade/its/one/App.class",
     "org/apache/maven/plugins/shade/its/two/App.class"
-};
+];
 
 
 JarFile jarFile = new JarFile( new File( basedir, "two/target/two-1.0-SNAPSHOT.jar" ) );

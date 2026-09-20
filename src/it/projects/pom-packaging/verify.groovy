@@ -20,13 +20,12 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "junit/framework/TestCase.class",
-};
+];
 
 String[] unwanted =
-{
-};
+[] as String[];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/shaded.jar" ) );
 

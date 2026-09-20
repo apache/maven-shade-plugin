@@ -20,17 +20,17 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "compile.properties",
     "runtime.properties",
-};
+];
 
 String[] unwanted =
-{
+[
     "system.properties",
     "provided.properties",
     "test.properties",
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/it-1.0.jar" ) );
 

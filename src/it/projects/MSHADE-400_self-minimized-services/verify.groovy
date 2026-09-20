@@ -20,16 +20,16 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "META-INF/services/org.acme.UsedService",
     "org/acme/Application.class",
     "org/acme/UsedClass.class",
     "org/acme/UsedService.class",
     "org/acme/UsedServiceUsedImpl.class"
-};
+];
 
 String[] unwanted =
-{
+[
     // Unused SPI config files are not removed
     //"META-INF/services/org.acme.UnusedService",
     "org/acme/UsedServiceUnusedImpl.class",
@@ -37,7 +37,7 @@ String[] unwanted =
     "org/acme/UnusedService.class",
     "org/acme/UnusedServiceImplA.class",
     "org/acme/UnusedServiceImplB.class"
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/module-with-services-1.0.jar" ) );
 

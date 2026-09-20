@@ -23,17 +23,17 @@ import java.util.Arrays;
 import org.codehaus.plexus.util.*;
 
 String[] wanted =
-{
+[
     "com/example/Main.class",
     "junit/runner/logo.gif",
     "com/example/shaded/org/codehaus/plexus/util/StringUtils.class",
-};
+];
 
 String[] unwanted =
-{
+[
     "junit/textui/TestRunner.class",
     "org/codehaus/plexus/util/StringUtils.class",
-};
+];
 
 JarFile jarFile = null;
 try

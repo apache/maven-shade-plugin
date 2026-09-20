@@ -20,22 +20,22 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "a.properties",
     "org/apache/a.properties",
     "org/apache/maven/a.properties",
     "b.properties",
     "org/apache/maven/b.properties",
-};
+];
 
 String[] unwanted =
-{
+[
     "META-INF/maven/org.apache.maven.its.shade.fac/a/pom.properties",
     "org/a.properties",
     "org/b.properties",
     "org/apache/b.properties",
     "org/apache/maven/b/b.properties",
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 

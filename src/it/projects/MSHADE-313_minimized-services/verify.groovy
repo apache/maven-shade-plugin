@@ -20,7 +20,7 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "Main.class",
     "META-INF/services/SomeServiceInterface",
     "SomeServiceInterface.class",
@@ -30,17 +30,17 @@ String[] wanted =
     "DependencyServiceInterface.class",
     "DependencyServiceClass.class",
     "DependencyReferencedClass.class"
-};
+];
 
 String[] unwanted =
-{
+[
     // Unused SPI config files are not removed
     //"META-INF/services/UnusedServiceInterface",
     "UnusedServiceInterface.class",
     "UnusedServiceClass.class",
     "SomeUnreferencedClass.class",
     "DependencyUnreferencedClass.class"
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.0.jar" ) );
 
