@@ -20,9 +20,9 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "Passed.class",
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 

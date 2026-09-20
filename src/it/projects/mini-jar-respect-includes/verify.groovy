@@ -20,19 +20,19 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "Main.class",
     "junit/framework/TestCase.class",
     "junit/runner/logo.gif",
     "junit/framework/Assert.class",
     "org/jdom2/Document.class"
-};
+];
 
 String[] unwanted =
-{
+[
     "junit/textui/TestRunner.class",
     "org/objectweb/asm/Type.class"
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 

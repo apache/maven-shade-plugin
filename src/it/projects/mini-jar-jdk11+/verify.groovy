@@ -21,17 +21,17 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "Main.class",
-    "Main$Nested.class",
+    "Main\$Nested.class",
     "junit/framework/TestCase.class",
     "junit/swingui/icons/error.gif",
-};
+];
 
 String[] unwanted =
-{
+[
     "junit/swingui/TestRunner.class",
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/testmini-1.0.jar" ) );
 

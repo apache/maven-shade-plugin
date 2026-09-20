@@ -20,10 +20,10 @@ import java.io.*;
 import java.util.*;
 
 String[] paths =
-{
+[
     "org/apache/maven/its/shade/aalf/test/1.0/test-1.0-shade.jar",
     "org/apache/maven/its/shade/aalf/test/1.0/test-1.0-sources.jar",
-};
+];
 
 for ( String path : paths )
 {

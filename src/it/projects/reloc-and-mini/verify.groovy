@@ -20,14 +20,14 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "a/junit/framework/TestResult.class",
-};
+];
 
 String[] unwanted =
-{
+[
     "junit/framework/TestResult.class",
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 

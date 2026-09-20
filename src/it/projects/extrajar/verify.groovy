@@ -21,10 +21,10 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "org/slf4j/Logger.class",
     "org/slf4j/impl/SimpleLogger.class"
-};
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0-shaded.jar" ) );
 

@@ -28,7 +28,7 @@ String service = IOUtil.toString( jarFile.getInputStream( jarEntry ), "UTF-8" );
 jarFile.close();
 
 String[] services = service.split( "(\r\n)|(\r)|(\n)" );
-String[] expected = { "org.apache.maven.its.shade.One", "shaded.org.apache.maven.its.shade.Two" };
+String[] expected = [ "org.apache.maven.its.shade.One", "shaded.org.apache.maven.its.shade.Two" ];
 
 Arrays.sort(services);
 Arrays.sort(expected);
