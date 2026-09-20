@@ -191,12 +191,11 @@ public class MinijarFilter implements Filter {
                 continue;
             }
 
-            try (BufferedReader configFileReader =
-                    new BufferedReader(new InputStreamReader(new FileInputStream(serviceProviderConfigFile), UTF_8))) {
+            try (BufferedReader configFileReader = Files.newBufferedReader(serviceProviderConfigFile.toPath(), UTF_8)) {
                 // check whether the found classes use services in turn
                 repeatScan |= scanServiceProviderConfigFile(cp, configFileReader);
             } catch (final IOException e) {
-                log.warn(e.getMessage());
+                log.warn("Failed to scan service provider config file " + serviceProviderConfigFile, e);
             }
         }
         return repeatScan;
@@ -222,11 +221,11 @@ public class MinijarFilter implements Filter {
                     // check whether the found classes use services in turn
                     repeatScan = scanServiceProviderConfigFile(cp, configFileReader);
                 } catch (final IOException e) {
-                    log.warn(e.getMessage());
+                    log.warn("Failed to scan JAR entry " + jarEntry.getName() + " in jar " + jar.getName(), e);
                 }
             }
         } catch (final IOException e) {
-            log.warn("Not a JAR file candidate. Ignoring classpath element '" + fileName + "' (" + e + ").");
+            log.warn("Not a JAR file candidate. Ignoring classpath element '" + fileName + "'", e);
         }
         return repeatScan;
     }

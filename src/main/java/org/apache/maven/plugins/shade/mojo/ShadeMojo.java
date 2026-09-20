@@ -1044,8 +1044,7 @@ public class ShadeMojo extends AbstractMojo {
             if (entryPoints == null) {
                 entryPoints = new HashSet<>();
             }
-            getLog().info("Minimizing jar " + project.getArtifact()
-                    + (entryPoints.isEmpty() ? "" : " with entry points"));
+            getLog().info("Minimizing jar " + project.getArtifact());
 
             try {
                 filters.add(new MinijarFilter(project, getLog(), simpleFilters, entryPoints));
