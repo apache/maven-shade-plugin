@@ -1231,8 +1231,17 @@ public class ShadeMojo extends AbstractMojo {
 
                     parentFile = parentFile.getCanonicalFile();
 
-                    String relPath = RelativizePath.convertToRelativePath(parentFile, f);
-                    model.getParent().setRelativePath(relPath);
+                    File actualParentFile =
+                            project.getParent() != null ? project.getParent().getFile() : null;
+                    if (isSameFile(parentFile, actualParentFile)) {
+                        String relPath = RelativizePath.convertToRelativePath(parentFile, f);
+                        model.getParent().setRelativePath(relPath);
+                    } else {
+                        // ../pom.xml has a different GAV (or does not have one).
+                        // An empty relativePath stops Maven 4 from walking into
+                        // that POM and reporting a false parent cycle.
+                        model.getParent().setRelativePath("");
+                    }
                 }
 
                 try {
@@ -1259,6 +1268,17 @@ public class ShadeMojo extends AbstractMojo {
 
             project.setFile(dependencyReducedPomLocation);
         }
+    }
+
+    /**
+     * True when the configured relativePath file is the project's parent POM.
+     */
+    private static boolean isSameFile(File configured, File actual) throws IOException {
+        return actual != null
+                && configured != null
+                && actual.isFile()
+                && configured.isFile()
+                && actual.getCanonicalFile().equals(configured.getCanonicalFile());
     }
 
     private void removeSystemScopedDependencies(Set<String> artifactsToRemove, List<Dependency> originalDependencies) {
