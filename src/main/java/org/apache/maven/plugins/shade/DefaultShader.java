@@ -69,6 +69,7 @@ import org.codehaus.plexus.util.io.CachingOutputStream;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
@@ -795,6 +796,10 @@ public class DefaultShader implements Shader {
 
     private static class LazyInitRemapper extends Remapper {
         private PackageMapper relocators;
+
+        LazyInitRemapper() {
+            super(Opcodes.ASM9);
+        }
 
         @Override
         public Object mapValue(Object object) {
