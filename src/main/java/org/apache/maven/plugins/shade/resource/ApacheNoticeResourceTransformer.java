@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -88,9 +89,11 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
 
     @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
-            throws IOException {
+        throws IOException {
         if (entries.isEmpty()) {
-            String year = new SimpleDateFormat("yyyy").format(new Date());
+            SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+            yearFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String year = yearFormat.format(new Date(time));
             if (!inceptionYear.equals(year)) {
                 year = inceptionYear + "-" + year;
             }
