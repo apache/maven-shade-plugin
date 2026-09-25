@@ -236,7 +236,7 @@
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
           <configuration>
-            <excludes combine.children="append">
+            <inputExcludes>
               <!-- Can't add license header otherwise the tests will fail. -->
               <exclude>src/it/mrm/repository/services-resource-transformer/*/META-INF/services/org.apache.maven.Shade</exclude>
               <exclude>src/it/mrm/repository/services-resource-transformer-with-reloc-includes-excludes/*/META-INF/services/org.apache.maven.shade</exclude>
@@ -248,7 +248,7 @@
               <exclude>src/it/projects/rerun-without-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
               <exclude>src/it/projects/MSHADE-182/src/main/resources/META-INF/services/relocateme.Service</exclude>
               <exclude>src/it/projects/MSHADE-390-sisu-index/**</exclude>
-            </excludes>
+            </inputExcludes>
           </configuration>
         </plugin>
         <plugin>
