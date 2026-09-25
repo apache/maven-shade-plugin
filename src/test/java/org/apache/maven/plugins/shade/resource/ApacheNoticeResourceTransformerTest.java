@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,6 +99,15 @@ public class ApacheNoticeResourceTransformerTest {
     @Test
     public void testNoParametersShouldNotThrowNullPointerWhenLineIsEmpty() throws IOException {
         processAndFailOnNullPointer("\n");
+    }
+
+    @Test
+    public void testGeneratedCopyrightYearUsesResourceTimestamp() throws IOException {
+        transformer.processResource(NOTICE_RESOURCE, new ByteArrayInputStream("".getBytes()),
+                Collections.emptyList(), 1_704_067_200_000L);
+
+        String generatedEntries = transformer.entries.stream().collect(Collectors.joining());
+        assertTrue(generatedEntries.contains("Copyright 2006-2024 The Apache Software Foundation"));
     }
 
     private void processAndFailOnNullPointer(final String noticeText) throws IOException {
