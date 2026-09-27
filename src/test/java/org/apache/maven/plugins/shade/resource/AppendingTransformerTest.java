@@ -18,11 +18,15 @@
  */
 package org.apache.maven.plugins.shade.resource;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Locale;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,5 +59,17 @@ public class AppendingTransformerTest {
         assertTrue(transformer.canTransformResource("abcdefghijklmnopqrstuvwxyz"));
         assertTrue(transformer.canTransformResource("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
         assertFalse(transformer.canTransformResource("META-INF/MANIFEST.MF"));
+    }
+
+    @Test
+    public void testProcessResourceDoesNotAddAnExtraLineFeed() throws Exception {
+        transformer.processResource(
+                "META-INF/services/example", new ByteArrayInputStream("first\n".getBytes(StandardCharsets.UTF_8)),
+                Collections.emptyList(), 0);
+        transformer.processResource(
+                "META-INF/services/example", new ByteArrayInputStream("second".getBytes(StandardCharsets.UTF_8)),
+                Collections.emptyList(), 0);
+
+        assertArrayEquals("first\nsecond\n".getBytes(StandardCharsets.UTF_8), transformer.data.toByteArray());
     }
 }
