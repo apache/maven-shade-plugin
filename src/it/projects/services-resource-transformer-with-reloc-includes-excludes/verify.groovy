@@ -16,41 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 import java.io.*;
+import java.util.Arrays;
 import java.util.jar.*;
+import org.codehaus.plexus.util.*;
 
-String[] wanted =
-{
-    "a/ResultPrinter.class",
-    "junit/textui/TestRunner.class",
-    "b/Test.class",
-    "b/TestCase.class",
-    "junit/framework/Assert.class",
-};
-
-String[] unwanted =
-{
-    "junit/textui/ResultPrinter.class",
-    "junit/framework/Test.class",
-    "junit/framework/TestCase.class",
-};
-
-JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
-
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
-    {
-        throw new IllegalStateException( "wanted path is missing: " + path );
-    }
-}
-
-for ( String path : unwanted )
-{
-    if ( jarFile.getEntry( path ) != null )
-    {
-        throw new IllegalStateException( "unwanted path is present: " + path );
-    }
-}
-
+JarFile jarFile = new JarFile( new File( basedir, "target/mshade-237-1.0.jar" ) );
+JarEntry jarEntry = jarFile.getEntry( "META-INF/services/org.apache.maven.shade" );
+String service = IOUtil.toString( jarFile.getInputStream( jarEntry ), "UTF-8" );
 jarFile.close();
+
+String[] services = service.split( "(\r\n)|(\r)|(\n)" );
+String[] expected = [ "org.apache.maven.its.shade.One", "shaded.org.apache.maven.its.shade.Two" ];
+
+Arrays.sort(services);
+Arrays.sort(expected);
+if ( !Arrays.equals( services, expected ) )
+{
+    throw new IllegalStateException( "Different services than expected: " + service );
+}

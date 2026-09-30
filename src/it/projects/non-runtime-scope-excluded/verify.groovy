@@ -17,22 +17,37 @@
  * under the License.
  */
 import java.io.*;
-import java.util.*;
+import java.util.jar.*;
 
-String[] paths =
-{
-    "org/apache/maven/its/shade/aalf/test/1.0/test-1.0-shade.jar",
-    "org/apache/maven/its/shade/aalf/test/1.0/test-1.0-sources.jar",
-};
+String[] wanted =
+[
+    "compile.properties",
+    "runtime.properties",
+];
 
-for ( String path : paths )
+String[] unwanted =
+[
+    "system.properties",
+    "provided.properties",
+    "test.properties",
+];
+
+JarFile jarFile = new JarFile( new File( basedir, "target/it-1.0.jar" ) );
+
+for ( String path : wanted )
 {
-    File file = new File( localRepositoryPath, path );
-    System.out.println( "Checking for existence of " + file );
-    if ( !file.isFile() )
+    if ( jarFile.getEntry( path ) == null )
     {
-        throw new FileNotFoundException( "Missing: " + file.getAbsolutePath() );
+        throw new IllegalStateException( "wanted path is missing: " + path );
     }
 }
 
-return true;
+for ( String path : unwanted )
+{
+    if ( jarFile.getEntry( path ) != null )
+    {
+        throw new IllegalStateException( "unwanted path is present: " + path );
+    }
+}
+
+jarFile.close();

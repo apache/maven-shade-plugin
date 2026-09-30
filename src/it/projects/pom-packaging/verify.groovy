@@ -16,22 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
-    "a.properties",
-};
+[
+    "junit/framework/TestCase.class",
+];
 
 String[] unwanted =
-{
-    "b.properties",
-    "junit/framework/TestCase.class",
-};
+[] as String[];
 
-JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
+JarFile jarFile = new JarFile( new File( basedir, "target/shaded.jar" ) );
 
 for ( String path : wanted )
 {

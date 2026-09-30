@@ -20,31 +20,17 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
-    "org/apache/maven/it/pi/Main.class",
-    "org/apache/maven/it/pi/HaveOneClass.class",
-    "org/apache/maven/it/pi/package-info.class",
-};
+[
+    "Passed.class",
+];
 
-String[] unwanted =
-{
-};
-
-JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.jar" ) );
+JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 
 for ( String path : wanted )
 {
     if ( jarFile.getEntry( path ) == null )
     {
         throw new IllegalStateException( "wanted path is missing: " + path );
-    }
-}
-
-for ( String path : unwanted )
-{
-    if ( jarFile.getEntry( path ) != null )
-    {
-        throw new IllegalStateException( "unwanted path is present: " + path );
     }
 }
 

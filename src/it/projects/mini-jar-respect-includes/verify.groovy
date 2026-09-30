@@ -16,23 +16,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
-    "org/slf4j/Logger.class",
-    "org/slf4j/impl/SimpleLogger.class"
-};
+[
+    "Main.class",
+    "junit/framework/TestCase.class",
+    "junit/runner/logo.gif",
+    "junit/framework/Assert.class",
+    "org/jdom2/Document.class"
+];
 
-JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0-shaded.jar" ) );
+String[] unwanted =
+[
+    "junit/textui/TestRunner.class",
+    "org/objectweb/asm/Type.class"
+];
+
+JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 
 for ( String path : wanted )
 {
     if ( jarFile.getEntry( path ) == null )
     {
         throw new IllegalStateException( "wanted path is missing: " + path );
+    }
+}
+
+for ( String path : unwanted )
+{
+    if ( jarFile.getEntry( path ) != null )
+    {
+        throw new IllegalStateException( "unwanted path is present: " + path );
     }
 }
 

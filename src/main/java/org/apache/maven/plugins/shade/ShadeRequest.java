@@ -28,6 +28,7 @@ import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 
 /**
  * Parameter object used to pass multitude of args to Shader.shade()
+ *
  * @since 2.0
  */
 public class ShadeRequest {
@@ -51,7 +52,7 @@ public class ShadeRequest {
     /**
      * Which jars to shade.
      *
-     * @param jars The jars.
+     * @param jars the jars
      */
     public void setJars(Set<File> jars) {
         this.jars = jars;
@@ -64,7 +65,7 @@ public class ShadeRequest {
     /**
      * Output jar.
      *
-     * @param uberJar The ueberJar file.
+     * @param uberJar the ueberJar file
      */
     public void setUberJar(File uberJar) {
         this.uberJar = uberJar;
@@ -77,7 +78,7 @@ public class ShadeRequest {
     /**
      * The filters.
      *
-     * @param filters The filters
+     * @param filters the filters
      */
     public void setFilters(List<Filter> filters) {
         this.filters = filters;
@@ -90,7 +91,7 @@ public class ShadeRequest {
     /**
      * The relocators.
      *
-     * @param relocators The relocators.
+     * @param relocators the relocators
      */
     public void setRelocators(List<Relocator> relocators) {
         this.relocators = relocators;
@@ -103,7 +104,7 @@ public class ShadeRequest {
     /**
      * The transformers.
      *
-     * @param resourceTransformers List of resourceTransformers.
+     * @param resourceTransformers list of resourceTransformers
      */
     public void setResourceTransformers(List<ResourceTransformer> resourceTransformers) {
         this.resourceTransformers = resourceTransformers;
@@ -118,7 +119,7 @@ public class ShadeRequest {
      * When false, it will just relocate the java source files to the shaded paths, but will not modify the
      * actual contents of the java source files.
      *
-     * @param shadeSourcesContent {@code true} or {@code false}.
+     * @param shadeSourcesContent {@code true} or {@code false}
      */
     public void setShadeSourcesContent(boolean shadeSourcesContent) {
         this.shadeSourcesContent = shadeSourcesContent;

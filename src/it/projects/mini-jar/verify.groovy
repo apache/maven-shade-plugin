@@ -16,23 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
+[
     "Main.class",
     "junit/framework/TestCase.class",
-    "junit/runner/logo.gif",
-    "junit/framework/Assert.class",
-    "org/jdom2/Document.class"
-};
+    "junit/swingui/icons/error.gif",
+];
 
 String[] unwanted =
-{
-    "junit/textui/TestRunner.class",
-    "org/objectweb/asm/Type.class"
-};
+[
+    "junit/swingui/TestRunner.class",
+];
 
 JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
 

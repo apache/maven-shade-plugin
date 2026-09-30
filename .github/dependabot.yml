@@ -39,6 +39,10 @@ updates:
       - dependency-name: org.apache.maven.plugin-testing:maven-plugin-testing-tools
         versions:
           - ">=3.2.0"
+      # mrm-maven-plugin 2.x requires Java 17
+      - dependency-name: org.codehaus.mojo:mrm-maven-plugin
+        versions:
+          - ">= 2.0.0"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

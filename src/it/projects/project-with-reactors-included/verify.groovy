@@ -20,20 +20,17 @@
 import java.io.*;
 import java.util.jar.*;
 
+import org.codehaus.plexus.util.*;
+
 String[] wanted =
-{
-    "Main.class",
-    "Main$Nested.class",
-    "junit/framework/TestCase.class",
-    "junit/swingui/icons/error.gif",
-};
+[
+    "org/apache/maven/plugins/shade/its/one/AppOne.class",
+    "org/apache/maven/plugins/shade/its/one/App.class",
+    "org/apache/maven/plugins/shade/its/two/App.class"
+];
 
-String[] unwanted =
-{
-    "junit/swingui/TestRunner.class",
-};
 
-JarFile jarFile = new JarFile( new File( basedir, "target/testmini-1.0.jar" ) );
+JarFile jarFile = new JarFile( new File( basedir, "two/target/two-1.0-SNAPSHOT.jar" ) );
 
 for ( String path : wanted )
 {
@@ -43,12 +40,14 @@ for ( String path : wanted )
     }
 }
 
-for ( String path : unwanted )
-{
-    if ( jarFile.getEntry( path ) != null )
-    {
-        throw new IllegalStateException( "unwanted path is present: " + path );
-    }
-}
-
 jarFile.close();
+
+// MSHADE-225 Writing output only once
+File logFile = new File( basedir, "build.log" );
+String log = FileUtils.fileRead( logFile );
+
+int index = log.indexOf( "[INFO] Dependency-reduced POM written at: " );
+if ( log.indexOf( "[INFO] Dependency-reduced POM written at: ", index+1 ) >= 0 )
+{
+  throw new IllegalStateException( "'[INFO] Dependency-reduced POM written at: ' written more than once" + path );
+}

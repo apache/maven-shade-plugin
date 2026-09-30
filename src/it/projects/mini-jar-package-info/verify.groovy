@@ -16,23 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 import java.io.*;
-import java.util.Arrays;
 import java.util.jar.*;
-import org.codehaus.plexus.util.*;
 
-JarFile jarFile = new JarFile( new File( basedir, "target/mshade-237-1.0.jar" ) );
-JarEntry jarEntry = jarFile.getEntry( "META-INF/services/org.apache.maven.shade" );
-String service = IOUtil.toString( jarFile.getInputStream( jarEntry ), "UTF-8" );
-jarFile.close();
+String[] wanted =
+[
+    "org/apache/maven/it/pi/Main.class",
+    "org/apache/maven/it/pi/HaveOneClass.class",
+    "org/apache/maven/it/pi/package-info.class",
+];
 
-String[] services = service.split( "(\r\n)|(\r)|(\n)" );
-String[] expected = { "org.apache.maven.its.shade.One", "shaded.org.apache.maven.its.shade.Two" };
+String[] unwanted =
+[] as String[];
 
-Arrays.sort(services);
-Arrays.sort(expected);
-if ( !Arrays.equals( services, expected ) )
+JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.jar" ) );
+
+for ( String path : wanted )
 {
-    throw new IllegalStateException( "Different services than expected: " + service );
+    if ( jarFile.getEntry( path ) == null )
+    {
+        throw new IllegalStateException( "wanted path is missing: " + path );
+    }
 }
+
+for ( String path : unwanted )
+{
+    if ( jarFile.getEntry( path ) != null )
+    {
+        throw new IllegalStateException( "unwanted path is present: " + path );
+    }
+}
+
+jarFile.close();

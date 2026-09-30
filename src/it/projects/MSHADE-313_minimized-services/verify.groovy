@@ -16,21 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 import java.io.*;
 import java.util.jar.*;
 
-import org.codehaus.plexus.util.*;
-
 String[] wanted =
-{
-    "org/apache/maven/plugins/shade/its/one/AppOne.class",
-    "org/apache/maven/plugins/shade/its/one/App.class",
-    "org/apache/maven/plugins/shade/its/two/App.class"
-};
+[
+    "Main.class",
+    "META-INF/services/SomeServiceInterface",
+    "SomeServiceInterface.class",
+    "SomeServiceClass.class",
+    "SomeReferencedClass.class",
+    "META-INF/services/DependencyServiceInterface",
+    "DependencyServiceInterface.class",
+    "DependencyServiceClass.class",
+    "DependencyReferencedClass.class"
+];
 
+String[] unwanted =
+[
+    // Unused SPI config files are not removed
+    //"META-INF/services/UnusedServiceInterface",
+    "UnusedServiceInterface.class",
+    "UnusedServiceClass.class",
+    "SomeUnreferencedClass.class",
+    "DependencyUnreferencedClass.class"
+];
 
-JarFile jarFile = new JarFile( new File( basedir, "two/target/two-1.0-SNAPSHOT.jar" ) );
+JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.0.jar" ) );
 
 for ( String path : wanted )
 {
@@ -40,14 +52,12 @@ for ( String path : wanted )
     }
 }
 
-jarFile.close();
-
-// MSHADE-225 Writing output only once
-File logFile = new File( basedir, "build.log" );
-String log = FileUtils.fileRead( logFile );
-
-int index = log.indexOf( "[INFO] Dependency-reduced POM written at: " );
-if ( log.indexOf( "[INFO] Dependency-reduced POM written at: ", index+1 ) >= 0 )
+for ( String path : unwanted )
 {
-  throw new IllegalStateException( "'[INFO] Dependency-reduced POM written at: ' written more than once" + path );
+    if ( jarFile.getEntry( path ) != null )
+    {
+        throw new IllegalStateException( "unwanted path is present: " + path );
+    }
 }
+
+jarFile.close();

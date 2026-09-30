@@ -21,7 +21,7 @@ import java.util.jar.*;
 
 // NOTE: We deliberately use JarInputStream and not JarFile here!
 Manifest extractManifest(name) {
-    file = new File( basedir, "target/" + name );
+    def file = new File( basedir, "target/" + name );
     if ( !file.exists() )
     {
         throw new IllegalStateException( "No file '" + file + "'" );
@@ -33,7 +33,7 @@ Manifest extractManifest(name) {
 }
 
 void assertsEntries( name, expectedTestEntry, expectedOriginalEntry, expectedCustomEntry ) {
-    attributes = extractManifest( name ).getMainAttributes();
+    def attributes = extractManifest( name ).getMainAttributes();
 
     if ( !Objects.equals( expectedTestEntry, attributes.getValue( "Test-Entry" ) ) )
     {

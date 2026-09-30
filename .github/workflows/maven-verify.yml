@@ -24,4 +24,5 @@ jobs:
   build:
     name: Verify
     uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v5
-
+    with:
+      maven4-enabled: true

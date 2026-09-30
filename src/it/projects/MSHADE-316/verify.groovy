@@ -20,19 +20,20 @@ import java.io.*;
 import java.util.jar.*;
 
 String[] wanted =
-{
-    "compile.properties",
-    "runtime.properties",
-};
+[
+    "Main.class",
+    "SomeUsedClass.class",
+    "x/y/z/SomeExemptedClass.class",
+    "x/y/z/AnotherExemptedClass.class",
+    "x/y/z/SomeDependencyOfExemptedClass.class"
+];
 
 String[] unwanted =
-{
-    "system.properties",
-    "provided.properties",
-    "test.properties",
-};
+[
+    "SomeUnusedClass.class"
+];
 
-JarFile jarFile = new JarFile( new File( basedir, "target/it-1.0.jar" ) );
+JarFile jarFile = new JarFile( new File( basedir, "test/target/test-1.0.jar" ) );
 
 for ( String path : wanted )
 {

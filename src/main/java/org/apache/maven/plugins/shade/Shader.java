@@ -31,7 +31,7 @@ public interface Shader {
      *
      * @param shadeRequest            holds the many parameters to this method
      * @throws IOException            for IO errors reading the thing
-     * @throws MojoExecutionException for anything else that goes wrong.
+     * @throws MojoExecutionException for anything else that goes wrong
      */
     void shade(ShadeRequest shadeRequest) throws IOException, MojoExecutionException;
 }
