@@ -413,6 +413,16 @@ public class ShadeMojo extends AbstractMojo {
     private boolean skip;
 
     /**
+     * When true, the plugin logs details about the shading process at info level, such as the dependencies
+     * included in or excluded from the shaded jar. When false, those details are only logged at debug level.
+     * This restores the output that was logged at info level before version 3.6.1.
+     *
+     * @since 3.6.3
+     */
+    @Parameter(property = "shade.verbose", defaultValue = "false")
+    private boolean verbose;
+
+    /**
      * Extra JAR files to infuse into shaded result. Accepts list of files that must exists. If any of specified
      * files does not exist (or is not a file), Mojo will fail.
      * <p>
@@ -787,7 +797,7 @@ public class ShadeMojo extends AbstractMojo {
                 continue;
             }
 
-            getLog().debug("Including " + artifact.getId() + " in the shaded jar.");
+            logVerbose("Including " + artifact.getId() + " in the shaded jar.");
 
             artifacts.add(artifact.getFile());
             artifactIds.add(getId(artifact));
@@ -846,10 +856,10 @@ public class ShadeMojo extends AbstractMojo {
         processedArtifacts.removeAll(emptyTestSourceArtifacts);
 
         for (Artifact artifact : excludedArtifacts) {
-            getLog().debug("Excluding " + artifact.getId() + " from the shaded jar.");
+            logVerbose("Excluding " + artifact.getId() + " from the shaded jar.");
         }
         for (Artifact artifact : pomArtifacts) {
-            getLog().debug("Skipping pom dependency " + artifact.getId() + " in the shaded jar.");
+            logVerbose("Skipping pom dependency " + artifact.getId() + " in the shaded jar.");
         }
         for (Artifact artifact : emptySourceArtifacts) {
             getLog().warn("Skipping empty source jar " + artifact.getId() + ".");
@@ -868,8 +878,16 @@ public class ShadeMojo extends AbstractMojo {
                 || !project.getArtifact().getFile().isFile();
     }
 
+    private void logVerbose(String message) {
+        if (verbose) {
+            getLog().info(message);
+        } else {
+            getLog().debug(message);
+        }
+    }
+
     private void replaceFile(File oldFile, File newFile) throws MojoExecutionException {
-        getLog().debug("Replacing " + oldFile + " with " + newFile);
+        logVerbose("Replacing " + oldFile + " with " + newFile);
 
         File origFile = new File(outputDirectory, "original-" + oldFile.getName());
         if (oldFile.exists() && !oldFile.renameTo(origFile)) {
@@ -1029,7 +1047,7 @@ public class ShadeMojo extends AbstractMojo {
                 }
 
                 if (jars.isEmpty()) {
-                    getLog().debug("No artifact matching filter " + filter.getArtifact());
+                    logVerbose("No artifact matching filter " + filter.getArtifact());
 
                     continue;
                 }
