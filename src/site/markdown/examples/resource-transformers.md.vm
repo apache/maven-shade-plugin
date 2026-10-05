@@ -442,6 +442,9 @@ For example, the following prevents the license from a `commons-collections` dep
 
 Some licenses (including the [ Apache License, Version 2](https://www.apache.org/licenses/LICENSE-2.0.html)) require that notices are preserved by downstream distributors. `ApacheNoticeResourceTransformer` automates the assembly of an appropriate `NOTICE`.
 
+The generated notice uses the Maven project name by default. This can be overridden with the
+`projectName` transformer parameter.
+
 For example, to simply merge in dependent notices:
 
 ```xml

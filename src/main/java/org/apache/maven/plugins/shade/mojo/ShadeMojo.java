@@ -60,6 +60,7 @@ import org.apache.maven.plugins.shade.pom.PomWriter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SerializedLambdaRelocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
@@ -971,6 +972,9 @@ public class ShadeMojo extends AbstractMojo {
             if (transformer == null) {
                 throw new MojoExecutionException(
                         "Failed to create shaded artifact: parameter transformers contains null (double-check XML attribute)");
+            }
+            if (transformer instanceof ApacheNoticeResourceTransformer) {
+                ((ApacheNoticeResourceTransformer) transformer).setProjectNameIfUnset(project.getName());
             }
         }
         return Arrays.asList(transformers);
