@@ -46,8 +46,11 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
     @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
+        int previousSize = data.size();
         IOUtil.copy(is, data);
-        data.write('\n');
+        if (data.size() > previousSize && data.toByteArray()[data.size() - 1] != '\n') {
+            data.write('\n');
+        }
         if (time > this.time) {
             this.time = time;
         }
