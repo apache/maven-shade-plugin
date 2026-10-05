@@ -1524,7 +1524,13 @@ public class MavenJDOMWriter {
             findAndReplaceSimpleElement(innerCount, root, "artifactId", value.getArtifactId(), null);
             findAndReplaceSimpleElement(innerCount, root, "groupId", value.getGroupId(), null);
             findAndReplaceSimpleElement(innerCount, root, "version", value.getVersion(), null);
-            findAndReplaceSimpleElement(innerCount, root, "relativePath", value.getRelativePath(), "../pom.xml");
+            String relativePath = value.getRelativePath();
+            if (relativePath != null && relativePath.isEmpty()) {
+                Element rel = updateElement(innerCount, root, "relativePath", true);
+                rel.setText("");
+            } else {
+                findAndReplaceSimpleElement(innerCount, root, "relativePath", relativePath, "../pom.xml");
+            }
         }
     }
 
