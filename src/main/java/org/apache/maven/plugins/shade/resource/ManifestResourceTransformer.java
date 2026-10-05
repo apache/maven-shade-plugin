@@ -30,6 +30,8 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A resource processor that allows the arbitrary addition of attributes to
@@ -40,6 +42,10 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
  * @since 1.2
  */
 public class ManifestResourceTransformer extends AbstractCompatibilityTransformer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ManifestResourceTransformer.class);
+
+    private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
+
     private final List<String> defaultAttributes =
             Arrays.asList("Export-Package", "Import-Package", "Provide-Capability", "Require-Capability");
 
@@ -54,6 +60,8 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
     private boolean manifestDiscovered;
 
     private Manifest manifest;
+
+    private boolean multiRelease;
 
     private long time = Long.MIN_VALUE;
 
@@ -79,11 +87,15 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
     @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
+        Manifest incomingManifest = new Manifest(is);
+        multiRelease |=
+                Boolean.parseBoolean(incomingManifest.getMainAttributes().getValue(MULTI_RELEASE));
+
         // We just want to take the first manifest we come across as that's our project's manifest. This is the behavior
         // now which is situational at best. Right now there is no context passed in with the processing so we cannot
         // tell what artifact is being processed.
         if (!manifestDiscovered) {
-            manifest = new Manifest(is);
+            manifest = incomingManifest;
 
             if (relocators != null && !relocators.isEmpty()) {
                 final Attributes attributes = manifest.getMainAttributes();
@@ -129,6 +141,10 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
 
         Attributes attributes = manifest.getMainAttributes();
 
+        if (multiRelease && attributes.getValue(MULTI_RELEASE) == null) {
+            attributes.put(MULTI_RELEASE, Boolean.TRUE.toString());
+        }
+
         if (mainClass != null) {
             attributes.put(Attributes.Name.MAIN_CLASS, mainClass);
         }
@@ -141,6 +157,11 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
                     attributes.put(new Attributes.Name(entry.getKey()), entry.getValue());
                 }
             }
+        }
+
+        if (multiRelease && !Boolean.parseBoolean(attributes.getValue(MULTI_RELEASE))) {
+            LOGGER.warn("Shaded inputs contain a multi-release JAR, but the shaded JAR is explicitly configured "
+                    + "with Multi-Release: false. Versioned classes will not be active.");
         }
 
         JarEntry jarEntry = new JarEntry(JarFile.MANIFEST_NAME);
