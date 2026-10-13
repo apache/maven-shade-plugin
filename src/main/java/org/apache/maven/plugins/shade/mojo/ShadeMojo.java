@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1257,6 +1258,27 @@ public class ShadeMojo extends AbstractMojo {
             }
 
             project.setFile(dependencyReducedPomLocation);
+            updateMaven4ConsumerPom();
+        }
+    }
+
+    private void updateMaven4ConsumerPom() throws IOException {
+        if (!session.getSystemProperties().getProperty("maven.version", "").startsWith("4.")) {
+            return;
+        }
+
+        // Maven 4 attaches its consumer POM before this mojo runs, so project.setFile() only updates the build POM.
+        // Replace the already materialized consumer POM with the dependency-reduced POM as well.
+        for (Artifact artifact : project.getAttachedArtifacts()) {
+            if ("pom".equals(artifact.getType()) && "consumer".equals(artifact.getClassifier())) {
+                File consumerPom = artifact.getFile();
+                if (consumerPom != null) {
+                    Files.copy(
+                            dependencyReducedPomLocation.toPath(),
+                            consumerPom.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
         }
     }
 
