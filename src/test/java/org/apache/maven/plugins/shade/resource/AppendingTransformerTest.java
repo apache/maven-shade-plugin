@@ -19,15 +19,22 @@
 package org.apache.maven.plugins.shade.resource;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -64,12 +71,40 @@ public class AppendingTransformerTest {
     @Test
     public void testProcessResourceDoesNotAddAnExtraLineFeed() throws Exception {
         transformer.processResource(
-                "META-INF/services/example", new ByteArrayInputStream("first\n".getBytes(StandardCharsets.UTF_8)),
-                Collections.emptyList(), 0);
+                "META-INF/services/example",
+                new ByteArrayInputStream("first\n".getBytes(StandardCharsets.UTF_8)),
+                Collections.emptyList(),
+                0);
         transformer.processResource(
-                "META-INF/services/example", new ByteArrayInputStream("second".getBytes(StandardCharsets.UTF_8)),
-                Collections.emptyList(), 0);
+                "META-INF/services/example",
+                new ByteArrayInputStream("second".getBytes(StandardCharsets.UTF_8)),
+                Collections.emptyList(),
+                0);
 
         assertArrayEquals("first\nsecond\n".getBytes(StandardCharsets.UTF_8), transformer.data.toByteArray());
+    }
+
+    @Test
+    public void testProcessEmptyResourcesPreservesAnEmptyEntry() throws Exception {
+        transformer.resource = "META-INF/services/example";
+        transformer.processResource(
+                transformer.resource, new ByteArrayInputStream(new byte[0]), Collections.emptyList(), 0);
+        transformer.processResource(
+                transformer.resource, new ByteArrayInputStream(new byte[0]), Collections.emptyList(), 0);
+
+        assertTrue(transformer.hasTransformedResource());
+
+        ByteArrayOutputStream jarBytes = new ByteArrayOutputStream();
+        try (JarOutputStream jarOutput = new JarOutputStream(jarBytes)) {
+            transformer.modifyOutputStream(jarOutput);
+        }
+
+        try (JarInputStream jarInput = new JarInputStream(new ByteArrayInputStream(jarBytes.toByteArray()))) {
+            JarEntry entry = jarInput.getNextJarEntry();
+            assertNotNull(entry);
+            assertEquals("META-INF/services/example", entry.getName());
+            assertEquals(-1, jarInput.read());
+            assertNull(jarInput.getNextJarEntry());
+        }
     }
 }

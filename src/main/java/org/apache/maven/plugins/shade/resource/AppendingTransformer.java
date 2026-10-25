@@ -34,7 +34,9 @@ import org.codehaus.plexus.util.IOUtil;
 public class AppendingTransformer extends AbstractCompatibilityTransformer {
     String resource;
 
-    ByteArrayOutputStream data = new ByteArrayOutputStream();
+    ByteArrayOutputStream data = new LastByteByteArrayOutputStream();
+
+    private boolean resourceProcessed;
 
     private long time = Long.MIN_VALUE;
 
@@ -48,9 +50,10 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
             throws IOException {
         int previousSize = data.size();
         IOUtil.copy(is, data);
-        if (data.size() > previousSize && data.toByteArray()[data.size() - 1] != '\n') {
+        if (data.size() > previousSize && lastByte() != '\n') {
             data.write('\n');
         }
+        resourceProcessed = true;
         if (time > this.time) {
             this.time = time;
         }
@@ -58,7 +61,7 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
 
     @Override
     public boolean hasTransformedResource() {
-        return data.size() > 0;
+        return resourceProcessed;
     }
 
     @Override
@@ -67,7 +70,19 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
         jarEntry.setTime(time);
         jos.putNextEntry(jarEntry);
 
-        jos.write(data.toByteArray());
+        data.writeTo(jos);
         data.reset();
+        resourceProcessed = false;
+    }
+
+    private int lastByte() {
+        return ((LastByteByteArrayOutputStream) data).lastByte();
+    }
+
+    private static class LastByteByteArrayOutputStream extends ByteArrayOutputStream {
+
+        synchronized int lastByte() {
+            return count == 0 ? -1 : buf[count - 1] & 0xff;
+        }
     }
 }
