@@ -40,6 +40,15 @@ assert installedPom.isFile() : "POM was not installed: $installedPom"
 
 def pom = parsePom(installedPom)
 assert pom.artifactId.text() == 'test' : "Unexpected content in $installedPom"
+def mavenVersion = new File(basedir, 'build.log').readLines('UTF-8').first() =~ /^Apache Maven (\d+)\.(\d+)/
+assert mavenVersion.find() : 'Could not determine the Maven version used by the integration test'
+def supportsConsumerPomFlattening = mavenVersion.group(1).toInteger() > 4 ||
+        (mavenVersion.group(1).toInteger() == 4 && mavenVersion.group(2).toInteger() >= 1)
+if (supportsConsumerPomFlattening) {
+    assert !pom.parent : "Installed consumer POM should preserve Maven 4 parent flattening: ${pom.parent}"
+} else if (pom.parent) {
+    assert pom.parent.version.text() == '1.2.3' : "Unresolved CI-friendly parent version in $installedPom"
+}
 assert dependenciesOf(pom).isEmpty() : "Installed POM still declares shaded dependencies ${dependenciesOf(pom)}; " +
         "consumers would resolve them (and their transitive dependencies) again. Installed POM: $installedPom"
 
