@@ -24,11 +24,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.Writer;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -80,6 +86,14 @@ import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
+import org.xml.sax.InputSource;
 
 import static org.apache.maven.plugins.shade.resource.UseDependencyReducedPom.createPomReplaceTransformers;
 
@@ -1257,7 +1271,157 @@ public class ShadeMojo extends AbstractMojo {
             }
 
             project.setFile(dependencyReducedPomLocation);
+            updateMaven4ConsumerPom();
         }
+    }
+
+    private void updateMaven4ConsumerPom() throws IOException {
+        if (!session.getSystemProperties().getProperty("maven.version", "").startsWith("4.")) {
+            return;
+        }
+
+        // Maven 4 attaches a transformed consumer POM before this mojo runs, so project.setFile() only updates the
+        // build POM. Keep the consumer transformations and apply the dependency reduction to that model.
+        for (Artifact artifact : project.getAttachedArtifacts()) {
+            if ("pom".equals(artifact.getType()) && "consumer".equals(artifact.getClassifier())) {
+                File consumerPom = artifact.getFile();
+                if (consumerPom != null) {
+                    mergeDependencyReductionIntoConsumerPom(consumerPom);
+                }
+            }
+        }
+    }
+
+    private void mergeDependencyReductionIntoConsumerPom(File consumerPom) throws IOException {
+        SAXBuilder saxBuilder = new SAXBuilder(false);
+        saxBuilder.setExpandEntities(false);
+        saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new StringReader("")));
+        Document consumerDocument;
+        Document dependencyReducedDocument;
+        try {
+            consumerDocument = saxBuilder.build(consumerPom);
+            dependencyReducedDocument = saxBuilder.build(dependencyReducedPomLocation);
+        } catch (JDOMException e) {
+            throw new IOException("Unable to merge the dependency-reduced POM into Maven 4's consumer POM", e);
+        }
+
+        Element consumerRoot = consumerDocument.getRootElement();
+        Element dependencyReducedRoot = dependencyReducedDocument.getRootElement();
+        Namespace consumerNamespace = consumerRoot.getNamespace();
+        Namespace dependencyReducedNamespace = dependencyReducedRoot.getNamespace();
+
+        Element consumerArtifactId = consumerRoot.getChild("artifactId", consumerNamespace);
+        Element dependencyReducedArtifactId = dependencyReducedRoot.getChild("artifactId", dependencyReducedNamespace);
+        if (consumerArtifactId != null && dependencyReducedArtifactId != null) {
+            consumerArtifactId.setText(dependencyReducedArtifactId.getText());
+        }
+
+        Element reducedDependencies = dependencyReducedRoot.getChild("dependencies", dependencyReducedNamespace);
+        Element consumerDependencies = consumerRoot.getChild("dependencies", consumerNamespace);
+        Map<String, Deque<Element>> transformedDependencies = new HashMap<>();
+        if (consumerDependencies != null) {
+            for (Element dependency : consumerDependencies.getChildren("dependency", consumerNamespace)) {
+                transformedDependencies
+                        .computeIfAbsent(dependencyKey(dependency, consumerNamespace), ignored -> new ArrayDeque<>())
+                        .addLast(dependency);
+            }
+        }
+
+        List<Element> mergedDependencies = new ArrayList<>();
+        if (reducedDependencies != null) {
+            for (Element dependency : reducedDependencies.getChildren("dependency", dependencyReducedNamespace)) {
+                Deque<Element> candidates =
+                        transformedDependencies.get(dependencyKey(dependency, dependencyReducedNamespace));
+                Element transformed = candidates == null || candidates.isEmpty() ? null : candidates.removeFirst();
+                mergedDependencies.add(mergeDependency(dependency, transformed, dependencyReducedNamespace));
+            }
+        }
+
+        if (mergedDependencies.isEmpty()) {
+            if (consumerDependencies != null) {
+                consumerRoot.removeContent(consumerDependencies);
+            }
+        } else {
+            if (consumerDependencies == null) {
+                consumerDependencies = new Element("dependencies", consumerNamespace);
+                insertDependenciesElement(consumerRoot, consumerDependencies, consumerNamespace);
+            } else {
+                consumerDependencies.removeContent();
+            }
+            consumerDependencies.addContent(mergedDependencies);
+        }
+
+        Path consumerPomPath = consumerPom.toPath().toAbsolutePath();
+        Path temporaryPom = Files.createTempFile(consumerPomPath.getParent(), "consumer-", ".pom");
+        try {
+            try (OutputStream outputStream = Files.newOutputStream(temporaryPom)) {
+                new XMLOutputter(Format.getPrettyFormat().setEncoding("UTF-8")).output(consumerDocument, outputStream);
+            }
+            try {
+                Files.move(
+                        temporaryPom,
+                        consumerPomPath,
+                        StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporaryPom, consumerPomPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temporaryPom);
+        }
+    }
+
+    private Element mergeDependency(Element reduced, Element transformed, Namespace namespace) {
+        Element merged = transformed == null ? reduced.clone() : transformed.clone();
+        if (transformed != null) {
+            replaceDependencyChild(reduced, merged, "scope", namespace);
+            replaceDependencyChild(reduced, merged, "exclusions", namespace);
+        }
+        return merged;
+    }
+
+    private void replaceDependencyChild(Element source, Element target, String name, Namespace namespace) {
+        Element sourceChild = source.getChild(name, source.getNamespace());
+        Element targetChild = target.getChild(name, namespace);
+        if (targetChild != null) {
+            int index = target.indexOf(targetChild);
+            target.removeContent(index);
+            if (sourceChild != null) {
+                target.addContent(index, sourceChild.clone());
+            }
+        } else if (sourceChild != null) {
+            if ("scope".equals(name)) {
+                for (String followingElement : Arrays.asList("systemPath", "optional", "exclusions")) {
+                    Element following = target.getChild(followingElement, namespace);
+                    if (following != null) {
+                        target.addContent(target.indexOf(following), sourceChild.clone());
+                        return;
+                    }
+                }
+            }
+            target.addContent(sourceChild.clone());
+        }
+    }
+
+    private String dependencyKey(Element dependency, Namespace namespace) {
+        String groupId = dependency.getChildTextTrim("groupId", namespace);
+        String artifactId = dependency.getChildTextTrim("artifactId", namespace);
+        String type = dependency.getChildTextTrim("type", namespace);
+        String classifier = dependency.getChildTextTrim("classifier", namespace);
+        return groupId + ":" + artifactId + ":" + (type == null ? "jar" : type) + ":"
+                + (classifier == null ? "" : classifier);
+    }
+
+    private void insertDependenciesElement(Element root, Element dependencies, Namespace namespace) {
+        for (String followingElement :
+                Arrays.asList("repositories", "pluginRepositories", "build", "reporting", "profiles")) {
+            Element following = root.getChild(followingElement, namespace);
+            if (following != null) {
+                root.addContent(root.indexOf(following), dependencies);
+                return;
+            }
+        }
+        root.addContent(dependencies);
     }
 
     private void removeSystemScopedDependencies(Set<String> artifactsToRemove, List<Dependency> originalDependencies) {
