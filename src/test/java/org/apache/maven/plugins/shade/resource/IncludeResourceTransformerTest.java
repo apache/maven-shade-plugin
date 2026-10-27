@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -74,5 +75,14 @@ class IncludeResourceTransformerTest {
                 () -> transformer.modifyOutputStream(new JarOutputStream(new ByteArrayOutputStream())));
         assertTrue(e.getMessage().contains(missing.toString()), e.getMessage());
         assertTrue(e.getMessage().contains("META-INF/LICENSE"), e.getMessage());
+    }
+
+    @Test
+    void claimsAnExistingEntryOfTheSameName() {
+        IncludeResourceTransformer transformer = new IncludeResourceTransformer();
+        transformer.resource = "META-INF/LICENSE";
+
+        assertTrue(transformer.canTransformResource("META-INF/LICENSE"));
+        assertFalse(transformer.canTransformResource("META-INF/NOTICE"));
     }
 }
