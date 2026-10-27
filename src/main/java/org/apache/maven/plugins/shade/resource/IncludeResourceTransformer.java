@@ -42,7 +42,9 @@ public class IncludeResourceTransformer extends AbstractCompatibilityTransformer
 
     @Override
     public boolean canTransformResource(String r) {
-        return false;
+        // Claim an entry the shaded jars already contain, so the configured file replaces it instead of
+        // colliding with it when the transformer writes the resource.
+        return resource != null && resource.equalsIgnoreCase(r);
     }
 
     @Override
