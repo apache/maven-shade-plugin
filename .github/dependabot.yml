@@ -43,6 +43,22 @@ updates:
       - dependency-name: org.codehaus.mojo:mrm-maven-plugin
         versions:
           - ">= 2.0.0"
+      # Compile against the Maven 3.9.x API, the oldest Maven the plugin supports
+      - dependency-name: org.apache.maven:maven-artifact
+        versions:
+          - ">= 3.10.0"
+      - dependency-name: org.apache.maven:maven-core
+        versions:
+          - ">= 3.10.0"
+      - dependency-name: org.apache.maven:maven-model
+        versions:
+          - ">= 3.10.0"
+      - dependency-name: org.apache.maven:maven-plugin-api
+        versions:
+          - ">= 3.10.0"
+      - dependency-name: org.apache.maven:maven-resolver-provider
+        versions:
+          - ">= 3.10.0"
       # Maven 3 so use SLF4J 1.7.x
       - dependency-name: "org.slf4j:*"
         versions:
