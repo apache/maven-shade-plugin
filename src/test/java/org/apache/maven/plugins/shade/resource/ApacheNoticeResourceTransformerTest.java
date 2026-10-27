@@ -120,6 +120,28 @@ public class ApacheNoticeResourceTransformerTest {
         processAndFailOnNullPointer("\n");
     }
 
+    @Test
+    public void testCopyrightYearEndsTheCopyrightLine() throws IOException {
+        transformer.copyrightYear = "2019";
+        transformer.processResource(
+                NOTICE_RESOURCE, new ByteArrayInputStream(new byte[0]), Collections.<Relocator>emptyList(), 0);
+
+        assertTrue(
+                String.join("", transformer.entries).contains("Copyright 2006-2019 The Apache Software Foundation"),
+                String.join("", transformer.entries));
+    }
+
+    @Test
+    public void testDefaultCopyrightYearDoesNotOverrideTheConfiguredOne() {
+        transformer.copyrightYear = "2020";
+        transformer.setDefaultCopyrightYear("2019");
+        assertEquals("2020", transformer.copyrightYear);
+
+        ApacheNoticeResourceTransformer unconfigured = new ApacheNoticeResourceTransformer();
+        unconfigured.setDefaultCopyrightYear("2019");
+        assertEquals("2019", unconfigured.copyrightYear);
+    }
+
     private void processAndFailOnNullPointer(final String noticeText) throws IOException {
         try {
             final ByteArrayInputStream noticeInputStream = new ByteArrayInputStream(noticeText.getBytes());
