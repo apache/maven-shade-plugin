@@ -18,11 +18,13 @@
  */
 package org.apache.maven.plugins.shade.mojo;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,5 +67,39 @@ public class ArtifactSelectorTest {
         assertTrue(selector.isSelected(new ArtifactId("gid", "id", "type", "cls")));
         assertFalse(selector.isSelected(new ArtifactId("gid", "aid", "type", "cls")));
         assertFalse(selector.isSelected(new ArtifactId("gid.test", "id", "type", "cls")));
+    }
+
+    @Test
+    public void testUnmatchedPatterns() {
+        ArtifactSelector selector = newSelector(
+                Arrays.asList("gid:aid", "gid:typo", "other:*"), Arrays.asList("gid:aid:jar:tests", "nope:*"), "gid");
+
+        selector.isSelected(new ArtifactId("gid", "aid", "jar", ""));
+        selector.isSelected(new ArtifactId("gid", "aid", "jar", "tests"));
+        selector.isSelected(new ArtifactId("other", "lib", "jar", ""));
+
+        assertEquals(Collections.singletonList("gid:typo"), selector.getUnmatchedIncludes());
+        assertEquals(Collections.singletonList("nope:*"), selector.getUnmatchedExcludes());
+    }
+
+    @Test
+    public void testExcludedArtifactStillCountsAsMatchingTheInclude() {
+        ArtifactSelector selector = newSelector(Collections.singleton("gid:*"), Collections.singleton("gid:aid"), null);
+
+        assertFalse(selector.isSelected(new ArtifactId("gid", "aid", "jar", "")));
+
+        assertTrue(selector.getUnmatchedIncludes().isEmpty());
+        assertTrue(selector.getUnmatchedExcludes().isEmpty());
+    }
+
+    @Test
+    public void testNothingConfiguredReportsNothing() {
+        ArtifactSelector selector = newSelector(null, null, "gid");
+
+        selector.isSelected(new ArtifactId("other", "aid", "jar", ""));
+
+        assertTrue(
+                selector.getUnmatchedIncludes().isEmpty(), "the shadedGroupFilter prefix is not a configured include");
+        assertTrue(selector.getUnmatchedExcludes().isEmpty());
     }
 }

@@ -532,6 +532,13 @@ public class ShadeMojo extends AbstractMojo {
         List<Artifact> processedArtifacts = processArtifactSelectors(
                 artifacts, artifactIds, sourceArtifacts, testArtifacts, testSourceArtifacts, artifactSelector);
 
+        for (String pattern : artifactSelector.getUnmatchedIncludes()) {
+            getLog().warn("No artifact matching artifactSet include " + pattern);
+        }
+        for (String pattern : artifactSelector.getUnmatchedExcludes()) {
+            getLog().info("No artifact matching artifactSet exclude " + pattern);
+        }
+
         File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier();
         File sourcesJar = shadedSourceArtifactFileWithClassifier();
         File testJar = shadedTestArtifactFileWithClassifier();
@@ -1033,7 +1040,7 @@ public class ShadeMojo extends AbstractMojo {
                 }
 
                 if (jars.isEmpty()) {
-                    getLog().debug("No artifact matching filter " + filter.getArtifact());
+                    getLog().warn("No artifact matching filter " + filter.getArtifact());
 
                     continue;
                 }

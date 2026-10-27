@@ -18,8 +18,15 @@
  */
 package org.apache.maven.plugins.shade.mojo;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 
@@ -31,6 +38,13 @@ class ArtifactSelector {
     private Collection<ArtifactId> includes;
 
     private Collection<ArtifactId> excludes;
+
+    /** The patterns as configured, by the id parsed from each; the patterns added here are not in it. */
+    private final Map<ArtifactId, String> configuredIncludes = new LinkedHashMap<>();
+
+    private final Map<ArtifactId, String> configuredExcludes = new LinkedHashMap<>();
+
+    private final Set<ArtifactId> matchedPatterns = Collections.newSetFromMap(new IdentityHashMap<>());
 
     ArtifactSelector(Artifact projectArtifact, ArtifactSet artifactSet, String groupPrefix) {
         this(
@@ -44,20 +58,22 @@ class ArtifactSelector {
     }
 
     ArtifactSelector(Collection<String> includes, Collection<String> excludes, String groupPrefix) {
-        this.includes = toIds(includes);
-        this.excludes = toIds(excludes);
+        this.includes = toIds(includes, configuredIncludes);
+        this.excludes = toIds(excludes, configuredExcludes);
 
         if (groupPrefix != null && groupPrefix.length() > 0) {
             this.includes.add(new ArtifactId(groupPrefix + "*", "*", "*", "*"));
         }
     }
 
-    private static Collection<ArtifactId> toIds(Collection<String> patterns) {
+    private static Collection<ArtifactId> toIds(Collection<String> patterns, Map<ArtifactId, String> configured) {
         Collection<ArtifactId> result = new HashSet<>();
 
         if (patterns != null) {
             for (String pattern : patterns) {
-                result.add(new ArtifactId(pattern));
+                ArtifactId id = new ArtifactId(pattern);
+                result.add(id);
+                configured.put(id, pattern);
             }
         }
 
@@ -69,15 +85,44 @@ class ArtifactSelector {
     }
 
     boolean isSelected(ArtifactId id) {
-        return (includes.isEmpty() || matches(includes, id)) && !matches(excludes, id);
+        // Both sets are always evaluated, so that every pattern that matches anything is recorded.
+        boolean includeMatched = matches(includes, id);
+        boolean excluded = matches(excludes, id);
+        return (includes.isEmpty() || includeMatched) && !excluded;
     }
 
     private boolean matches(Collection<ArtifactId> patterns, ArtifactId id) {
+        boolean matched = false;
         for (ArtifactId pattern : patterns) {
             if (id.matches(pattern)) {
-                return true;
+                matchedPatterns.add(pattern);
+                matched = true;
             }
         }
-        return false;
+        return matched;
+    }
+
+    /**
+     * @return the configured include patterns that have not matched any artifact passed to {@link #isSelected}
+     */
+    List<String> getUnmatchedIncludes() {
+        return unmatched(configuredIncludes);
+    }
+
+    /**
+     * @return the configured exclude patterns that have not matched any artifact passed to {@link #isSelected}
+     */
+    List<String> getUnmatchedExcludes() {
+        return unmatched(configuredExcludes);
+    }
+
+    private List<String> unmatched(Map<ArtifactId, String> configured) {
+        List<String> result = new ArrayList<>();
+        for (Map.Entry<ArtifactId, String> entry : configured.entrySet()) {
+            if (!matchedPatterns.contains(entry.getKey())) {
+                result.add(entry.getValue());
+            }
+        }
+        return result;
     }
 }
