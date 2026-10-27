@@ -28,6 +28,8 @@ under the License.
 
 Aggregating classes/resources from several artifacts into one uber JAR is straight forward as long as there is no overlap. Otherwise, some kind of logic to merge resources from several JARs is required. This is where resource transformers kick in.
 
+Each resource is offered to the configured transformers in the order they are listed, and the first transformer that accepts it consumes it: later transformers never see that resource. List a transformer that drops resources, such as `DontIncludeResourceTransformer`, after the transformers that should merge them.
+
 |   |   |
 |:---|:---|
 |[ApacheLicenseResourceTransformer](#ApacheLicenseResourceTransformer)|Prevents license duplication|
@@ -263,7 +265,7 @@ For ResourceBundles properties files, you can use the `<a id="ResourceBundleAppe
 Excluding Resources with the <a id="DontIncludeResourceTransformer"></a>DontIncludeResourceTransformer
 ------------------------------------------------------------------------------------------------------
 
-The `DontIncludeResourceTransformer` allows resources to be excluded when their name ends in a given value.
+The `DontIncludeResourceTransformer` allows resources to be excluded when their name ends in a given value. Because the first matching transformer consumes a resource, list it after transformers such as `ApacheNoticeResourceTransformer` that should merge the resources it would otherwise drop.
 
 For example, the following sample excludes all resources ending in `.txt`.
 
