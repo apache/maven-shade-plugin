@@ -447,6 +447,8 @@ Some licenses (including the [ Apache License, Version 2](https://www.apache.org
 The generated notice uses the Maven project name by default. This can be overridden with the
 `projectName` transformer parameter.
 
+The copyright line of the generated `NOTICE` runs from `inceptionYear` to `copyrightYear`. When `copyrightYear` is not configured, it is the year of `project.build.outputTimestamp` if that is set, so that the `NOTICE` is reproducible, and the current year otherwise.
+
 For example, to simply merge in dependent notices:
 
 ```xml

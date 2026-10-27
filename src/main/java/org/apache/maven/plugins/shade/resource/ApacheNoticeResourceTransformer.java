@@ -64,6 +64,12 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
 
     String inceptionYear = "2006";
 
+    /**
+     * The year that ends the copyright line. Defaults to the year of {@code project.build.outputTimestamp} when
+     * that is set, and otherwise to the current year.
+     */
+    String copyrightYear;
+
     String copyright;
 
     /**
@@ -92,6 +98,18 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
         }
     }
 
+    /**
+     * Sets the year that ends the copyright line unless the configuration sets {@code copyrightYear}.
+     *
+     * @param year the year of the build's reproducible timestamp
+     * @since 3.6.3
+     */
+    public void setDefaultCopyrightYear(String year) {
+        if (copyrightYear == null) {
+            copyrightYear = year;
+        }
+    }
+
     @Override
     public boolean canTransformResource(String resource) {
         return NOTICE_PATH.equalsIgnoreCase(resource)
@@ -103,7 +121,7 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         if (entries.isEmpty()) {
-            String year = new SimpleDateFormat("yyyy").format(new Date());
+            String year = copyrightYear != null ? copyrightYear : new SimpleDateFormat("yyyy").format(new Date());
             if (!inceptionYear.equals(year)) {
                 year = inceptionYear + "-" + year;
             }
