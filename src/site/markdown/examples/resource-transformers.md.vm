@@ -313,7 +313,7 @@ Since maven-shade-plugin-3.0 it is also possible to give a list of resources whi
 Adding New Resources with the <a id="IncludeResourceTransformer"></a>IncludeResourceTransformer
 -----------------------------------------------------------------------------------------------
 
-The `IncludeResourceTransformer` allows project files to be included in the package under a given name.
+The `IncludeResourceTransformer` allows project files to be included in the package under a given name. The build fails if the file does not exist.
 
 For example, the following sample includes `README.txt` in the package as `README` in the `META-INF` directory.
 

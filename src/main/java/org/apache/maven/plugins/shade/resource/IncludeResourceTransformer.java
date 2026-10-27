@@ -55,11 +55,15 @@ public class IncludeResourceTransformer extends AbstractCompatibilityTransformer
 
     @Override
     public boolean hasTransformedResource() {
-        return file != null && file.exists();
+        return file != null;
     }
 
     @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
+        if (!file.isFile()) {
+            throw new IOException("IncludeResourceTransformer: file " + file + " for resource " + resource
+                    + " does not exist or is not a file");
+        }
         JarEntry jarEntry = new JarEntry(resource);
         jarEntry.setTime(time);
 
