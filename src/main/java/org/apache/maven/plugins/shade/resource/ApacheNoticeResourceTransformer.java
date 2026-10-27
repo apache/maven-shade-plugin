@@ -102,7 +102,7 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
      * Sets the year that ends the copyright line unless the configuration sets {@code copyrightYear}.
      *
      * @param year the year of the build's reproducible timestamp
-     * @since 3.6.3
+     * @since 3.7.0
      */
     public void setDefaultCopyrightYear(String year) {
         if (copyrightYear == null) {
