@@ -982,23 +982,22 @@ public class ShadeMojo extends AbstractMojo {
         if (transformers == null) {
             return Collections.emptyList();
         }
-        for (ResourceTransformer transformer : transformers) {
-            if (transformer == null) {
-                throw new MojoExecutionException(
-                        "Failed to create shaded artifact: parameter transformers contains null (double-check XML attribute)");
-            }
-            if (transformer instanceof ApacheNoticeResourceTransformer) {
-                ((ApacheNoticeResourceTransformer) transformer).setProjectNameIfUnset(project.getName());
-            }
-        }
         String year = outputTimestampYear(outputTimestamp);
         if (year == null && outputTimestamp != null && outputTimestamp.length() > 1) {
             getLog().warn("Cannot read a year from outputTimestamp " + outputTimestamp
                     + "; a generated NOTICE uses the current year");
         }
         for (ResourceTransformer transformer : transformers) {
-            if (year != null && transformer instanceof ApacheNoticeResourceTransformer) {
-                ((ApacheNoticeResourceTransformer) transformer).setDefaultCopyrightYear(year);
+            if (transformer == null) {
+                throw new MojoExecutionException(
+                        "Failed to create shaded artifact: parameter transformers contains null (double-check XML attribute)");
+            }
+            if (transformer instanceof ApacheNoticeResourceTransformer) {
+                ApacheNoticeResourceTransformer notice = (ApacheNoticeResourceTransformer) transformer;
+                notice.setProjectNameIfUnset(project.getName());
+                if (year != null) {
+                    notice.setDefaultCopyrightYear(year);
+                }
             }
         }
         return Arrays.asList(transformers);
