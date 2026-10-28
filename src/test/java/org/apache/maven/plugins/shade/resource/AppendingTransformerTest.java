@@ -107,4 +107,51 @@ public class AppendingTransformerTest {
             assertNull(jarInput.getNextJarEntry());
         }
     }
+
+    @Test
+    public void testProcessEmptyAndNonEmptyResources() throws Exception {
+        transformer.processResource(
+                "META-INF/services/example", new ByteArrayInputStream(new byte[0]), Collections.emptyList(), 0);
+        transformer.processResource(
+                "META-INF/services/example",
+                new ByteArrayInputStream("first".getBytes(StandardCharsets.UTF_8)),
+                Collections.emptyList(),
+                0);
+        transformer.processResource(
+                "META-INF/services/example", new ByteArrayInputStream(new byte[0]), Collections.emptyList(), 0);
+        transformer.processResource(
+                "META-INF/services/example",
+                new ByteArrayInputStream("second\n".getBytes(StandardCharsets.UTF_8)),
+                Collections.emptyList(),
+                0);
+
+        assertArrayEquals("first\nsecond\n".getBytes(StandardCharsets.UTF_8), transformer.data.toByteArray());
+    }
+
+    @Test
+    public void testProcessManyResourcesDoesNotCopyAccumulatedData() throws Exception {
+        CountingOutputStream data = new CountingOutputStream();
+        transformer.data = data;
+
+        for (int i = 0; i < 1000; i++) {
+            transformer.processResource(
+                    "META-INF/services/example",
+                    new ByteArrayInputStream(new byte[] {'x'}),
+                    Collections.emptyList(),
+                    i);
+        }
+
+        assertEquals(0, data.toByteArrayCalls);
+        assertEquals(2000, data.size());
+    }
+
+    private static class CountingOutputStream extends AppendingTransformer.LastByteByteArrayOutputStream {
+        private int toByteArrayCalls;
+
+        @Override
+        public synchronized byte[] toByteArray() {
+            toByteArrayCalls++;
+            return super.toByteArray();
+        }
+    }
 }

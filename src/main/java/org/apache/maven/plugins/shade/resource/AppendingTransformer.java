@@ -79,7 +79,7 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
         return ((LastByteByteArrayOutputStream) data).lastByte();
     }
 
-    private static class LastByteByteArrayOutputStream extends ByteArrayOutputStream {
+    static class LastByteByteArrayOutputStream extends ByteArrayOutputStream {
 
         synchronized int lastByte() {
             return count == 0 ? -1 : buf[count - 1] & 0xff;
