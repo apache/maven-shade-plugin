@@ -38,10 +38,12 @@ import org.apache.maven.api.plugin.testing.MojoTest;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugins.shade.ModuleInfoConfiguration;
 import org.apache.maven.plugins.shade.ModuleInfoMode;
 import org.apache.maven.plugins.shade.ShadeRequest;
@@ -95,6 +97,9 @@ class ShadeMojoTest {
 
     @Inject
     private MavenProject project;
+
+    @Inject
+    private ArtifactHandlerManager artifactHandlerManager;
 
     @Test
     void testManifestTransformerSelection() throws Exception {
@@ -195,6 +200,73 @@ class ShadeMojoTest {
             assertTrue(e.getCause().getMessage().contains("No JDK toolchain matches"));
             assertTrue(e.getCause().getMessage().contains("version=99"));
         }
+    }
+
+    /**
+     * MSHADE-456: a POM-declared {@code <dependency>} of type {@code test-jar} has no classifier set
+     * explicitly, but resolves to classifier {@code tests} once Maven turns it into an {@link Artifact}
+     * (see {@link DefaultArtifact}, which falls back to {@link ArtifactHandler#getClassifier()} when
+     * constructed with a {@code null} classifier). The id computed from the {@code Dependency} must match
+     * the id computed from the resolved {@code Artifact}, otherwise a shaded test-jar dependency is never
+     * removed from the dependency reduced POM.
+     */
+    @Test
+    void testGetIdForTestJarDependencyMatchesResolvedArtifact() throws Exception {
+        final ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "artifactHandlerManager", artifactHandlerManager);
+
+        final Dependency dependency = new Dependency();
+        dependency.setGroupId("org.apache.maven.its");
+        dependency.setArtifactId("foo");
+        dependency.setVersion("1.0");
+        dependency.setType("test-jar");
+        // no classifier set here, exactly as a user would write it in the POM
+
+        final Method getIdForDependency = ShadeMojo.class.getDeclaredMethod("getId", Dependency.class);
+        getIdForDependency.setAccessible(true);
+        final String dependencyId = (String) getIdForDependency.invoke(mojo, dependency);
+
+        assertEquals("org.apache.maven.its:foo:test-jar:tests", dependencyId);
+
+        final ArtifactHandler testJarHandler = container.lookup(ArtifactHandler.class, "test-jar");
+        final Artifact artifact = new DefaultArtifact(
+                "org.apache.maven.its",
+                "foo",
+                VersionRange.createFromVersion("1.0"),
+                "compile",
+                "test-jar",
+                null,
+                testJarHandler);
+
+        final Method getIdForArtifact = ShadeMojo.class.getDeclaredMethod("getId", Artifact.class);
+        getIdForArtifact.setAccessible(true);
+        final String artifactId = (String) getIdForArtifact.invoke(mojo, artifact);
+
+        assertEquals(dependencyId, artifactId);
+    }
+
+    /**
+     * A dependency with an ordinary type keeps relying on its explicit (possibly absent) classifier,
+     * unaffected by the MSHADE-456 fix for type {@code test-jar}.
+     */
+    @Test
+    void testGetIdForRegularDependencyKeepsExplicitClassifier() throws Exception {
+        final ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "artifactHandlerManager", artifactHandlerManager);
+
+        final Dependency dependency = new Dependency();
+        dependency.setGroupId("org.apache.maven.its");
+        dependency.setArtifactId("bar");
+        dependency.setVersion("1.0");
+        dependency.setType("jar");
+
+        final Method getIdForDependency = ShadeMojo.class.getDeclaredMethod("getId", Dependency.class);
+        getIdForDependency.setAccessible(true);
+
+        assertEquals("org.apache.maven.its:bar:jar:", getIdForDependency.invoke(mojo, dependency));
+
+        dependency.setClassifier("linux");
+        assertEquals("org.apache.maven.its:bar:jar:linux", getIdForDependency.invoke(mojo, dependency));
     }
 
     @Test
