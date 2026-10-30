@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
@@ -466,6 +468,14 @@ public class ShadeMojo extends AbstractMojo {
 
     @Inject
     private RepositorySystem repositorySystem;
+
+    /**
+     * Used to look up the default classifier Maven associates with a dependency type (for example
+     * {@code test-jar} implies classifier {@code tests}), so that the id computed for a POM-declared
+     * dependency matches the id computed for the corresponding resolved artifact.
+     */
+    @Inject
+    private ArtifactHandlerManager artifactHandlerManager;
 
     /**
      * ProjectBuilder, needed to create projects from the artifacts.
@@ -1358,11 +1368,31 @@ public class ShadeMojo extends AbstractMojo {
 
     private String getId(Dependency dependency) {
         return getId(
-                dependency.getGroupId(), dependency.getArtifactId(), dependency.getType(), dependency.getClassifier());
+                dependency.getGroupId(),
+                dependency.getArtifactId(),
+                dependency.getType(),
+                getEffectiveClassifier(dependency));
     }
 
     private String getId(String groupId, String artifactId, String type, String classifier) {
         return groupId + ":" + artifactId + ":" + type + ":" + ((classifier != null) ? classifier : "");
+    }
+
+    /**
+     * Returns the classifier a {@link Dependency} resolves to once Maven turns it into an {@link Artifact}.
+     * A POM typically leaves the classifier element out and relies on the artifact handler registered for
+     * the dependency's type to supply it, for example type {@code test-jar} implies classifier
+     * {@code tests}. Without this, an id built straight from the {@code Dependency} would never match the
+     * id built from the resolved {@code Artifact} in {@link #getId(Artifact)}, and a shaded test-jar
+     * dependency would never be recognized as removable from the dependency reduced POM.
+     */
+    private String getEffectiveClassifier(Dependency dependency) {
+        String classifier = dependency.getClassifier();
+        if (classifier != null && !classifier.isEmpty()) {
+            return classifier;
+        }
+        ArtifactHandler handler = artifactHandlerManager.getArtifactHandler(dependency.getType());
+        return handler.getClassifier();
     }
 
     public boolean updateExcludesInDeps(
