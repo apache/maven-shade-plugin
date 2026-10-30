@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -121,7 +122,9 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         if (entries.isEmpty()) {
-            String year = copyrightYear != null ? copyrightYear : new SimpleDateFormat("yyyy").format(new Date());
+            String year = copyrightYear != null
+                    ? copyrightYear
+                    : new SimpleDateFormat("yyyy", Locale.ROOT).format(new Date());
             if (!inceptionYear.equals(year)) {
                 year = inceptionYear + "-" + year;
             }
