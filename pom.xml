@@ -80,7 +80,6 @@
 
   <properties>
     <mavenVersion>3.9.16</mavenVersion>
-    <javaVersion>8</javaVersion>
     <currentVersion>${project.version}</currentVersion>
     <asmVersion>9.11.1</asmVersion>
     <slf4j.version>1.7.36</slf4j.version>
