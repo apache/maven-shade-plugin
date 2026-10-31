@@ -18,6 +18,8 @@
  */
 package org.apache.maven.plugins.shade.mojo;
 
+import javax.inject.Inject;
+
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -31,6 +33,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.api.plugin.testing.InjectMojo;
+import org.apache.maven.api.plugin.testing.MojoTest;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
@@ -38,7 +42,6 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.testing.AbstractMojoTestCase;
 import org.apache.maven.plugins.shade.ModuleInfoConfiguration;
 import org.apache.maven.plugins.shade.ModuleInfoMode;
 import org.apache.maven.plugins.shade.ShadeRequest;
@@ -53,17 +56,22 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.ContainerConfiguration;
-import org.codehaus.plexus.PlexusConstants;
+import org.codehaus.plexus.PlexusContainer;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.apache.maven.api.plugin.testing.MojoExtension.getBasedir;
+import static org.apache.maven.api.plugin.testing.MojoExtension.setVariableValueToObject;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -74,13 +82,22 @@ import static org.mockito.Mockito.when;
  * @author Jason van Zyl
  * @author Mauro Talevi
  */
-public class ShadeMojoTest extends AbstractMojoTestCase {
-    @Override
-    protected void customizeContainerConfiguration(final ContainerConfiguration configuration) {
-        configuration.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
-    }
+@MojoTest
+class ShadeMojoTest {
+    @Inject
+    private PlexusContainer container;
 
-    public void testManifestTransformerSelection() throws Exception {
+    @Inject
+    private Shader shader;
+
+    @Inject
+    private ArtifactHandler artifactHandler;
+
+    @Inject
+    private MavenProject project;
+
+    @Test
+    void testManifestTransformerSelection() throws Exception {
         final ShadeMojo mojo = new ShadeMojo();
         final Method m = ShadeMojo.class.getDeclaredMethod("toResourceTransformers", String.class, List.class);
         m.setAccessible(true);
@@ -113,7 +130,8 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         assertEquals(asList(testsTfr1, testsTfr2), m.invoke(mojo, "tests", asList(testsTfr1, testsTfr2, defaultTfr)));
     }
 
-    public void testSourceRequestsDiscardModuleInfo() throws Exception {
+    @Test
+    void testSourceRequestsDiscardModuleInfo() throws Exception {
         ShadeMojo mojo = new ShadeMojo();
         setVariableValueToObject(mojo, "moduleInfoMode", "mErGe");
         Method method = ShadeMojo.class.getDeclaredMethod(
@@ -133,7 +151,8 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         assertTrue(request.getDependencyAnalysisArtifacts().isEmpty());
     }
 
-    public void testSelectsConfiguredModuleInfoAnalysisJdkToolchain() throws Exception {
+    @Test
+    void testSelectsConfiguredModuleInfoAnalysisJdkToolchain() throws Exception {
         ShadeMojo mojo = new ShadeMojo();
         ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
         configuration.setAnalysisJdkToolchain(Collections.singletonMap("version", "21"));
@@ -154,7 +173,8 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         verify(manager).getToolchains(session, "jdk", configuration.getAnalysisJdkToolchain());
     }
 
-    public void testRejectsMissingModuleInfoAnalysisJdkToolchain() throws Exception {
+    @Test
+    void testRejectsMissingModuleInfoAnalysisJdkToolchain() throws Exception {
         ShadeMojo mojo = new ShadeMojo();
         ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
         configuration.setAnalysisJdkToolchain(Collections.singletonMap("version", "99"));
@@ -177,18 +197,19 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         }
     }
 
-    public void testShaderWithDefaultShadedPattern() throws Exception {
+    @Test
+    void testShaderWithDefaultShadedPattern() throws Exception {
         shaderWithPattern(null, new File("target/foo-default.jar"));
     }
 
-    public void testShaderWithCustomShadedPattern() throws Exception {
+    @Test
+    void testShaderWithCustomShadedPattern() throws Exception {
         shaderWithPattern("org/shaded/plexus/util", new File("target/foo-custom.jar"));
     }
 
-    public void testShaderWithExclusions() throws Exception {
+    @Test
+    void testShaderWithExclusions() throws Exception {
         File jarFile = new File(getBasedir(), "target/unit/foo-bar.jar");
-
-        Shader s = lookup(Shader.class);
 
         Set<File> set = new LinkedHashSet<>();
         set.add(new File(getBasedir(), "src/test/jars/test-artifact-1.0-SNAPSHOT.jar"));
@@ -211,7 +232,7 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         shadeRequest.setRelocators(relocators);
         shadeRequest.setResourceTransformers(resourceTransformers);
 
-        s.shade(shadeRequest);
+        shader.shade(shadeRequest);
 
         try (URLClassLoader cl = new URLClassLoader(new URL[] {jarFile.toURI().toURL()})) {
             Class<?> c = cl.loadClass("org.apache.maven.plugins.shade.Lib");
@@ -229,10 +250,9 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
      *
      * @throws Exception
      */
-    public void testShadeWithFilter() throws Exception {
-        // create and configure MavenProject
-        MavenProject project = new MavenProject();
-        ArtifactHandler artifactHandler = lookup(ArtifactHandler.class);
+    @Test
+    void testShadeWithFilter(@InjectMojo(goal = "shade") ShadeMojo mojo) throws Exception {
+        // configure the MavenProject
         Artifact artifact = new DefaultArtifact(
                 "org.apache.myfaces.core",
                 "myfaces-impl",
@@ -244,13 +264,11 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         artifact.setFile(new File("myfaces-impl-2.0.1-SNAPSHOT.jar"));
         project.setArtifact(artifact);
 
-        ShadeMojo mojo = (ShadeMojo) lookupConfiguredMojo(project, "shade");
-
         DefaultRepositorySystemSession repositorySystemSession = MavenRepositorySystemUtils.newSession();
         repositorySystemSession.setLocalRepositoryManager(new SimpleLocalRepositoryManagerFactory()
                 .newInstance(repositorySystemSession, new LocalRepository(new File("target/local-repo/"))));
         MavenSession mavenSession = new MavenSession(
-                getContainer(),
+                container,
                 repositorySystemSession,
                 mock(MavenExecutionRequest.class),
                 mock(MavenExecutionResult.class));
@@ -298,8 +316,7 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         assertTrue(filter.canFilter(new File("myfaces-impl-2.0.1-SNAPSHOT-sources.jar"))); // sources jar
     }
 
-    public void shaderWithPattern(String shadedPattern, File jar) throws Exception {
-        Shader s = lookup(Shader.class);
+    private void shaderWithPattern(String shadedPattern, File jar) throws Exception {
 
         Set<File> set = new LinkedHashSet<>();
 
@@ -328,6 +345,6 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         shadeRequest.setRelocators(relocators);
         shadeRequest.setResourceTransformers(resourceTransformers);
 
-        s.shade(shadeRequest);
+        shader.shade(shadeRequest);
     }
 }
