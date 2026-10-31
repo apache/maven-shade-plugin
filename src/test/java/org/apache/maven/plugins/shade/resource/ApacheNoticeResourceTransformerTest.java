@@ -20,6 +20,7 @@ package org.apache.maven.plugins.shade.resource;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.Year;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -129,6 +130,22 @@ public class ApacheNoticeResourceTransformerTest {
         assertTrue(
                 String.join("", transformer.entries).contains("Copyright 2006-2019 The Apache Software Foundation"),
                 String.join("", transformer.entries));
+    }
+
+    @Test
+    public void testDefaultCopyrightYearUsesGregorianCalendar() throws IOException {
+        Locale previousFormatLocale = Locale.getDefault(Locale.Category.FORMAT);
+        try {
+            Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag("th-TH"));
+            transformer.processResource(
+                    NOTICE_RESOURCE, new ByteArrayInputStream(new byte[0]), Collections.<Relocator>emptyList(), 0);
+
+            String expectedYear = String.valueOf(Year.now().getValue());
+            assertTrue(String.join("", transformer.entries)
+                    .contains("Copyright 2006-" + expectedYear + " The Apache Software Foundation"));
+        } finally {
+            Locale.setDefault(Locale.Category.FORMAT, previousFormatLocale);
+        }
     }
 
     @Test
