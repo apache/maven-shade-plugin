@@ -598,7 +598,9 @@ public class DefaultShaderTest {
         try (JarFile shadedJar = new JarFile(shadedFile)) {
             assertEquals("true", shadedJar.getManifest().getMainAttributes().getValue("Multi-Release"));
         }
-        assertThat(warnMessages.getAllValues(), hasItem(containsString("Multi-Release: false is overridden")));
+        assertTrue(
+                warnMessages.getAllValues().stream().anyMatch(m -> m.contains("Multi-Release: false is overridden")),
+                warnMessages.getAllValues().toString());
 
         temporaryFolder.delete();
     }
@@ -736,9 +738,9 @@ public class DefaultShaderTest {
 
         MojoExecutionException exception =
                 assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
-        assertThat(exception.getMessage(), containsString("dep.DynamicConsumer"));
-        assertThat(exception.getMessage(), containsString("ServiceLoader.load"));
-        assertThat(exception.getMessage(), containsString("service type cannot be determined"));
+        assertTrue(exception.getMessage().contains("dep.DynamicConsumer"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("ServiceLoader.load"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("service type cannot be determined"), exception.getMessage());
 
         temporaryFolder.delete();
     }
@@ -763,8 +765,8 @@ public class DefaultShaderTest {
 
         MojoExecutionException exception =
                 assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
-        assertThat(exception.getMessage(), containsString("dep.MethodHandleConsumer"));
-        assertThat(exception.getMessage(), containsString("ServiceLoader method handle"));
+        assertTrue(exception.getMessage().contains("dep.MethodHandleConsumer"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("ServiceLoader method handle"), exception.getMessage());
 
         temporaryFolder.delete();
     }
@@ -812,8 +814,10 @@ public class DefaultShaderTest {
         MojoExecutionException exception =
                 assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
 
-        assertThat(exception.getMessage(), containsString("requires Java " + futureRelease + " platform data"));
-        assertThat(exception.getMessage(), containsString("analysisJdkToolchain"));
+        assertTrue(
+                exception.getMessage().contains("requires Java " + futureRelease + " platform data"),
+                exception.getMessage());
+        assertTrue(exception.getMessage().contains("analysisJdkToolchain"), exception.getMessage());
 
         temporaryFolder.delete();
     }
@@ -835,9 +839,9 @@ public class DefaultShaderTest {
 
         MojoExecutionException exception =
                 assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
-        assertThat(exception.getMessage(), containsString("dep.AutomaticDependency"));
-        assertThat(exception.getMessage(), containsString("missing.Type"));
-        assertThat(exception.getMessage(), containsString("not present in the shaded output"));
+        assertTrue(exception.getMessage().contains("dep.AutomaticDependency"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("missing.Type"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("not present in the shaded output"), exception.getMessage());
 
         temporaryFolder.delete();
     }
@@ -866,10 +870,10 @@ public class DefaultShaderTest {
 
         MojoExecutionException exception =
                 assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
-        assertThat(exception.getMessage(), containsString("external.Type"));
-        assertThat(exception.getMessage(), containsString("external.one"));
-        assertThat(exception.getMessage(), containsString("external.two"));
-        assertThat(exception.getMessage(), containsString("owned by multiple modules"));
+        assertTrue(exception.getMessage().contains("external.Type"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("external.one"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("external.two"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("owned by multiple modules"), exception.getMessage());
 
         temporaryFolder.delete();
     }
@@ -889,9 +893,9 @@ public class DefaultShaderTest {
 
         MojoExecutionException exception =
                 assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
-        assertThat(exception.getMessage(), containsString("Invalid module-info analysis JDK"));
-        assertThat(exception.getMessage(), containsString("missing jmods/java.base.jmod"));
-        assertThat(exception.getMessage(), containsString("analysisJdkToolchain"));
+        assertTrue(exception.getMessage().contains("Invalid module-info analysis JDK"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("missing jmods/java.base.jmod"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("analysisJdkToolchain"), exception.getMessage());
 
         temporaryFolder.delete();
     }
@@ -1108,11 +1112,15 @@ public class DefaultShaderTest {
                 new LinkedHashSet<>(
                         Arrays.asList("hidden/dep/internal/StableProvider", "hidden/dep/versioned/LaterProvider")),
                 providers);
-        assertThat(
-                warnMessages.getAllValues(),
-                hasItems(
-                        containsString("Raising the module descriptor floor for app.module from Java 9 to Java 17"),
-                        containsString("provider hidden.dep.versioned.LaterProvider for spi.Service")));
+        assertTrue(
+                warnMessages.getAllValues().stream()
+                        .anyMatch(m -> m.contains(
+                                "Raising the module descriptor floor for app.module from Java 9 to Java 17")),
+                warnMessages.getAllValues().toString());
+        assertTrue(
+                warnMessages.getAllValues().stream()
+                        .anyMatch(m -> m.contains("provider hidden.dep.versioned.LaterProvider for spi.Service")),
+                warnMessages.getAllValues().toString());
         assertFalse(warnMessages.getAllValues().stream()
                 .anyMatch(message -> message.contains("transitive platform requirement jdk.incubator.vector")));
 
@@ -1180,9 +1188,11 @@ public class DefaultShaderTest {
 
         MojoExecutionException exception =
                 assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
-        assertThat(exception.getMessage(), containsString("dep.versioned.Provider11"));
-        assertThat(exception.getMessage(), containsString("cannot be exposed while app.module is automatic"));
-        assertThat(exception.getMessage(), containsString("META-INF/services cannot be versioned"));
+        assertTrue(exception.getMessage().contains("dep.versioned.Provider11"), exception.getMessage());
+        assertTrue(
+                exception.getMessage().contains("cannot be exposed while app.module is automatic"),
+                exception.getMessage());
+        assertTrue(exception.getMessage().contains("META-INF/services cannot be versioned"), exception.getMessage());
 
         temporaryFolder.delete();
     }
@@ -1289,9 +1299,9 @@ public class DefaultShaderTest {
 
         MojoExecutionException exception =
                 assertThrows(MojoExecutionException.class, () -> newShader().shade(request));
-        assertThat(
-                exception.getMessage(),
-                containsString("exported package app.api from the primary descriptor is absent"));
+        assertTrue(
+                exception.getMessage().contains("exported package app.api from the primary descriptor is absent"),
+                exception.getMessage());
 
         temporaryFolder.delete();
     }
@@ -1358,7 +1368,9 @@ public class DefaultShaderTest {
         assertEquals("linux-amd64", target[0].targetPlatform);
         assertEquals(1, resolution[0].resolutionFlags);
         assertFalse(otherAttributes.contains("ModuleHashes"));
-        assertThat(warnMessages.getAllValues(), hasItem(containsString("Dropping ModuleHashes")));
+        assertTrue(
+                warnMessages.getAllValues().stream().anyMatch(m -> m.contains("Dropping ModuleHashes")),
+                warnMessages.getAllValues().toString());
 
         temporaryFolder.delete();
     }
