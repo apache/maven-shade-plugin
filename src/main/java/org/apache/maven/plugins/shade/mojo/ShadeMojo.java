@@ -720,7 +720,13 @@ public class ShadeMojo extends AbstractMojo {
                     getLog().info("Replacing original artifact with shaded artifact.");
                     File originalArtifact = project.getArtifact().getFile();
                     if (originalArtifact != null) {
-                        replaceFile(originalArtifact, outputJar);
+                        // The shaded main artifact always lands in outputDirectory, just like the shaded
+                        // sources/test/test-sources artifacts below, even though the pre-shade artifact
+                        // produced by an earlier phase (e.g. maven-jar-plugin) may live elsewhere, such as
+                        // when outputDirectory differs from the default build directory.
+                        File shadedMainArtifactFile = shadedMainArtifactFile();
+                        replaceFile(shadedMainArtifactFile, originalArtifact, outputJar);
+                        project.getArtifact().setFile(shadedMainArtifactFile);
 
                         if (createSourcesJar) {
                             getLog().info("Replacing original source artifact with shaded source artifact.");
@@ -1018,33 +1024,43 @@ public class ShadeMojo extends AbstractMojo {
     }
 
     private void replaceFile(File oldFile, File newFile) throws MojoExecutionException {
-        getLog().debug("Replacing " + oldFile + " with " + newFile);
+        replaceFile(oldFile, oldFile, newFile);
+    }
 
-        File origFile = new File(outputDirectory, "original-" + oldFile.getName());
-        if (oldFile.exists() && !oldFile.renameTo(origFile)) {
+    /**
+     * Backs up {@code fileToBackup} as {@code original-<destFile.getName()>} in {@link #outputDirectory}, then
+     * moves {@code newFile} onto {@code destFile}. {@code fileToBackup} and {@code destFile} are the same file in
+     * the common case, but differ when the pre-shade artifact does not already live at the location the shaded
+     * artifact belongs at, e.g. when {@link #outputDirectory} differs from the default build directory.
+     */
+    private void replaceFile(File destFile, File fileToBackup, File newFile) throws MojoExecutionException {
+        getLog().debug("Replacing " + destFile + " with " + newFile);
+
+        File origFile = new File(outputDirectory, "original-" + destFile.getName());
+        if (fileToBackup.exists() && !fileToBackup.renameTo(origFile)) {
             // try a gc to see if an unclosed stream needs garbage collecting
             System.gc();
             System.gc();
 
-            if (!oldFile.renameTo(origFile)) {
+            if (!fileToBackup.renameTo(origFile)) {
                 // Still didn't work. We'll do a copy
                 try {
-                    copyFiles(oldFile, origFile);
+                    copyFiles(fileToBackup, origFile);
                 } catch (IOException ex) {
                     // kind of ignorable here. We're just trying to save the original
                     getLog().warn(ex);
                 }
             }
         }
-        if (!newFile.renameTo(oldFile)) {
+        if (!newFile.renameTo(destFile)) {
             // try a gc to see if an unclosed stream needs garbage collecting
             System.gc();
             System.gc();
 
-            if (!newFile.renameTo(oldFile)) {
+            if (!newFile.renameTo(destFile)) {
                 // Still didn't work. We'll do a copy
                 try {
-                    copyFiles(newFile, oldFile);
+                    copyFiles(newFile, destFile);
                 } catch (IOException ex) {
                     throw new MojoExecutionException("Could not replace original artifact with shaded artifact!", ex);
                 }
@@ -1238,6 +1254,15 @@ public class ShadeMojo extends AbstractMojo {
         }
 
         return filters;
+    }
+
+    /**
+     * Computes where the shaded main artifact belongs: {@link #outputDirectory}, under the same file name as the
+     * pre-shade artifact produced by an earlier phase. This mirrors {@link #shadedArtifactFile(String)}, which
+     * already places the shaded sources/test/test-sources artifacts in {@link #outputDirectory}.
+     */
+    private File shadedMainArtifactFile() {
+        return new File(outputDirectory, project.getArtifact().getFile().getName());
     }
 
     private File shadedArtifactFileWithClassifier() {
