@@ -23,11 +23,12 @@ import java.util.Collections;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.codehaus.plexus.util.IOUtil;
-import org.custommonkey.xmlunit.Diff;
-import org.custommonkey.xmlunit.XMLAssert;
-import org.custommonkey.xmlunit.XMLUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.diff.Diff;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Test for {@link ComponentsXmlResourceTransformer}.
@@ -46,8 +47,6 @@ public class ComponentsXmlResourceTransformerTest {
     @Test
     public void testConfigurationMerging() throws Exception {
 
-        XMLUnit.setNormalizeWhitespace(true);
-
         InputStream resourceAsStream = getClass().getResourceAsStream("/components-1.xml");
         transformer.processResource("components-1.xml", resourceAsStream, Collections.<Relocator>emptyList(), 0);
         resourceAsStream.close();
@@ -55,12 +54,15 @@ public class ComponentsXmlResourceTransformerTest {
         transformer.processResource("components-1.xml", resourceAsStream1, Collections.<Relocator>emptyList(), 0);
         resourceAsStream1.close();
         final InputStream resourceAsStream2 = getClass().getResourceAsStream("/components-expected.xml");
-        Diff diff = XMLUnit.compareXML(
-                IOUtil.toString(resourceAsStream2, "UTF-8"),
-                IOUtil.toString(transformer.getTransformedResource(), "UTF-8"));
+        Diff diff = DiffBuilder.compare(IOUtil.toString(resourceAsStream2, "UTF-8"))
+                .withTest(IOUtil.toString(transformer.getTransformedResource(), "UTF-8"))
+                .ignoreComments()
+                .normalizeWhitespace()
+                .checkForIdentical()
+                .build();
         // assertEquals( IOUtil.toString( getClass().getResourceAsStream( "/components-expected.xml" ), "UTF-8" ),
         //              IOUtil.toString( transformer.getTransformedResource(), "UTF-8" ).replaceAll("\r\n", "\n") );
         resourceAsStream2.close();
-        XMLAssert.assertXMLIdentical(diff, true);
+        assertFalse(diff.hasDifferences(), diff.toString());
     }
 }
