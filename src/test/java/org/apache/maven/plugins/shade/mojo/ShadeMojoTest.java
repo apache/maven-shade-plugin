@@ -26,6 +26,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,6 +72,7 @@ import static java.util.Collections.singletonList;
 import static org.apache.maven.api.plugin.testing.MojoExtension.getBasedir;
 import static org.apache.maven.api.plugin.testing.MojoExtension.setVariableValueToObject;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -314,6 +317,75 @@ class ShadeMojoTest {
         Filter filter = filters.get(0);
         assertTrue(filter.canFilter(new File("myfaces-impl-2.0.1-SNAPSHOT.jar"))); // binary jar
         assertTrue(filter.canFilter(new File("myfaces-impl-2.0.1-SNAPSHOT-sources.jar"))); // sources jar
+    }
+
+    /**
+     * The shaded main artifact must land in {@code outputDirectory}, exactly like the shaded sources, test and
+     * test-sources artifacts, even when the pre-shade artifact file lives elsewhere.
+     */
+    @Test
+    void testShadedMainArtifactFileUsesOutputDirectory() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+
+        File outputDirectory = new File(getBasedir(), "target/testShadedMainArtifactFileUsesOutputDirectory/custom");
+        setVariableValueToObject(mojo, "outputDirectory", outputDirectory);
+
+        Artifact artifact = new DefaultArtifact(
+                "org.apache.maven.plugins.shade.test",
+                "test-project",
+                VersionRange.createFromVersion("1.0"),
+                "compile",
+                "jar",
+                null,
+                artifactHandler);
+        artifact.setFile(new File(
+                getBasedir(), "target/testShadedMainArtifactFileUsesOutputDirectory/build/test-project-1.0.jar"));
+        project.setArtifact(artifact);
+        setVariableValueToObject(mojo, "project", project);
+
+        Method shadedMainArtifactFile = ShadeMojo.class.getDeclaredMethod("shadedMainArtifactFile");
+        shadedMainArtifactFile.setAccessible(true);
+
+        assertEquals(new File(outputDirectory, "test-project-1.0.jar"), shadedMainArtifactFile.invoke(mojo));
+    }
+
+    /**
+     * Reproduces MSHADE-354: when the pre-shade artifact does not already live where the shaded artifact belongs
+     * (e.g. {@code outputDirectory} differs from the default build directory), {@code replaceFile} must still move
+     * the shaded content to the configured destination and back up the pre-shade content there, rather than
+     * leaving the shaded jar behind in the pre-shade artifact's original directory.
+     */
+    @Test
+    void testReplaceFileMovesShadedJarAcrossDirectories() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+
+        File baseDir = new File(getBasedir(), "target/testReplaceFileMovesShadedJarAcrossDirectories");
+        File buildDirectory = new File(baseDir, "build");
+        File outputDirectory = new File(baseDir, "custom");
+        buildDirectory.mkdirs();
+        outputDirectory.mkdirs();
+        setVariableValueToObject(mojo, "outputDirectory", outputDirectory);
+
+        File preShadeArtifact = new File(buildDirectory, "app-1.0.jar");
+        Files.write(preShadeArtifact.toPath(), "original".getBytes(StandardCharsets.UTF_8));
+
+        File shadedJar = new File(outputDirectory, "app-1.0-shaded.jar");
+        Files.write(shadedJar.toPath(), "shaded".getBytes(StandardCharsets.UTF_8));
+
+        File destFile = new File(outputDirectory, "app-1.0.jar");
+
+        Method replaceFile = ShadeMojo.class.getDeclaredMethod("replaceFile", File.class, File.class, File.class);
+        replaceFile.setAccessible(true);
+        replaceFile.invoke(mojo, destFile, preShadeArtifact, shadedJar);
+
+        assertFalse(
+                preShadeArtifact.exists(), "the pre-shade artifact must be moved out of the default build directory");
+        assertTrue(destFile.exists(), "the shaded artifact must land in the configured outputDirectory");
+        assertEquals("shaded", new String(Files.readAllBytes(destFile.toPath()), StandardCharsets.UTF_8));
+
+        File backup = new File(outputDirectory, "original-app-1.0.jar");
+        assertTrue(backup.exists(), "the pre-shade artifact must be preserved in outputDirectory");
+        assertEquals("original", new String(Files.readAllBytes(backup.toPath()), StandardCharsets.UTF_8));
     }
 
     private void shaderWithPattern(String shadedPattern, File jar) throws Exception {
