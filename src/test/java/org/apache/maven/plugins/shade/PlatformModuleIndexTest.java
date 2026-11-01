@@ -61,6 +61,27 @@ public class PlatformModuleIndexTest {
     }
 
     @Test
+    public void indexesLegacyHistoricalPlatformOwnership() throws Exception {
+        File jdkHome = syntheticLegacyJdk();
+
+        PlatformModuleIndex index = new PlatformModuleIndex(jdkHome);
+
+        assertEquals(21, index.getRelease());
+        assertEquals(singletonSortedSet("java.base"), index.findOwners("java/lang/Object", 9));
+        assertEquals(singletonSortedSet("java.sql"), index.findOwners("java/sql/Connection", 9));
+        assertEquals(singletonSortedSet("java.sql"), index.findOwners("java/sql/Connection", 10));
+        assertTrue(index.findOwners("java/sql/Driver", 9).isEmpty());
+        assertEquals(singletonSortedSet("java.sql"), index.findOwners("java/sql/Driver", 10));
+        assertEquals(singletonSortedSet("java.xml"), index.findOwners("javax/xml/parsers/Parser", 9));
+        assertTrue(index.findOwners("javax/xml/parsers/Parser", 10).isEmpty());
+        assertTrue(index.hasModule("java.base", 9));
+        assertTrue(index.hasModule("java.sql", 10));
+        assertTrue(index.hasModule("java.xml", 9));
+        assertFalse(index.hasModule("java.xml", 10));
+        assertTrue(index.hasModule("java.base", 21));
+    }
+
+    @Test
     public void rejectsJdkWithoutHistoricalPlatformSignatures() throws Exception {
         File jdkHome = newFolder("jdk");
         File jmods = new File(jdkHome, "jmods");
@@ -93,6 +114,29 @@ public class PlatformModuleIndexTest {
         return jdkHome;
     }
 
+    private File syntheticLegacyJdk() throws IOException {
+        File jdkHome = newFolder("jdk");
+        File jmods = new File(jdkHome, "jmods");
+        File lib = new File(jdkHome, "lib");
+        assertTrue(jmods.mkdirs());
+        assertTrue(lib.mkdirs());
+
+        writeJmod(new File(jmods, "java.base.jmod"), "java.base", Opcodes.V21, "java/lang/Object");
+        writeJmod(new File(jmods, "java.sql.jmod"), "java.sql", Opcodes.V21, "java/sql/Driver");
+
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(new File(lib, "ct.sym").toPath()))) {
+            writeModuleInfo(output, "9-modules/java.base/module-info.sig", "java.base", "java/lang");
+            writeModuleInfo(output, "9-modules/java.sql/module-info.sig", "java.sql", "java/sql");
+            writeModuleInfo(output, "9-modules/java.xml/module-info.sig", "java.xml", "javax/xml/parsers");
+            writeModuleInfo(output, "A-modules/java.sql/module-info.sig", "java.sql", "java/sql");
+            writeEmptyEntry(output, "9A/java/lang/Object.sig");
+            writeEmptyEntry(output, "9A/java/sql/Connection.sig");
+            writeEmptyEntry(output, "9/javax/xml/parsers/Parser.sig");
+            writeEmptyEntry(output, "A/java/sql/Driver.sig");
+        }
+        return jdkHome;
+    }
+
     private File newFolder(String name) throws IOException {
         return Files.createDirectory(temporaryFolder.toPath().resolve(name)).toFile();
     }
@@ -110,6 +154,22 @@ public class PlatformModuleIndexTest {
 
             writeEmptyEntry(output, "classes/" + className + ".class");
         }
+    }
+
+    private static void writeModuleInfo(JarOutputStream output, String name, String module, String... exports)
+            throws IOException {
+        ClassWriter writer = new ClassWriter(0);
+        writer.visit(Opcodes.V9, Opcodes.ACC_MODULE, "module-info", null, null, null);
+        ModuleVisitor visitor = writer.visitModule(module, 0, null);
+        for (String packaze : exports) {
+            visitor.visitExport(packaze, 0);
+        }
+        visitor.visitEnd();
+        writer.visitEnd();
+
+        output.putNextEntry(new JarEntry(name));
+        output.write(writer.toByteArray());
+        output.closeEntry();
     }
 
     private static void writeEmptyEntry(JarOutputStream output, String name) throws IOException {

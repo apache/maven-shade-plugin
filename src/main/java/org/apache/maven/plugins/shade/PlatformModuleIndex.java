@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -33,6 +34,9 @@ import java.util.jar.JarFile;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ModuleVisitor;
+import org.objectweb.asm.Opcodes;
 
 /**
  * Release-aware ownership index for classes in a selected JDK.
@@ -40,9 +44,15 @@ import org.objectweb.asm.ClassReader;
 final class PlatformModuleIndex {
     private static final int FIRST_MODULE_RELEASE = 9;
 
+    private static final String MODULE_INFO = "module-info.sig";
+
+    private static final String MODULES_SUFFIX = "-modules";
+
     private final File jdkHome;
 
     private final Map<Integer, Map<String, SortedSet<String>>> classOwners = new HashMap<>();
+
+    private final Map<Integer, Map<String, SortedSet<String>>> packageOwners = new HashMap<>();
 
     private final Map<Integer, Set<String>> modules = new HashMap<>();
 
@@ -51,8 +61,8 @@ final class PlatformModuleIndex {
     PlatformModuleIndex(File jdkHome) throws MojoExecutionException {
         this.jdkHome = normalizeJdkHome(jdkHome);
         this.release = readCurrentRelease();
-        readHistoricalReleases();
         readCurrentReleaseClasses();
+        readHistoricalReleases();
     }
 
     int getRelease() {
@@ -100,9 +110,9 @@ final class PlatformModuleIndex {
             return;
         }
         try (JarFile archive = new JarFile(ctSym)) {
-            Enumeration<JarEntry> entries = archive.entries();
-            while (entries.hasMoreElements()) {
-                JarEntry entry = entries.nextElement();
+            List<JarEntry> entries = Collections.list(archive.entries());
+            boolean legacyLayout = usesLegacyLayout(entries);
+            for (JarEntry entry : entries) {
                 if (entry.isDirectory()) {
                     continue;
                 }
@@ -110,21 +120,113 @@ final class PlatformModuleIndex {
                 if (parts.length < 3) {
                     continue;
                 }
-                String releaseSet = parts[0];
-                String module = parts[1];
-                String path = parts[2];
-                if ("module-info.sig".equals(path)) {
-                    forEachRelease(
-                            releaseSet,
-                            value -> modules.computeIfAbsent(value, key -> new TreeSet<>())
-                                    .add(module));
-                } else if (path.endsWith(".sig")) {
-                    String className = path.substring(0, path.length() - ".sig".length());
-                    forEachRelease(releaseSet, value -> addOwner(value, className, module));
+                if (legacyLayout) {
+                    readLegacyEntry(archive, entry, parts);
+                } else {
+                    readModularEntry(parts);
                 }
             }
         } catch (IOException e) {
             throw new MojoExecutionException("Cannot read " + ctSym + " for module-info analysis", e);
+        }
+    }
+
+    private static boolean usesLegacyLayout(List<JarEntry> entries) {
+        for (JarEntry entry : entries) {
+            String name = entry.getName();
+            int separator = name.indexOf('/');
+            if (separator > 0 && name.substring(0, separator).endsWith(MODULES_SUFFIX)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void readModularEntry(String[] parts) {
+        String releaseSet = parts[0];
+        String module = parts[1];
+        String path = parts[2];
+        if (MODULE_INFO.equals(path)) {
+            forEachRelease(
+                    releaseSet,
+                    value -> modules.computeIfAbsent(value, key -> new TreeSet<>())
+                            .add(module));
+        } else if (path.endsWith(".sig")) {
+            String className = path.substring(0, path.length() - ".sig".length());
+            forEachRelease(releaseSet, value -> addOwner(value, className, module));
+        }
+    }
+
+    private void readLegacyEntry(JarFile archive, JarEntry entry, String[] parts) throws IOException {
+        String releaseSet = parts[0];
+        String path = parts[2];
+        if (releaseSet.endsWith(MODULES_SUFFIX)) {
+            if (!MODULE_INFO.equals(path)) {
+                return;
+            }
+            String module = parts[1];
+            SortedSet<String> packages = readExportedPackages(archive, entry);
+            String releases = releaseSet.substring(0, releaseSet.length() - MODULES_SUFFIX.length());
+            forEachRelease(releases, value -> {
+                modules.computeIfAbsent(value, key -> new TreeSet<>()).add(module);
+                for (String packaze : packages) {
+                    packageOwners
+                            .computeIfAbsent(value, key -> new HashMap<>())
+                            .computeIfAbsent(packaze, key -> new TreeSet<>())
+                            .add(module);
+                }
+            });
+        } else if (path.endsWith(".sig")) {
+            String className = parts[1] + "/" + path.substring(0, path.length() - ".sig".length());
+            forEachRelease(releaseSet, value -> addLegacyOwner(value, className));
+        }
+    }
+
+    private static SortedSet<String> readExportedPackages(JarFile archive, JarEntry entry) throws IOException {
+        SortedSet<String> packages = new TreeSet<>();
+        try (InputStream input = archive.getInputStream(entry)) {
+            new ClassReader(input)
+                    .accept(
+                            new ClassVisitor(Opcodes.ASM9) {
+                                @Override
+                                public ModuleVisitor visitModule(String name, int access, String version) {
+                                    return new ModuleVisitor(Opcodes.ASM9) {
+                                        @Override
+                                        public void visitExport(String packaze, int access, String... modules) {
+                                            packages.add(packaze);
+                                        }
+
+                                        @Override
+                                        public void visitOpen(String packaze, int access, String... modules) {
+                                            packages.add(packaze);
+                                        }
+
+                                        @Override
+                                        public void visitPackage(String packaze) {
+                                            packages.add(packaze);
+                                        }
+                                    };
+                                }
+                            },
+                            0);
+        }
+        return packages;
+    }
+
+    private void addLegacyOwner(int targetRelease, String className) {
+        int separator = className.lastIndexOf('/');
+        String packaze = separator < 0 ? "" : className.substring(0, separator);
+        SortedSet<String> owners = packageOwners
+                .getOrDefault(targetRelease, Collections.emptyMap())
+                .get(packaze);
+        if (owners == null || owners.isEmpty()) {
+            owners = classOwners.getOrDefault(release, Collections.emptyMap()).get(className);
+        }
+        if (owners == null || owners.isEmpty()) {
+            return;
+        }
+        for (String owner : owners) {
+            addOwner(targetRelease, className, owner);
         }
     }
 
