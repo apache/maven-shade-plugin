@@ -30,7 +30,7 @@ By default, the plugin provide a DefaultShader implementation but with version 1
 
 Create a standard Maven project with your implementation.
 
-```unknown
+```text
 
 Dependency to Plexus annotations
 
