@@ -31,10 +31,9 @@ under the License.
 
 ### Why Does My Second Shade Include The Results Of The First Execution?
 
-By default, shade replaces with original jar with the result of shading.
-So, when a `pom.xml` includes two shades, the second shade execution will
-(by default) start from the result of the first shade execution.
+By default, shade replaces the original jar with the result of shading.
+So, when a `pom.xml` includes two shades, the second shade execution by default starts from the result of the first shade execution.
 
-If you're looking for two independent shades then read in
-[shade:shade](shade-mojo.html) about ways choose a different name for your
+If you're looking for two independent shades, then read in
+[shade:shade](shade-mojo.html) about ways to choose a different name for your
 first shade.

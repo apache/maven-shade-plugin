@@ -75,10 +75,10 @@ It's also possible to narrow the pattern with the `include` and/or `exclude` tag
       <pattern>org.codehaus.plexus.util</pattern>
       <shadedPattern>org.shaded.plexus.util</shadedPattern>
       <includes>
-        <include>org.codehaud.plexus.util.io.*</include>
+        <include>org.codehaus.plexus.util.io.*</include>
       </includes>
       <excludes>
-        <exclude>org.codehaud.plexus.util.io.*</exclude>
+        <exclude>org.codehaus.plexus.util.io.*</exclude>
       </excludes>
     </relocation>
   ...

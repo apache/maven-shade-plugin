@@ -25,24 +25,26 @@ under the License.
 -->
 
 # Apache Maven Shade Plugin
-This plugin provides the capability to package the artifact in an uber-jar, including its dependencies and to _shade_ - i.e. rename - the packages of some of the dependencies.
+This plugin can package the artifact in an uber-jar, including its dependencies, and shade — that is, relocate — the packages of some of the dependencies.
 
 ## Goals Overview
 
-The Shade Plugin has a single goal:
+The Shade Plugin has 2 goals:
 
 - [shade:shade](./shade-mojo.html) is bound to the `package` phase and is used to create a shaded jar.
+- [shade:help](./help-mojo.html) displays help information about the plugin.
+
 ## Usage
 
 General instructions on how to use the Shade Plugin can be found on the [usage page](./usage.html). Some more specific use cases are described in the examples given below.
 
-In case you still have questions regarding the plugin's usage, please feel free to contact the [user mailing list](./mailing-lists.html). The posts to the mailing list are archived and could already contain the answer to your question as part of an older thread. Hence, it is also worth browsing/searching the [mail archive](./mail-lists.html).
+If you have questions regarding the plugin's usage, please feel free to contact the [user mailing list](./mailing-lists.html). The posts to the mailing list are archived and could already contain the answer to your question as part of an older thread. Hence, it is also worth browsing/searching the [mail archive](./mailing-lists.html).
 
-If you feel like the plugin is missing a feature or has a defect, you can fill a feature request or bug report in our [issue tracker](./issue-management.html). When creating a new issue, please provide a comprehensive description of your concern. Especially for fixing bugs it is crucial that the developers can reproduce your problem. For this reason, entire debug logs, POMs or most preferably little demo projects attached to the issue are very much appreciated. Of course, patches are welcome, too. Contributors can check out the project from our [source repository](./scm.html) and will find supplementary information in the [guide to helping with Maven](http://maven.apache.org/guides/development/guide-helping.html).
+If you think the plugin is missing a feature or has a defect, you can file a feature request or bug report in our [issue tracker](./issue-management.html). When creating a new issue, please provide a comprehensive description of your concern. Especially for fixing bugs it is crucial that the developers can reproduce your problem. For this reason, entire debug logs, POMs or most preferably little demo projects attached to the issue are very much appreciated. Of course, patches are welcome, too. Contributors can check out the project from our [source repository](./scm.html) and will find supplementary information in the [guide to helping with Maven](https://maven.apache.org/guides/development/guide-helping.html).
 
 ## Examples
 
-To provide you with better understanding on some usages of the Shade Plugin, you can take a look into the following examples:
+To help you understand some usages of the Shade Plugin, look into the following examples:
 
 - [Selecting Contents for Uber JAR](./examples/includes-excludes.html)
 - [Relocating Classes](./examples/class-relocation.html)
