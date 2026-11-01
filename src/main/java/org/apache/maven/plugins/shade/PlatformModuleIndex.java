@@ -111,19 +111,14 @@ final class PlatformModuleIndex {
         }
         try (JarFile archive = new JarFile(ctSym)) {
             List<JarEntry> entries = Collections.list(archive.entries());
-            boolean legacyLayout = usesLegacyLayout(entries);
-            for (JarEntry entry : entries) {
-                if (entry.isDirectory()) {
-                    continue;
-                }
-                String[] parts = entry.getName().split("/", 3);
-                if (parts.length < 3) {
-                    continue;
-                }
-                if (legacyLayout) {
-                    readLegacyEntry(archive, entry, parts);
-                } else {
-                    readModularEntry(parts);
+            if (usesLegacyLayout(entries)) {
+                readLegacyEntries(archive, entries);
+            } else {
+                for (JarEntry entry : entries) {
+                    String[] parts = entryParts(entry);
+                    if (parts != null) {
+                        readModularEntry(parts);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -157,29 +152,55 @@ final class PlatformModuleIndex {
         }
     }
 
-    private void readLegacyEntry(JarFile archive, JarEntry entry, String[] parts) throws IOException {
-        String releaseSet = parts[0];
-        String path = parts[2];
-        if (releaseSet.endsWith(MODULES_SUFFIX)) {
-            if (!MODULE_INFO.equals(path)) {
-                return;
-            }
-            String module = parts[1];
-            SortedSet<String> packages = readExportedPackages(archive, entry);
-            String releases = releaseSet.substring(0, releaseSet.length() - MODULES_SUFFIX.length());
-            forEachRelease(releases, value -> {
-                modules.computeIfAbsent(value, key -> new TreeSet<>()).add(module);
-                for (String packaze : packages) {
-                    packageOwners
-                            .computeIfAbsent(value, key -> new HashMap<>())
-                            .computeIfAbsent(packaze, key -> new TreeSet<>())
-                            .add(module);
-                }
-            });
-        } else if (path.endsWith(".sig")) {
-            String className = parts[1] + "/" + path.substring(0, path.length() - ".sig".length());
-            forEachRelease(releaseSet, value -> addLegacyOwner(value, className));
+    private static String[] entryParts(JarEntry entry) {
+        if (entry.isDirectory()) {
+            return null;
         }
+        String[] parts = entry.getName().split("/", 3);
+        return parts.length < 3 ? null : parts;
+    }
+
+    private void readLegacyEntries(JarFile archive, List<JarEntry> entries) throws IOException {
+        for (JarEntry entry : entries) {
+            String[] parts = entryParts(entry);
+            if (parts != null && parts[0].endsWith(MODULES_SUFFIX)) {
+                readLegacyModuleDescriptor(archive, entry, parts);
+            }
+        }
+        for (JarEntry entry : entries) {
+            String[] parts = entryParts(entry);
+            if (parts != null && !parts[0].endsWith(MODULES_SUFFIX)) {
+                readLegacyClass(parts);
+            }
+        }
+    }
+
+    private void readLegacyModuleDescriptor(JarFile archive, JarEntry entry, String[] parts) throws IOException {
+        String releaseSet = parts[0];
+        if (!MODULE_INFO.equals(parts[2])) {
+            return;
+        }
+        String module = parts[1];
+        SortedSet<String> packages = readExportedPackages(archive, entry);
+        String releases = releaseSet.substring(0, releaseSet.length() - MODULES_SUFFIX.length());
+        forEachRelease(releases, value -> {
+            modules.computeIfAbsent(value, key -> new TreeSet<>()).add(module);
+            for (String packaze : packages) {
+                packageOwners
+                        .computeIfAbsent(value, key -> new HashMap<>())
+                        .computeIfAbsent(packaze, key -> new TreeSet<>())
+                        .add(module);
+            }
+        });
+    }
+
+    private void readLegacyClass(String[] parts) {
+        String path = parts[2];
+        if (!path.endsWith(".sig")) {
+            return;
+        }
+        String className = parts[1] + "/" + path.substring(0, path.length() - ".sig".length());
+        forEachRelease(parts[0], value -> addLegacyOwner(value, className));
     }
 
     private static SortedSet<String> readExportedPackages(JarFile archive, JarEntry entry) throws IOException {

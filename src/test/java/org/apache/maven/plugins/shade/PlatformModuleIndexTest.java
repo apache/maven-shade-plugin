@@ -62,7 +62,7 @@ public class PlatformModuleIndexTest {
 
     @Test
     public void indexesLegacyHistoricalPlatformOwnership() throws Exception {
-        File jdkHome = syntheticLegacyJdk();
+        File jdkHome = syntheticLegacyJdk(false);
 
         PlatformModuleIndex index = new PlatformModuleIndex(jdkHome);
 
@@ -79,6 +79,15 @@ public class PlatformModuleIndexTest {
         assertTrue(index.hasModule("java.xml", 9));
         assertFalse(index.hasModule("java.xml", 10));
         assertTrue(index.hasModule("java.base", 21));
+    }
+
+    @Test
+    public void indexesLegacyHistoricalPlatformOwnershipWhenClassesPrecedeDescriptors() throws Exception {
+        File jdkHome = syntheticLegacyJdk(true);
+
+        PlatformModuleIndex index = new PlatformModuleIndex(jdkHome);
+
+        assertEquals(singletonSortedSet("java.xml"), index.findOwners("javax/xml/parsers/Parser", 9));
     }
 
     @Test
@@ -114,7 +123,7 @@ public class PlatformModuleIndexTest {
         return jdkHome;
     }
 
-    private File syntheticLegacyJdk() throws IOException {
+    private File syntheticLegacyJdk(boolean classesBeforeDescriptors) throws IOException {
         File jdkHome = newFolder("jdk");
         File jmods = new File(jdkHome, "jmods");
         File lib = new File(jdkHome, "lib");
@@ -125,13 +134,18 @@ public class PlatformModuleIndexTest {
         writeJmod(new File(jmods, "java.sql.jmod"), "java.sql", Opcodes.V21, "java/sql/Driver");
 
         try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(new File(lib, "ct.sym").toPath()))) {
+            if (classesBeforeDescriptors) {
+                writeEmptyEntry(output, "9/javax/xml/parsers/Parser.sig");
+            }
             writeModuleInfo(output, "9-modules/java.base/module-info.sig", "java.base", "java/lang");
             writeModuleInfo(output, "9-modules/java.sql/module-info.sig", "java.sql", "java/sql");
             writeModuleInfo(output, "9-modules/java.xml/module-info.sig", "java.xml", "javax/xml/parsers");
             writeModuleInfo(output, "A-modules/java.sql/module-info.sig", "java.sql", "java/sql");
             writeEmptyEntry(output, "9A/java/lang/Object.sig");
             writeEmptyEntry(output, "9A/java/sql/Connection.sig");
-            writeEmptyEntry(output, "9/javax/xml/parsers/Parser.sig");
+            if (!classesBeforeDescriptors) {
+                writeEmptyEntry(output, "9/javax/xml/parsers/Parser.sig");
+            }
             writeEmptyEntry(output, "A/java/sql/Driver.sig");
         }
         return jdkHome;
