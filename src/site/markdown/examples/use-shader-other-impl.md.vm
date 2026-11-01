@@ -28,42 +28,22 @@ under the License.
 
 By default, the plugin provide a DefaultShader implementation but with version 1.6 you can use your own implementation.
 
-Create a standard Maven project with your implementation.
+Create a standard Maven project with your implementation. Make the shader a JSR-330 component, named by the hint that selects it:
 
-```text
+```java
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-Dependency to Plexus annotations
+import org.apache.maven.plugins.shade.Shader;
 
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-component-annotations</artifactId>
-      <version>1.5.5</version>
-    </dependency>
-
-Create your Shader
-
-@Component( role = Shader.class, hint = "mock" )
-public class MockShader
-    implements Shader
-{
-  // implement the interface here
+@Singleton
+@Named("mock")
+public class MockShader implements Shader {
+    // implement the interface here
 }
-
-// Use the plexus component metadata plugin in your job to generate Plexus metadata
-
-      <plugin>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-component-metadata</artifactId>
-        <version>1.5.5</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate-metadata</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
 ```
+
+The project needs a `javax.inject` dependency and the component index that the `sisu-maven-plugin` writes; see [How to use JSR-330](https://maven.apache.org/maven-jsr330.html#How_to_use_JSR-330).
 
 Assuming your project has coordinate org.foo.bar:wine:1.0, you must add it as a dependency of the shade plugin.
 
