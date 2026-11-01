@@ -26,6 +26,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,6 +55,8 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugins.shade.ModuleInfoConfiguration;
+import org.apache.maven.plugins.shade.ModuleInfoMode;
 import org.apache.maven.plugins.shade.ShadeRequest;
 import org.apache.maven.plugins.shade.Shader;
 import org.apache.maven.plugins.shade.filter.Filter;
@@ -60,6 +66,7 @@ import org.apache.maven.plugins.shade.pom.PomWriter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SerializedLambdaRelocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
@@ -69,6 +76,8 @@ import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
+import org.apache.maven.toolchain.Toolchain;
+import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.WriterFactory;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -238,7 +247,7 @@ public class ShadeMojo extends AbstractMojo {
 
     /**
      * Defines whether the shaded artifact should be attached as classifier to the original artifact. If false, the
-     * shaded jar will be the main artifact of the project
+     * shaded jar will be the main artifact of the project.
      */
     @Parameter
     private boolean shadedArtifactAttached;
@@ -302,7 +311,7 @@ public class ShadeMojo extends AbstractMojo {
     private String shadedClassifierName;
 
     /**
-     * When true, it will attempt to create a sources jar as well
+     * When true, it will attempt to create a sources jar as well.
      */
     @Parameter
     private boolean createSourcesJar;
@@ -330,6 +339,27 @@ public class ShadeMojo extends AbstractMojo {
      */
     @Parameter(property = "shadeSourcesContent", defaultValue = "false")
     private boolean shadeSourcesContent;
+
+    /**
+     * Controls how compiled Java module descriptors are handled. The {@code discard} mode preserves the historical
+     * behavior. The {@code merge} mode retains the primary artifact's module identity by default and its public
+     * boundary while incorporating requirements and service declarations from embedded artifacts. The output module
+     * name can be changed with {@code moduleInfo.moduleName}.
+     *
+     * @see <a href="https://maven.apache.org/plugins/maven-shade-plugin/examples/module-info-merging.html">Merging Java
+     * Module Descriptors</a>
+     * @since 3.7.0
+     */
+    @Parameter(property = "shade.moduleInfoMode", defaultValue = "discard")
+    private String moduleInfoMode = "discard";
+
+    /**
+     * Configures how the merged descriptor represents the amalgamated shaded contents.
+     *
+     * @since 3.7.0
+     */
+    @Parameter
+    private ModuleInfoConfiguration moduleInfo = new ModuleInfoConfiguration();
 
     /**
      * When true, dependencies will be stripped down on the class level to only the transitive hull required for the
@@ -391,7 +421,7 @@ public class ShadeMojo extends AbstractMojo {
      * When true, the version of each dependency of the reduced pom will be based on the baseVersion of the original
      * dependency instead of its resolved version. For example, if the original pom (transitively) depends on
      * a:a:2.7-SNAPSHOT, if useBaseVersion is set to false, the reduced pom will depend on a:a:2.7-20130312.222222-12
-     * whereas if useBaseVersion is set to true, the reduced pom will depend on a:a:2.7-SNAPSHOT
+     * whereas if useBaseVersion is set to true, the reduced pom will depend on a:a:2.7-SNAPSHOT.
      *
      * @since 3.0
      */
@@ -406,6 +436,7 @@ public class ShadeMojo extends AbstractMojo {
 
     /**
      * When true, skips the execution of this MOJO.
+     *
      * @since 3.3.0
      */
     @Parameter(defaultValue = "false")
@@ -442,6 +473,16 @@ public class ShadeMojo extends AbstractMojo {
     @Parameter
     private List<String> extraArtifacts;
 
+    /**
+     * Timestamp for reproducible output, in ISO 8601 or as seconds since the epoch. Its year ends the copyright line of
+     * a NOTICE generated by {@code ApacheNoticeResourceTransformer} that sets no {@code copyrightYear}, instead of the
+     * current year.
+     *
+     * @since 3.7.0
+     */
+    @Parameter(defaultValue = "${project.build.outputTimestamp}")
+    private String outputTimestamp;
+
     @Inject
     private MavenProjectHelper projectHelper;
 
@@ -463,8 +504,11 @@ public class ShadeMojo extends AbstractMojo {
     @Inject
     private Map<String, Shader> shaders;
 
+    @Inject
+    private ToolchainManager toolchainManager;
+
     /**
-     * @throws MojoExecutionException in case of an error.
+     * @throws MojoExecutionException in case of an error
      */
     @SuppressWarnings("checkstyle:methodlength")
     @Override
@@ -481,6 +525,7 @@ public class ShadeMojo extends AbstractMojo {
         Set<File> sourceArtifacts = new LinkedHashSet<>();
         Set<File> testArtifacts = new LinkedHashSet<>();
         Set<File> testSourceArtifacts = new LinkedHashSet<>();
+        Set<File> dependencyAnalysisArtifacts = new LinkedHashSet<>();
 
         ArtifactSelector artifactSelector = new ArtifactSelector(project.getArtifact(), artifactSet, shadedGroupFilter);
 
@@ -502,6 +547,7 @@ public class ShadeMojo extends AbstractMojo {
                                         + " that is not a file (does not exist or is not a file)");
                     }
                     artifacts.add(extraJar);
+                    dependencyAnalysisArtifacts.add(extraJar);
                 }
             }
 
@@ -528,7 +574,20 @@ public class ShadeMojo extends AbstractMojo {
         }
 
         List<Artifact> processedArtifacts = processArtifactSelectors(
-                artifacts, artifactIds, sourceArtifacts, testArtifacts, testSourceArtifacts, artifactSelector);
+                artifacts,
+                artifactIds,
+                sourceArtifacts,
+                testArtifacts,
+                testSourceArtifacts,
+                dependencyAnalysisArtifacts,
+                artifactSelector);
+
+        for (String pattern : artifactSelector.getUnmatchedIncludes()) {
+            getLog().warn("No artifact matching artifactSet include " + pattern);
+        }
+        for (String pattern : artifactSelector.getUnmatchedExcludes()) {
+            getLog().info("No artifact matching artifactSet exclude " + pattern);
+        }
 
         File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier();
         File sourcesJar = shadedSourceArtifactFileWithClassifier();
@@ -553,8 +612,15 @@ public class ShadeMojo extends AbstractMojo {
                 }
             }
 
-            ShadeRequest shadeRequest =
-                    shadeRequest("jar", artifacts, outputJar, filters, relocators, resourceTransformers);
+            ShadeRequest shadeRequest = shadeRequest(
+                    "jar",
+                    artifacts,
+                    project.getArtifact().getFile(),
+                    outputJar,
+                    filters,
+                    relocators,
+                    resourceTransformers,
+                    dependencyAnalysisArtifacts);
 
             shader.shade(shadeRequest);
 
@@ -566,8 +632,16 @@ public class ShadeMojo extends AbstractMojo {
             }
 
             if (shadeTestJar) {
-                ShadeRequest shadeTestRequest =
-                        shadeRequest("test-jar", testArtifacts, testJar, filters, relocators, resourceTransformers);
+                File primaryTestArtifact = shadedTestArtifactFile();
+                ShadeRequest shadeTestRequest = shadeRequest(
+                        "test-jar",
+                        testArtifacts,
+                        testArtifacts.contains(primaryTestArtifact) ? primaryTestArtifact : null,
+                        testJar,
+                        filters,
+                        relocators,
+                        resourceTransformers,
+                        dependencyAnalysisArtifacts);
 
                 shader.shade(shadeTestRequest);
             }
@@ -695,19 +769,31 @@ public class ShadeMojo extends AbstractMojo {
         getLog().error("- You removed the configuration of the maven-jar-plugin that produces the main artifact.");
     }
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     private ShadeRequest shadeRequest(
             String shade,
             Set<File> artifacts,
+            File primaryArtifact,
             File outputJar,
             List<Filter> filters,
             List<Relocator> relocators,
-            List<ResourceTransformer> resourceTransformers) {
+            List<ResourceTransformer> resourceTransformers,
+            Set<File> dependencyAnalysisArtifacts)
+            throws MojoExecutionException {
         ShadeRequest shadeRequest = new ShadeRequest();
         shadeRequest.setJars(artifacts);
+        shadeRequest.setPrimaryArtifact(primaryArtifact);
         shadeRequest.setUberJar(outputJar);
         shadeRequest.setFilters(filters);
         shadeRequest.setRelocators(relocators);
         shadeRequest.setResourceTransformers(toResourceTransformers(shade, resourceTransformers));
+        ModuleInfoMode parsedModuleInfoMode = ModuleInfoMode.fromString(moduleInfoMode);
+        shadeRequest.setModuleInfoMode(parsedModuleInfoMode);
+        shadeRequest.setModuleInfoConfiguration(moduleInfo);
+        if (parsedModuleInfoMode == ModuleInfoMode.MERGE && primaryArtifact != null) {
+            shadeRequest.setModuleInfoAnalysisJdkHome(resolveModuleInfoAnalysisJdkHome());
+        }
+        shadeRequest.setDependencyAnalysisArtifacts(dependencyAnalysisArtifacts);
         return shadeRequest;
     }
 
@@ -717,11 +803,65 @@ public class ShadeMojo extends AbstractMojo {
             File testJar,
             List<Filter> filters,
             List<Relocator> relocators,
-            List<ResourceTransformer> resourceTransformers) {
-        ShadeRequest shadeSourcesRequest =
-                shadeRequest(shade, testArtifacts, testJar, filters, relocators, resourceTransformers);
+            List<ResourceTransformer> resourceTransformers)
+            throws MojoExecutionException {
+        ShadeRequest shadeSourcesRequest = shadeRequest(
+                shade,
+                testArtifacts,
+                null,
+                testJar,
+                filters,
+                relocators,
+                resourceTransformers,
+                Collections.<File>emptySet());
+        shadeSourcesRequest.setModuleInfoMode(ModuleInfoMode.DISCARD);
         shadeSourcesRequest.setShadeSourcesContent(shadeSourcesContent);
         return shadeSourcesRequest;
+    }
+
+    private File resolveModuleInfoAnalysisJdkHome() throws MojoExecutionException {
+        Toolchain toolchain = null;
+        Map<String, String> requirements = moduleInfo.getAnalysisJdkToolchain();
+        if (!requirements.isEmpty()) {
+            List<Toolchain> matches = toolchainManager.getToolchains(session, "jdk", requirements);
+            if (matches == null || matches.isEmpty()) {
+                throw new MojoExecutionException(
+                        "No JDK toolchain matches moduleInfo.analysisJdkToolchain " + requirements + '.');
+            }
+            toolchain = matches.get(0);
+        } else {
+            toolchain = toolchainManager.getToolchainFromBuildContext("jdk", session);
+        }
+
+        if (toolchain == null) {
+            return normalizeJdkHome(new File(System.getProperty("java.home")));
+        }
+
+        String javac = toolchain.findTool("javac");
+        if (javac == null) {
+            throw new MojoExecutionException("The selected module-info analysis JDK toolchain has no javac tool.");
+        }
+        File executable = new File(javac);
+        File bin = executable.getParentFile();
+        if (bin == null || bin.getParentFile() == null) {
+            throw new MojoExecutionException(
+                    "Cannot determine the JDK home from the selected javac executable " + executable + '.');
+        }
+        return normalizeJdkHome(bin.getParentFile());
+    }
+
+    private File normalizeJdkHome(File home) throws MojoExecutionException {
+        File candidate = home;
+        if (!new File(candidate, "jmods").isDirectory()
+                && candidate.getParentFile() != null
+                && new File(candidate.getParentFile(), "jmods").isDirectory()) {
+            candidate = candidate.getParentFile();
+        }
+        try {
+            return candidate.getCanonicalFile();
+        } catch (IOException e) {
+            throw new MojoExecutionException("Cannot resolve module-info analysis JDK home " + candidate, e);
+        }
     }
 
     private void setupHintedShader() throws MojoExecutionException {
@@ -741,6 +881,7 @@ public class ShadeMojo extends AbstractMojo {
             Set<File> sourceArtifacts,
             Set<File> testArtifacts,
             Set<File> testSourceArtifacts,
+            Set<File> dependencyAnalysisArtifacts,
             ArtifactSelector artifactSelector)
             throws MojoExecutionException {
 
@@ -773,6 +914,15 @@ public class ShadeMojo extends AbstractMojo {
             }
         }
         processedArtifacts.addAll(project.getArtifacts());
+
+        for (Artifact artifact : processedArtifacts) {
+            if (!"pom".equals(artifact.getType())
+                    && artifact.getFile() != null
+                    && (artifact.getArtifactHandler() == null
+                            || artifact.getArtifactHandler().isAddedToClasspath())) {
+                dependencyAnalysisArtifacts.add(artifact.getFile());
+            }
+        }
 
         // for loop over COPY; as we add to the list in this loop
         for (Artifact artifact : new ArrayList<>(processedArtifacts)) {
@@ -966,13 +1116,48 @@ public class ShadeMojo extends AbstractMojo {
         if (transformers == null) {
             return Collections.emptyList();
         }
+        String year = outputTimestampYear(outputTimestamp);
+        if (year == null && outputTimestamp != null && outputTimestamp.length() > 1) {
+            getLog().warn("Cannot read a year from outputTimestamp " + outputTimestamp
+                    + "; a generated NOTICE uses the current year");
+        }
         for (ResourceTransformer transformer : transformers) {
             if (transformer == null) {
                 throw new MojoExecutionException(
                         "Failed to create shaded artifact: parameter transformers contains null (double-check XML attribute)");
             }
+            if (transformer instanceof ApacheNoticeResourceTransformer) {
+                ApacheNoticeResourceTransformer notice = (ApacheNoticeResourceTransformer) transformer;
+                notice.setProjectNameIfUnset(project.getName());
+                if (year != null) {
+                    notice.setDefaultCopyrightYear(year);
+                }
+            }
         }
         return Arrays.asList(transformers);
+    }
+
+    /**
+     * Reads the UTC year of a {@code project.build.outputTimestamp} value, in the formats maven-archiver accepts.
+     *
+     * @return the year, or {@code null} when the value is unset, at most one character long (which means "no
+     *         timestamp"), or cannot be parsed
+     */
+    static String outputTimestampYear(String outputTimestamp) {
+        if (outputTimestamp == null || outputTimestamp.length() < 2) {
+            return null;
+        }
+        Instant instant;
+        try {
+            if (outputTimestamp.chars().allMatch(Character::isDigit)) {
+                instant = Instant.ofEpochSecond(Long.parseLong(outputTimestamp));
+            } else {
+                instant = OffsetDateTime.parse(outputTimestamp).toInstant();
+            }
+        } catch (DateTimeParseException | NumberFormatException e) {
+            return null;
+        }
+        return String.valueOf(instant.atZone(ZoneOffset.UTC).getYear());
     }
 
     private List<Filter> getFilters(List<Artifact> artifactCollection, ArtifactSelector artifactSelector)
@@ -1028,7 +1213,7 @@ public class ShadeMojo extends AbstractMojo {
                 }
 
                 if (jars.isEmpty()) {
-                    getLog().debug("No artifact matching filter " + filter.getArtifact());
+                    getLog().warn("No artifact matching filter " + filter.getArtifact());
 
                     continue;
                 }
@@ -1043,8 +1228,7 @@ public class ShadeMojo extends AbstractMojo {
             if (entryPoints == null) {
                 entryPoints = new HashSet<>();
             }
-            getLog().info("Minimizing jar " + project.getArtifact()
-                    + (entryPoints.isEmpty() ? "" : " with entry points"));
+            getLog().info("Minimizing jar " + project.getArtifact());
 
             try {
                 filters.add(new MinijarFilter(project, getLog(), simpleFilters, entryPoints));
@@ -1230,8 +1414,17 @@ public class ShadeMojo extends AbstractMojo {
 
                     parentFile = parentFile.getCanonicalFile();
 
-                    String relPath = RelativizePath.convertToRelativePath(parentFile, f);
-                    model.getParent().setRelativePath(relPath);
+                    File actualParentFile =
+                            project.getParent() != null ? project.getParent().getFile() : null;
+                    if (isSameFile(parentFile, actualParentFile)) {
+                        String relPath = RelativizePath.convertToRelativePath(parentFile, f);
+                        model.getParent().setRelativePath(relPath);
+                    } else {
+                        // ../pom.xml has a different GAV (or does not have one).
+                        // An empty relativePath stops Maven 4 from walking into
+                        // that POM and reporting a false parent cycle.
+                        model.getParent().setRelativePath("");
+                    }
                 }
 
                 try {
@@ -1258,6 +1451,17 @@ public class ShadeMojo extends AbstractMojo {
 
             project.setFile(dependencyReducedPomLocation);
         }
+    }
+
+    /**
+     * True when the configured relativePath file is the project's parent POM.
+     */
+    private static boolean isSameFile(File configured, File actual) throws IOException {
+        return actual != null
+                && configured != null
+                && actual.isFile()
+                && configured.isFile()
+                && actual.getCanonicalFile().equals(configured.getCanonicalFile());
     }
 
     private void removeSystemScopedDependencies(Set<String> artifactsToRemove, List<Dependency> originalDependencies) {

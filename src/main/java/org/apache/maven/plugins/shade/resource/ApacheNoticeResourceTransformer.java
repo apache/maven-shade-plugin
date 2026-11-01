@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -64,6 +65,12 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
 
     String inceptionYear = "2006";
 
+    /**
+     * The year that ends the copyright line. Defaults to the year of {@code project.build.outputTimestamp} when
+     * that is set, and otherwise to the current year.
+     */
+    String copyrightYear;
+
     String copyright;
 
     /**
@@ -79,6 +86,31 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
 
     private static final String NOTICE_MD_PATH = "META-INF/NOTICE.md";
 
+    /**
+     * Uses the Maven project name when no project name was configured explicitly.
+     *
+     * @param projectName the Maven project name
+     */
+    public void setProjectNameIfUnset(String projectName) {
+        if (this.projectName.isEmpty()
+                && projectName != null
+                && !projectName.trim().isEmpty()) {
+            this.projectName = projectName;
+        }
+    }
+
+    /**
+     * Sets the year that ends the copyright line unless the configuration sets {@code copyrightYear}.
+     *
+     * @param year the year of the build's reproducible timestamp
+     * @since 3.7.0
+     */
+    public void setDefaultCopyrightYear(String year) {
+        if (copyrightYear == null) {
+            copyrightYear = year;
+        }
+    }
+
     @Override
     public boolean canTransformResource(String resource) {
         return NOTICE_PATH.equalsIgnoreCase(resource)
@@ -90,7 +122,9 @@ public class ApacheNoticeResourceTransformer extends AbstractCompatibilityTransf
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
         if (entries.isEmpty()) {
-            String year = new SimpleDateFormat("yyyy").format(new Date());
+            String year = copyrightYear != null
+                    ? copyrightYear
+                    : new SimpleDateFormat("yyyy", Locale.ROOT).format(new Date());
             if (!inceptionYear.equals(year)) {
                 year = inceptionYear + "-" + year;
             }

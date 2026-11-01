@@ -32,7 +32,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.codehaus.plexus.util.IOUtil;
 
 /**
- * An appending transformer for resource bundles
+ * An appending transformer for resource bundles.
  *
  * @author Robert Scholte
  * @since 3.0.0
@@ -45,8 +45,9 @@ public class ResourceBundleAppendingTransformer extends AbstractCompatibilityTra
     private long time = Long.MIN_VALUE;
 
     /**
-     * the base name of the resource bundle, a fully qualified class name
-     * @param basename The basename.
+     * The base name of the resource bundle, a fully qualified class name.
+     *
+     * @param basename the basename
      */
     public void setBasename(String basename) {
         resourceBundlePattern = Pattern.compile(basename + "(_[a-zA-Z]+){0,3}\\.properties");

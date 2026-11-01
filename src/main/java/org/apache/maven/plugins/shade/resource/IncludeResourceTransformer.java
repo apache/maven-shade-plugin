@@ -42,7 +42,9 @@ public class IncludeResourceTransformer extends AbstractCompatibilityTransformer
 
     @Override
     public boolean canTransformResource(String r) {
-        return false;
+        // Claim an entry the shaded jars already contain, so the configured file replaces it instead of
+        // colliding with it when the transformer writes the resource.
+        return resource != null && resource.equalsIgnoreCase(r);
     }
 
     @Override
@@ -55,11 +57,15 @@ public class IncludeResourceTransformer extends AbstractCompatibilityTransformer
 
     @Override
     public boolean hasTransformedResource() {
-        return file != null && file.exists();
+        return file != null;
     }
 
     @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
+        if (!file.isFile()) {
+            throw new IOException("IncludeResourceTransformer: file " + file + " for resource " + resource
+                    + " does not exist or is not a file");
+        }
         JarEntry jarEntry = new JarEntry(resource);
         jarEntry.setTime(time);
 

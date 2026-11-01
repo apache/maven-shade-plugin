@@ -21,9 +21,9 @@ package org.apache.maven.plugins.shade.mojo;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RelativizePathTest {
     static final String[] PARENTS = {
@@ -49,7 +49,7 @@ public class RelativizePathTest {
             File child = new File(CHILDREN[x]).getCanonicalFile();
             String answer = ANSWER[x];
             String r = RelativizePath.convertToRelativePath(parent, child);
-            assertEquals(String.format("parent %s child %s", parent.toString(), child.toString()), answer, r);
+            assertEquals(answer, r, String.format("parent %s child %s", parent.toString(), child.toString()));
         }
     }
 }

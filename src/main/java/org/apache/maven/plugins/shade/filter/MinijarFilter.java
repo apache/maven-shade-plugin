@@ -69,7 +69,7 @@ public class MinijarFilter implements Filter {
     /**
      * @param project {@link MavenProject}
      * @param log {@link Log}
-     * @throws IOException in case of error.
+     * @throws IOException in case of error
      */
     public MinijarFilter(MavenProject project, Log log) throws IOException {
         this(project, log, Collections.<SimpleFilter>emptyList(), Collections.<String>emptySet());
@@ -79,7 +79,7 @@ public class MinijarFilter implements Filter {
      * @param project {@link MavenProject}
      * @param log {@link Log}
      * @param entryPoints
-     * @throws IOException in case of error.
+     * @throws IOException in case of error
      */
     public MinijarFilter(MavenProject project, Log log, Set<String> entryPoints) throws IOException {
         this(project, log, Collections.<SimpleFilter>emptyList(), entryPoints);
@@ -90,7 +90,7 @@ public class MinijarFilter implements Filter {
      * @param log {@link Log}
      * @param simpleFilters {@link SimpleFilter}
      * @param entryPoints
-     * @throws IOException in case of errors.
+     * @throws IOException in case of errors
      * @since 1.6
      */
     public MinijarFilter(MavenProject project, Log log, List<SimpleFilter> simpleFilters, Set<String> entryPoints)
@@ -191,12 +191,11 @@ public class MinijarFilter implements Filter {
                 continue;
             }
 
-            try (BufferedReader configFileReader =
-                    new BufferedReader(new InputStreamReader(new FileInputStream(serviceProviderConfigFile), UTF_8))) {
+            try (BufferedReader configFileReader = Files.newBufferedReader(serviceProviderConfigFile.toPath(), UTF_8)) {
                 // check whether the found classes use services in turn
                 repeatScan |= scanServiceProviderConfigFile(cp, configFileReader);
             } catch (final IOException e) {
-                log.warn(e.getMessage());
+                log.warn("Failed to scan service provider config file " + serviceProviderConfigFile, e);
             }
         }
         return repeatScan;
@@ -222,11 +221,11 @@ public class MinijarFilter implements Filter {
                     // check whether the found classes use services in turn
                     repeatScan = scanServiceProviderConfigFile(cp, configFileReader);
                 } catch (final IOException e) {
-                    log.warn(e.getMessage());
+                    log.warn("Failed to scan JAR entry " + jarEntry.getName() + " in jar " + jar.getName(), e);
                 }
             }
         } catch (final IOException e) {
-            log.warn("Not a JAR file candidate. Ignoring classpath element '" + fileName + "' (" + e + ").");
+            log.warn("Not a JAR file candidate. Ignoring classpath element '" + fileName + "'", e);
         }
         return repeatScan;
     }

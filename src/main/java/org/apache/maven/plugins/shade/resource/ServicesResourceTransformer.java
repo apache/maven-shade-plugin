@@ -47,6 +47,21 @@ public class ServicesResourceTransformer extends AbstractCompatibilityTransforme
 
     private long time = Long.MIN_VALUE;
 
+    /**
+     * Adds an already relocated provider to a service descriptor.
+     *
+     * @param service service type
+     * @param provider provider implementation
+     * @param time entry timestamp
+     */
+    public void addServiceProvider(String service, String provider, long time) {
+        String resource = SERVICES_PATH + '/' + service;
+        serviceEntries.computeIfAbsent(resource, key -> new LinkedHashSet<>()).add(provider);
+        if (time > this.time) {
+            this.time = time;
+        }
+    }
+
     @Override
     public boolean canTransformResource(String resource) {
         return resource.startsWith(SERVICES_PATH);

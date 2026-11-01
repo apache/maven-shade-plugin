@@ -31,7 +31,6 @@ import org.codehaus.plexus.util.SelectorUtils;
  */
 /**
  * @author kama
- *
  */
 public class SimpleFilter implements Filter {
 
@@ -44,10 +43,10 @@ public class SimpleFilter implements Filter {
     private boolean excludeDefaults = true;
 
     /**
-     * @deprecated As of release 3.2.2, replaced by {@link #SimpleFilter(Set, ArchiveFilter)}}
-     * @param jars set of {@link File}s.
-     * @param includes set of includes.
-     * @param excludes set of excludes.
+     * @param jars set of {@link File}s
+     * @param includes set of includes
+     * @param excludes set of excludes
+     * @deprecated as of release 3.2.2, replaced by {@link #SimpleFilter(Set, ArchiveFilter)}}
      */
     @Deprecated
     public SimpleFilter(Set<File> jars, Set<String> includes, Set<String> excludes) {
@@ -55,18 +54,18 @@ public class SimpleFilter implements Filter {
     }
 
     /**
-     * @param jars set of {@link File}s.
-     * @param archiveFilter set of {@link ArchiveFilter}s.
+     * @param jars set of {@link File}s
+     * @param archiveFilter set of {@link ArchiveFilter}s
      */
     public SimpleFilter(final Set<File> jars, final ArchiveFilter archiveFilter) {
         this(jars, archiveFilter.getIncludes(), archiveFilter.getExcludes(), archiveFilter.getExcludeDefaults());
     }
 
     /**
-     * @param jars set of {@link File}s.
-     * @param includes set of includes.
-     * @param excludes set of excludes.
-     * @param excludeDefaults whether to exclude default includes once includes are provided explicitly.
+     * @param jars set of {@link File}s
+     * @param includes set of includes
+     * @param excludes set of excludes
+     * @param excludeDefaults whether to exclude default includes once includes are provided explicitly
      */
     private SimpleFilter(
             final Set<File> jars,
@@ -79,13 +78,17 @@ public class SimpleFilter implements Filter {
         this.excludeDefaults = excludeDefaults;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean canFilter(File jar) {
         return jars.contains(jar);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isFiltered(String classFile) {
         String path = normalizePath(classFile);
@@ -94,8 +97,8 @@ public class SimpleFilter implements Filter {
     }
 
     /**
-     * @param classFile The class file.
-     * @return true if included false otherwise.
+     * @param classFile the class file
+     * @return true if included false otherwise
      */
     public boolean isSpecificallyIncluded(String classFile) {
         if (includes == null || includes.isEmpty()) {
@@ -156,7 +159,9 @@ public class SimpleFilter implements Filter {
         return result;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void finished() {}
 }

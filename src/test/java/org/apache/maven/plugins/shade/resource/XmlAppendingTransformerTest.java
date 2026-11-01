@@ -20,11 +20,11 @@ package org.apache.maven.plugins.shade.resource;
 
 import java.util.Locale;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test for {@link XmlAppendingTransformer}.
@@ -44,7 +44,7 @@ public class XmlAppendingTransformerTest {
         Locale.setDefault(new Locale("tr"));
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         transformer = new XmlAppendingTransformer();
     }

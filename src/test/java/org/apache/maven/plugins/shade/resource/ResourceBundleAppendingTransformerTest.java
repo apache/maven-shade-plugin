@@ -18,16 +18,16 @@
  */
 package org.apache.maven.plugins.shade.resource;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ResourceBundleAppendingTransformerTest {
     private ResourceBundleAppendingTransformer transformer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         transformer = new ResourceBundleAppendingTransformer();
     }

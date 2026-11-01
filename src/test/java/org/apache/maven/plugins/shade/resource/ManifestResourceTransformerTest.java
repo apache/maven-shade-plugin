@@ -33,15 +33,16 @@ import java.util.jar.Manifest;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ManifestResourceTransformerTest {
     private ManifestResourceTransformer transformer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         transformer = new ManifestResourceTransformer();
     }
@@ -123,7 +124,7 @@ public class ManifestResourceTransformerTest {
         }
     }
 
-    @Test()
+    @Test
     public void rewriteDefaultAttributesWithSameSuffix() throws Exception {
         final Manifest manifest = createTestManifest();
 
@@ -165,6 +166,30 @@ public class ManifestResourceTransformerTest {
         try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
             Attributes attrs = jis.getManifest().getMainAttributes();
             assertEquals("This jar uses jakarta packages", attrs.getValue("description-custom"));
+        }
+    }
+
+    @Test
+    public void forcedModuleAttributesApplyToOneOutputOnly() throws Exception {
+        transformer.setForceAutomaticModuleName("example.module");
+        transformer.setForceMultiRelease(true);
+
+        Attributes first = writeManifest().getMainAttributes();
+        assertEquals("example.module", first.getValue("Automatic-Module-Name"));
+        assertEquals("true", first.getValue("Multi-Release"));
+
+        Attributes second = writeManifest().getMainAttributes();
+        assertNull(second.getValue("Automatic-Module-Name"));
+        assertNull(second.getValue("Multi-Release"));
+    }
+
+    private Manifest writeManifest() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (JarOutputStream jarOutputStream = new JarOutputStream(out)) {
+            transformer.modifyOutputStream(jarOutputStream);
+        }
+        try (JarInputStream jarInputStream = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            return jarInputStream.getManifest();
         }
     }
 
