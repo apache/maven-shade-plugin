@@ -59,7 +59,8 @@ To create an executable uber JAR, one simply needs to set the main class that se
 </project>
 ```
 
-This snippet configures a special resource transformer which sets the `Main-Class` entry in the `MANIFEST.MF` of the shaded JAR. Other entries can be added to the `MANIFEST.MF` as well via key-value pairs in the `<manifestEntries>` section:
+This snippet configures a special resource transformer which sets the `Main-Class` entry in the `MANIFEST.MF` of the shaded JAR.
+Since the project's JAR and most of its dependencies each bring their own `META-INF/MANIFEST.MF`, the build warns that this resource overlaps; the transformer writes the manifest of the shaded JAR, so the warning is harmless. Other entries can be added to the `MANIFEST.MF` as well via key-value pairs in the `<manifestEntries>` section:
 
 ```xml
 <project>
