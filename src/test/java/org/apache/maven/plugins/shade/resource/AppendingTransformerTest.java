@@ -18,11 +18,19 @@
  */
 package org.apache.maven.plugins.shade.resource;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,5 +63,85 @@ public class AppendingTransformerTest {
         assertTrue(transformer.canTransformResource("abcdefghijklmnopqrstuvwxyz"));
         assertTrue(transformer.canTransformResource("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
         assertFalse(transformer.canTransformResource("META-INF/MANIFEST.MF"));
+    }
+
+    @Test
+    public void testProcessResource() throws IOException {
+        transformer.resource = "test-resource";
+        String firstLine = "first line";
+        String secondLine = "second line";
+
+        processResources(firstLine, secondLine);
+
+        assertEquals(firstLine + "\n" + secondLine, transformAndRead());
+    }
+
+    @Test
+    public void testProcessEmptyResource() throws IOException {
+        transformer.resource = "test-resource";
+
+        processResources("");
+
+        assertTrue(transformer.hasTransformedResource());
+        assertEquals("", transformAndRead());
+    }
+
+    @Test
+    public void testProcessEmptyResources() throws IOException {
+        transformer.resource = "test-resource";
+
+        processResources("", "");
+
+        assertTrue(transformer.hasTransformedResource());
+        assertEquals("\n", transformAndRead());
+    }
+
+    @Test
+    public void testProcessEmptyAndNonEmptyResources() throws IOException {
+        transformer.resource = "test-resource";
+
+        processResources("", "first line", "", "second line");
+
+        assertEquals("\nfirst line\n\nsecond line", transformAndRead());
+    }
+
+    @Test
+    public void testHasTransformedResourceResetAfterOutput() throws IOException {
+        transformer.resource = "test-resource";
+        assertFalse(transformer.hasTransformedResource());
+
+        processResources("");
+        transformAndRead();
+
+        assertFalse(transformer.hasTransformedResource());
+    }
+
+    private void processResources(String... contents) throws IOException {
+        for (String content : contents) {
+            transformer.processResource(
+                    "", new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)), Collections.emptyList());
+        }
+    }
+
+    private String transformAndRead() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (JarOutputStream jarOutputStream = new JarOutputStream(out)) {
+            transformer.modifyOutputStream(jarOutputStream);
+        }
+
+        try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            assertEquals("test-resource", jis.getNextJarEntry().getName());
+            return read(jis);
+        }
+    }
+
+    private String read(final JarInputStream jar) throws IOException {
+        final StringBuilder builder = new StringBuilder();
+        final byte[] buffer = new byte[512];
+        int read;
+        while ((read = jar.read(buffer)) >= 0) {
+            builder.append(new String(buffer, 0, read));
+        }
+        return builder.toString();
     }
 }
