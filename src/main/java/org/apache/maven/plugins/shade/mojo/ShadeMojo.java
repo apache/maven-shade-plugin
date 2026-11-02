@@ -255,9 +255,8 @@ public class ShadeMojo extends AbstractMojo {
     /**
      * Flag whether to generate a simplified POM for the shaded artifact. If set to <code>true</code>, dependencies that
      * have been included into the uber JAR will be removed from the <code>&lt;dependencies&gt;</code> section of the
-     * generated POM. The reduced POM will be named <code>dependency-reduced-pom.xml</code> and is stored into the same
-     * directory as the shaded artifact. Unless you also specify dependencyReducedPomLocation, the plugin will create a
-     * temporary file named <code>dependency-reduced-pom.xml</code> in the project basedir.
+     * generated POM. The reduced POM is written to <code>dependencyReducedPomLocation</code>, by default
+     * <code>dependency-reduced-pom.xml</code> in the project basedir, and stays there after the build.
      */
     @Parameter(defaultValue = "true")
     private boolean createDependencyReducedPom;
