@@ -26,6 +26,7 @@ under the License.
 # Frequently Asked Questions
 
 1. [Why Does My Second Shade Include The Results Of The First Execution?](#two-executions)
+2. [Why Does Shade Report Hundreds Of Overlapping Classes When I Build Without `clean`?](#without-clean)
 
 <a id="two-executions"></a>
 
@@ -38,3 +39,32 @@ So, when a `pom.xml` includes two shades, the second shade execution will
 If you're looking for two independent shades then read in
 [shade:shade](shade-mojo.html) about ways choose a different name for your
 first shade.
+
+<a id="without-clean"></a>
+
+### Why Does Shade Report Hundreds Of Overlapping Classes When I Build Without `clean`?
+
+When nothing changed since the last build, the Maven JAR Plugin keeps the existing JAR instead of creating it again.
+Since shade replaced that JAR with the shaded one, the next build, for example `mvn install` right after `mvn verify`,
+shades the shaded JAR again: every class of the dependencies is then found twice, and shade warns about each of them.
+
+Build with `clean`, or make the JAR plugin create the JAR on every build with its
+[`forceCreation`](/plugins/maven-jar-plugin/jar-mojo.html#forceCreation) parameter:
+
+```xml
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-jar-plugin</artifactId>
+  <executions>
+    <execution>
+      <id>default-jar</id>
+      <configuration>
+        <forceCreation>true</forceCreation>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+```
+
+Renaming the shaded JAR with `finalName` also avoids the second shading, but then the project's main artifact, which
+`install` and `deploy` publish, is the JAR without its dependencies.
