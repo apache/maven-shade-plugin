@@ -32,7 +32,7 @@ import org.jdom2.output.Format;
  */
 public class PomWriter {
     public static void write(Writer w, Model newModel) throws IOException {
-        write(w, newModel, false);
+        write(w, newModel, true);
     }
 
     public static void write(Writer w, Model newModel, boolean namespaceDeclaration) throws IOException {
