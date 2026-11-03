@@ -28,6 +28,8 @@ under the License.
 
 Aggregating classes/resources from several artifacts into one uber JAR is straight forward as long as there is no overlap. Otherwise, some kind of logic to merge resources from several JARs is required. This is where resource transformers kick in.
 
+Each resource is offered to the configured transformers in the order they are listed, and the first transformer that accepts it consumes it: later transformers never see that resource. List a transformer that drops resources, such as `DontIncludeResourceTransformer`, after the transformers that should merge them.
+
 |   |   |
 |:---|:---|
 |[ApacheLicenseResourceTransformer](#ApacheLicenseResourceTransformer)|Prevents license duplication|
@@ -263,7 +265,7 @@ For ResourceBundles properties files, you can use the `<a id="ResourceBundleAppe
 Excluding Resources with the <a id="DontIncludeResourceTransformer"></a>DontIncludeResourceTransformer
 ------------------------------------------------------------------------------------------------------
 
-The `DontIncludeResourceTransformer` allows resources to be excluded when their name ends in a given value.
+The `DontIncludeResourceTransformer` allows resources to be excluded when their name ends in a given value. Because the first matching transformer consumes a resource, list it after transformers such as `ApacheNoticeResourceTransformer` that should merge the resources it would otherwise drop.
 
 For example, the following sample excludes all resources ending in `.txt`.
 
@@ -311,7 +313,7 @@ Since maven-shade-plugin-3.0 it is also possible to give a list of resources whi
 Adding New Resources with the <a id="IncludeResourceTransformer"></a>IncludeResourceTransformer
 -----------------------------------------------------------------------------------------------
 
-The `IncludeResourceTransformer` allows project files to be included in the package under a given name.
+The `IncludeResourceTransformer` allows project files to be included in the package under a given name. The build fails if the file does not exist.
 
 For example, the following sample includes `README.txt` in the package as `README` in the `META-INF` directory.
 
@@ -441,6 +443,11 @@ For example, the following prevents the license from a `commons-collections` dep
 #[[### Aggregating Notices with the <a id="ApacheNoticeResourceTransformer"></a>ApacheNoticeResourceTransformer]]#
 
 Some licenses (including the [ Apache License, Version 2](https://www.apache.org/licenses/LICENSE-2.0.html)) require that notices are preserved by downstream distributors. `ApacheNoticeResourceTransformer` automates the assembly of an appropriate `NOTICE`.
+
+The generated notice uses the Maven project name by default. This can be overridden with the
+`projectName` transformer parameter.
+
+The copyright line of the generated `NOTICE` runs from `inceptionYear` to `copyrightYear`. When `copyrightYear` is not configured, it is the year of `project.build.outputTimestamp` if that is set, so that the `NOTICE` is reproducible, and the current year otherwise.
 
 For example, to simply merge in dependent notices:
 

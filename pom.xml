@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>maven-shade-plugin</artifactId>
-  <version>3.6.3-SNAPSHOT</version>
+  <version>3.7.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Apache Maven Shade Plugin</name>
@@ -54,7 +54,7 @@
   </contributors>
 
   <prerequisites>
-    <maven>3.6.3</maven>
+    <maven>3.9.0</maven>
   </prerequisites>
 
   <scm>
@@ -68,8 +68,8 @@
     <url>https://github.com/apache/maven-shade-plugin/issues/</url>
   </issueManagement>
   <ciManagement>
-    <system>Jenkins</system>
-    <url>https://ci-maven.apache.org/job/Maven/job/maven-box/job/maven-shade-plugin/</url>
+    <system>GitHub</system>
+    <url>https://github.com/apache/maven-shade-plugin/actions</url>
   </ciManagement>
   <distributionManagement>
     <site>
@@ -79,28 +79,13 @@
   </distributionManagement>
 
   <properties>
-    <mavenVersion>3.10.0</mavenVersion>
-    <javaVersion>8</javaVersion>
+    <mavenVersion>3.9.16</mavenVersion>
+    <resolverVersion>1.9.27</resolverVersion>
     <currentVersion>${project.version}</currentVersion>
-    <asmVersion>9.10.1</asmVersion>
+    <asmVersion>9.11.1</asmVersion>
     <slf4j.version>1.7.36</slf4j.version>
     <project.build.outputTimestamp>2026-03-02T10:52:20Z</project.build.outputTimestamp>
   </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.13.2</version>
-      </dependency>
-      <dependency>
-        <groupId>org.hamcrest</groupId>
-        <artifactId>hamcrest-core</artifactId>
-        <version>3.0</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
     <!-- Needed dependencies -->
@@ -112,6 +97,16 @@
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-commons</artifactId>
+      <version>${asmVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-tree</artifactId>
+      <version>${asmVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-analysis</artifactId>
       <version>${asmVersion}</version>
     </dependency>
     <dependency>
@@ -162,6 +157,24 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-api</artifactId>
+      <version>${resolverVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-util</artifactId>
+      <version>${resolverVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-impl</artifactId>
+      <version>${resolverVersion}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
       <version>3.16.0</version>
@@ -187,17 +200,6 @@
       <artifactId>org.eclipse.sisu.plexus</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- Used by: ShadeMojoTest, which extends AbstractMojoTestCase (JUnit 3 TestCase) -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
@@ -205,7 +207,7 @@
     </dependency>
     <dependency>
       <groupId>org.xmlunit</groupId>
-      <artifactId>xmlunit-legacy</artifactId>
+      <artifactId>xmlunit-core</artifactId>
       <version>2.14.0</version>
       <scope>test</scope>
     </dependency>
@@ -247,6 +249,7 @@
               <exclude>src/it/projects/rerun-with-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
               <exclude>src/it/projects/rerun-without-reloc/src/main/resources/some-ordinary-resource.txt</exclude>
               <exclude>src/it/projects/MSHADE-182/src/main/resources/META-INF/services/relocateme.Service</exclude>
+              <exclude>src/it/projects/module-info-merge/automatic/src/main/resources/META-INF/services/*</exclude>
               <exclude>src/it/projects/MSHADE-390-sisu-index/**</exclude>
             </inputExcludes>
           </configuration>

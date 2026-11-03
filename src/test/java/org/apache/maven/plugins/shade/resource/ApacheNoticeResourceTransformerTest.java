@@ -20,6 +20,7 @@ package org.apache.maven.plugins.shade.resource;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.Year;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -28,6 +29,7 @@ import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -66,6 +68,25 @@ public class ApacheNoticeResourceTransformerTest {
     }
 
     @Test
+    public void testProjectNameDefaultsToMavenProjectName() {
+        transformer.setProjectNameIfUnset(null);
+        transformer.setProjectNameIfUnset(" ");
+        assertEquals("", transformer.projectName);
+
+        transformer.setProjectNameIfUnset("Maven Project Name");
+        assertEquals("Maven Project Name", transformer.projectName);
+    }
+
+    @Test
+    public void testConfiguredProjectNameTakesPrecedence() {
+        transformer.projectName = "Configured Project Name";
+
+        transformer.setProjectNameIfUnset("Maven Project Name");
+
+        assertEquals("Configured Project Name", transformer.projectName);
+    }
+
+    @Test
     public void testNoParametersShouldNotThrowNullPointerWhenNoInput() throws IOException {
         processAndFailOnNullPointer("");
     }
@@ -98,6 +119,44 @@ public class ApacheNoticeResourceTransformerTest {
     @Test
     public void testNoParametersShouldNotThrowNullPointerWhenLineIsEmpty() throws IOException {
         processAndFailOnNullPointer("\n");
+    }
+
+    @Test
+    public void testCopyrightYearEndsTheCopyrightLine() throws IOException {
+        transformer.copyrightYear = "2019";
+        transformer.processResource(
+                NOTICE_RESOURCE, new ByteArrayInputStream(new byte[0]), Collections.<Relocator>emptyList(), 0);
+
+        assertTrue(
+                String.join("", transformer.entries).contains("Copyright 2006-2019 The Apache Software Foundation"),
+                String.join("", transformer.entries));
+    }
+
+    @Test
+    public void testDefaultCopyrightYearUsesGregorianCalendar() throws IOException {
+        Locale previousFormatLocale = Locale.getDefault(Locale.Category.FORMAT);
+        try {
+            Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag("th-TH"));
+            transformer.processResource(
+                    NOTICE_RESOURCE, new ByteArrayInputStream(new byte[0]), Collections.<Relocator>emptyList(), 0);
+
+            String expectedYear = String.valueOf(Year.now().getValue());
+            assertTrue(String.join("", transformer.entries)
+                    .contains("Copyright 2006-" + expectedYear + " The Apache Software Foundation"));
+        } finally {
+            Locale.setDefault(Locale.Category.FORMAT, previousFormatLocale);
+        }
+    }
+
+    @Test
+    public void testDefaultCopyrightYearDoesNotOverrideTheConfiguredOne() {
+        transformer.copyrightYear = "2020";
+        transformer.setDefaultCopyrightYear("2019");
+        assertEquals("2020", transformer.copyrightYear);
+
+        ApacheNoticeResourceTransformer unconfigured = new ApacheNoticeResourceTransformer();
+        unconfigured.setDefaultCopyrightYear("2019");
+        assertEquals("2019", unconfigured.copyrightYear);
     }
 
     private void processAndFailOnNullPointer(final String noticeText) throws IOException {

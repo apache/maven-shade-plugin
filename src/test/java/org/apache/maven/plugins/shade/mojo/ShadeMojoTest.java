@@ -18,11 +18,16 @@
  */
 package org.apache.maven.plugins.shade.mojo;
 
+import javax.inject.Inject;
+
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,14 +35,19 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.api.plugin.testing.InjectMojo;
+import org.apache.maven.api.plugin.testing.MojoTest;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.testing.AbstractMojoTestCase;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.plugins.shade.ModuleInfoConfiguration;
+import org.apache.maven.plugins.shade.ModuleInfoMode;
 import org.apache.maven.plugins.shade.ShadeRequest;
 import org.apache.maven.plugins.shade.Shader;
 import org.apache.maven.plugins.shade.filter.Filter;
@@ -48,33 +58,54 @@ import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.codehaus.plexus.ContainerConfiguration;
-import org.codehaus.plexus.PlexusConstants;
+import org.apache.maven.toolchain.Toolchain;
+import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.PlexusContainer;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.apache.maven.api.plugin.testing.MojoExtension.getBasedir;
+import static org.apache.maven.api.plugin.testing.MojoExtension.setVariableValueToObject;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Jason van Zyl
  * @author Mauro Talevi
  */
-public class ShadeMojoTest extends AbstractMojoTestCase {
-    @Override
-    protected void customizeContainerConfiguration(final ContainerConfiguration configuration) {
-        configuration.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
-    }
+@MojoTest
+class ShadeMojoTest {
+    @Inject
+    private PlexusContainer container;
 
-    public void testManifestTransformerSelection() throws Exception {
+    @Inject
+    private Shader shader;
+
+    @Inject
+    private ArtifactHandler artifactHandler;
+
+    @Inject
+    private MavenProject project;
+
+    @Inject
+    private ArtifactHandlerManager artifactHandlerManager;
+
+    @Test
+    void testManifestTransformerSelection() throws Exception {
         final ShadeMojo mojo = new ShadeMojo();
         final Method m = ShadeMojo.class.getDeclaredMethod("toResourceTransformers", String.class, List.class);
         m.setAccessible(true);
@@ -107,18 +138,153 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         assertEquals(asList(testsTfr1, testsTfr2), m.invoke(mojo, "tests", asList(testsTfr1, testsTfr2, defaultTfr)));
     }
 
-    public void testShaderWithDefaultShadedPattern() throws Exception {
+    @Test
+    void testSourceRequestsDiscardModuleInfo() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "moduleInfoMode", "mErGe");
+        Method method = ShadeMojo.class.getDeclaredMethod(
+                "createShadeSourcesRequest", String.class, Set.class, File.class, List.class, List.class, List.class);
+        method.setAccessible(true);
+
+        ShadeRequest request = (ShadeRequest) method.invoke(
+                mojo,
+                "sources-jar",
+                Collections.emptySet(),
+                new File("target/sources.jar"),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList());
+
+        assertEquals(ModuleInfoMode.DISCARD, request.getModuleInfoMode());
+        assertTrue(request.getDependencyAnalysisArtifacts().isEmpty());
+    }
+
+    @Test
+    void testSelectsConfiguredModuleInfoAnalysisJdkToolchain() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
+        configuration.setAnalysisJdkToolchain(Collections.singletonMap("version", "21"));
+        MavenSession session = mock(MavenSession.class);
+        ToolchainManager manager = mock(ToolchainManager.class);
+        Toolchain toolchain = mock(Toolchain.class);
+        File javaHome = new File(System.getProperty("java.home")).getCanonicalFile();
+        when(manager.getToolchains(session, "jdk", configuration.getAnalysisJdkToolchain()))
+                .thenReturn(Collections.singletonList(toolchain));
+        when(toolchain.findTool("javac")).thenReturn(new File(new File(javaHome, "bin"), "javac").getPath());
+        setVariableValueToObject(mojo, "moduleInfo", configuration);
+        setVariableValueToObject(mojo, "session", session);
+        setVariableValueToObject(mojo, "toolchainManager", manager);
+
+        Method method = ShadeMojo.class.getDeclaredMethod("resolveModuleInfoAnalysisJdkHome");
+        method.setAccessible(true);
+        assertEquals(javaHome, method.invoke(mojo));
+        verify(manager).getToolchains(session, "jdk", configuration.getAnalysisJdkToolchain());
+    }
+
+    @Test
+    void testRejectsMissingModuleInfoAnalysisJdkToolchain() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        ModuleInfoConfiguration configuration = new ModuleInfoConfiguration();
+        configuration.setAnalysisJdkToolchain(Collections.singletonMap("version", "99"));
+        MavenSession session = mock(MavenSession.class);
+        ToolchainManager manager = mock(ToolchainManager.class);
+        when(manager.getToolchains(session, "jdk", configuration.getAnalysisJdkToolchain()))
+                .thenReturn(Collections.emptyList());
+        setVariableValueToObject(mojo, "moduleInfo", configuration);
+        setVariableValueToObject(mojo, "session", session);
+        setVariableValueToObject(mojo, "toolchainManager", manager);
+
+        Method method = ShadeMojo.class.getDeclaredMethod("resolveModuleInfoAnalysisJdkHome");
+        method.setAccessible(true);
+        try {
+            method.invoke(mojo);
+            fail("Expected a missing toolchain failure");
+        } catch (InvocationTargetException e) {
+            assertTrue(e.getCause().getMessage().contains("No JDK toolchain matches"));
+            assertTrue(e.getCause().getMessage().contains("version=99"));
+        }
+    }
+
+    /**
+     * MSHADE-456: a POM-declared {@code <dependency>} of type {@code test-jar} has no classifier set
+     * explicitly, but resolves to classifier {@code tests} once Maven turns it into an {@link Artifact}
+     * (see {@link DefaultArtifact}, which falls back to {@link ArtifactHandler#getClassifier()} when
+     * constructed with a {@code null} classifier). The id computed from the {@code Dependency} must match
+     * the id computed from the resolved {@code Artifact}, otherwise a shaded test-jar dependency is never
+     * removed from the dependency reduced POM.
+     */
+    @Test
+    void testGetIdForTestJarDependencyMatchesResolvedArtifact() throws Exception {
+        final ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "artifactHandlerManager", artifactHandlerManager);
+
+        final Dependency dependency = new Dependency();
+        dependency.setGroupId("org.apache.maven.its");
+        dependency.setArtifactId("foo");
+        dependency.setVersion("1.0");
+        dependency.setType("test-jar");
+        // no classifier set here, exactly as a user would write it in the POM
+
+        final Method getIdForDependency = ShadeMojo.class.getDeclaredMethod("getId", Dependency.class);
+        getIdForDependency.setAccessible(true);
+        final String dependencyId = (String) getIdForDependency.invoke(mojo, dependency);
+
+        assertEquals("org.apache.maven.its:foo:test-jar:tests", dependencyId);
+
+        final ArtifactHandler testJarHandler = container.lookup(ArtifactHandler.class, "test-jar");
+        final Artifact artifact = new DefaultArtifact(
+                "org.apache.maven.its",
+                "foo",
+                VersionRange.createFromVersion("1.0"),
+                "compile",
+                "test-jar",
+                null,
+                testJarHandler);
+
+        final Method getIdForArtifact = ShadeMojo.class.getDeclaredMethod("getId", Artifact.class);
+        getIdForArtifact.setAccessible(true);
+        final String artifactId = (String) getIdForArtifact.invoke(mojo, artifact);
+
+        assertEquals(dependencyId, artifactId);
+    }
+
+    /**
+     * A dependency with an ordinary type keeps relying on its explicit (possibly absent) classifier,
+     * unaffected by the MSHADE-456 fix for type {@code test-jar}.
+     */
+    @Test
+    void testGetIdForRegularDependencyKeepsExplicitClassifier() throws Exception {
+        final ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "artifactHandlerManager", artifactHandlerManager);
+
+        final Dependency dependency = new Dependency();
+        dependency.setGroupId("org.apache.maven.its");
+        dependency.setArtifactId("bar");
+        dependency.setVersion("1.0");
+        dependency.setType("jar");
+
+        final Method getIdForDependency = ShadeMojo.class.getDeclaredMethod("getId", Dependency.class);
+        getIdForDependency.setAccessible(true);
+
+        assertEquals("org.apache.maven.its:bar:jar:", getIdForDependency.invoke(mojo, dependency));
+
+        dependency.setClassifier("linux");
+        assertEquals("org.apache.maven.its:bar:jar:linux", getIdForDependency.invoke(mojo, dependency));
+    }
+
+    @Test
+    void testShaderWithDefaultShadedPattern() throws Exception {
         shaderWithPattern(null, new File("target/foo-default.jar"));
     }
 
-    public void testShaderWithCustomShadedPattern() throws Exception {
+    @Test
+    void testShaderWithCustomShadedPattern() throws Exception {
         shaderWithPattern("org/shaded/plexus/util", new File("target/foo-custom.jar"));
     }
 
-    public void testShaderWithExclusions() throws Exception {
+    @Test
+    void testShaderWithExclusions() throws Exception {
         File jarFile = new File(getBasedir(), "target/unit/foo-bar.jar");
-
-        Shader s = lookup(Shader.class);
 
         Set<File> set = new LinkedHashSet<>();
         set.add(new File(getBasedir(), "src/test/jars/test-artifact-1.0-SNAPSHOT.jar"));
@@ -141,7 +307,7 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         shadeRequest.setRelocators(relocators);
         shadeRequest.setResourceTransformers(resourceTransformers);
 
-        s.shade(shadeRequest);
+        shader.shade(shadeRequest);
 
         try (URLClassLoader cl = new URLClassLoader(new URL[] {jarFile.toURI().toURL()})) {
             Class<?> c = cl.loadClass("org.apache.maven.plugins.shade.Lib");
@@ -159,10 +325,9 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
      *
      * @throws Exception
      */
-    public void testShadeWithFilter() throws Exception {
-        // create and configure MavenProject
-        MavenProject project = new MavenProject();
-        ArtifactHandler artifactHandler = lookup(ArtifactHandler.class);
+    @Test
+    void testShadeWithFilter(@InjectMojo(goal = "shade") ShadeMojo mojo) throws Exception {
+        // configure the MavenProject
         Artifact artifact = new DefaultArtifact(
                 "org.apache.myfaces.core",
                 "myfaces-impl",
@@ -174,13 +339,11 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         artifact.setFile(new File("myfaces-impl-2.0.1-SNAPSHOT.jar"));
         project.setArtifact(artifact);
 
-        ShadeMojo mojo = (ShadeMojo) lookupConfiguredMojo(project, "shade");
-
         DefaultRepositorySystemSession repositorySystemSession = MavenRepositorySystemUtils.newSession();
         repositorySystemSession.setLocalRepositoryManager(new SimpleLocalRepositoryManagerFactory()
                 .newInstance(repositorySystemSession, new LocalRepository(new File("target/local-repo/"))));
         MavenSession mavenSession = new MavenSession(
-                getContainer(),
+                container,
                 repositorySystemSession,
                 mock(MavenExecutionRequest.class),
                 mock(MavenExecutionResult.class));
@@ -228,8 +391,76 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         assertTrue(filter.canFilter(new File("myfaces-impl-2.0.1-SNAPSHOT-sources.jar"))); // sources jar
     }
 
-    public void shaderWithPattern(String shadedPattern, File jar) throws Exception {
-        Shader s = lookup(Shader.class);
+    /**
+     * The shaded main artifact must land in {@code outputDirectory}, exactly like the shaded sources, test and
+     * test-sources artifacts, even when the pre-shade artifact file lives elsewhere.
+     */
+    @Test
+    void testShadedMainArtifactFileUsesOutputDirectory() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+
+        File outputDirectory = new File(getBasedir(), "target/testShadedMainArtifactFileUsesOutputDirectory/custom");
+        setVariableValueToObject(mojo, "outputDirectory", outputDirectory);
+
+        Artifact artifact = new DefaultArtifact(
+                "org.apache.maven.plugins.shade.test",
+                "test-project",
+                VersionRange.createFromVersion("1.0"),
+                "compile",
+                "jar",
+                null,
+                artifactHandler);
+        artifact.setFile(new File(
+                getBasedir(), "target/testShadedMainArtifactFileUsesOutputDirectory/build/test-project-1.0.jar"));
+        project.setArtifact(artifact);
+        setVariableValueToObject(mojo, "project", project);
+
+        Method shadedMainArtifactFile = ShadeMojo.class.getDeclaredMethod("shadedMainArtifactFile");
+        shadedMainArtifactFile.setAccessible(true);
+
+        assertEquals(new File(outputDirectory, "test-project-1.0.jar"), shadedMainArtifactFile.invoke(mojo));
+    }
+
+    /**
+     * Reproduces MSHADE-354: when the pre-shade artifact does not already live where the shaded artifact belongs
+     * (e.g. {@code outputDirectory} differs from the default build directory), {@code replaceFile} must still move
+     * the shaded content to the configured destination and back up the pre-shade content there, rather than
+     * leaving the shaded jar behind in the pre-shade artifact's original directory.
+     */
+    @Test
+    void testReplaceFileMovesShadedJarAcrossDirectories() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+
+        File baseDir = new File(getBasedir(), "target/testReplaceFileMovesShadedJarAcrossDirectories");
+        File buildDirectory = new File(baseDir, "build");
+        File outputDirectory = new File(baseDir, "custom");
+        buildDirectory.mkdirs();
+        outputDirectory.mkdirs();
+        setVariableValueToObject(mojo, "outputDirectory", outputDirectory);
+
+        File preShadeArtifact = new File(buildDirectory, "app-1.0.jar");
+        Files.write(preShadeArtifact.toPath(), "original".getBytes(StandardCharsets.UTF_8));
+
+        File shadedJar = new File(outputDirectory, "app-1.0-shaded.jar");
+        Files.write(shadedJar.toPath(), "shaded".getBytes(StandardCharsets.UTF_8));
+
+        File destFile = new File(outputDirectory, "app-1.0.jar");
+
+        Method replaceFile = ShadeMojo.class.getDeclaredMethod("replaceFile", File.class, File.class, File.class);
+        replaceFile.setAccessible(true);
+        replaceFile.invoke(mojo, destFile, preShadeArtifact, shadedJar);
+
+        assertFalse(
+                preShadeArtifact.exists(), "the pre-shade artifact must be moved out of the default build directory");
+        assertTrue(destFile.exists(), "the shaded artifact must land in the configured outputDirectory");
+        assertEquals("shaded", new String(Files.readAllBytes(destFile.toPath()), StandardCharsets.UTF_8));
+
+        File backup = new File(outputDirectory, "original-app-1.0.jar");
+        assertTrue(backup.exists(), "the pre-shade artifact must be preserved in outputDirectory");
+        assertEquals("original", new String(Files.readAllBytes(backup.toPath()), StandardCharsets.UTF_8));
+    }
+
+    private void shaderWithPattern(String shadedPattern, File jar) throws Exception {
 
         Set<File> set = new LinkedHashSet<>();
 
@@ -258,6 +489,6 @@ public class ShadeMojoTest extends AbstractMojoTestCase {
         shadeRequest.setRelocators(relocators);
         shadeRequest.setResourceTransformers(resourceTransformers);
 
-        s.shade(shadeRequest);
+        shader.shade(shadeRequest);
     }
 }

@@ -59,6 +59,10 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
 
     private String shade;
 
+    private boolean forceMultiRelease;
+
+    private String forceAutomaticModuleName;
+
     public void setMainClass(String mainClass) {
         this.mainClass = mainClass;
     }
@@ -69,6 +73,54 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
 
     public void setAdditionalAttributes(List<String> additionalAttributes) {
         this.additionalAttributes = additionalAttributes;
+    }
+
+    /**
+     * Forces the output manifest to retain multi-release processing semantics.
+     *
+     * @param forceMultiRelease whether {@code Multi-Release: true} must be written
+     */
+    public void setForceMultiRelease(boolean forceMultiRelease) {
+        this.forceMultiRelease = forceMultiRelease;
+    }
+
+    /**
+     * @return whether configured manifest entries explicitly disable multi-release processing
+     */
+    public boolean isMultiReleaseExplicitlyDisabled() {
+        if (manifestEntries == null) {
+            return false;
+        }
+        for (Map.Entry<String, Object> entry : manifestEntries.entrySet()) {
+            if ("Multi-Release".equalsIgnoreCase(entry.getKey())) {
+                return "false".equalsIgnoreCase(String.valueOf(entry.getValue()));
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return whether configured manifest entries explicitly enable multi-release processing
+     */
+    public boolean isMultiReleaseExplicitlyEnabled() {
+        if (manifestEntries == null) {
+            return false;
+        }
+        for (Map.Entry<String, Object> entry : manifestEntries.entrySet()) {
+            if ("Multi-Release".equalsIgnoreCase(entry.getKey())) {
+                return "true".equalsIgnoreCase(String.valueOf(entry.getValue()));
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Forces a stable automatic module name for releases where no explicit descriptor is effective.
+     *
+     * @param moduleName module name
+     */
+    public void setForceAutomaticModuleName(String moduleName) {
+        this.forceAutomaticModuleName = moduleName;
     }
 
     @Override
@@ -122,31 +174,42 @@ public class ManifestResourceTransformer extends AbstractCompatibilityTransforme
 
     @Override
     public void modifyOutputStream(JarOutputStream jos) throws IOException {
-        // If we didn't find a manifest, then let's create one.
-        if (manifest == null) {
-            manifest = new Manifest();
-        }
+        try {
+            Manifest outputManifest = manifest == null ? new Manifest() : new Manifest(manifest);
+            Attributes attributes = outputManifest.getMainAttributes();
+            if (attributes.getValue(Attributes.Name.MANIFEST_VERSION) == null) {
+                attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+            }
 
-        Attributes attributes = manifest.getMainAttributes();
+            if (mainClass != null) {
+                attributes.put(Attributes.Name.MAIN_CLASS, mainClass);
+            }
 
-        if (mainClass != null) {
-            attributes.put(Attributes.Name.MAIN_CLASS, mainClass);
-        }
-
-        if (manifestEntries != null) {
-            for (Map.Entry<String, Object> entry : manifestEntries.entrySet()) {
-                if (entry.getValue() == null) {
-                    attributes.remove(new Attributes.Name(entry.getKey()));
-                } else {
-                    attributes.put(new Attributes.Name(entry.getKey()), entry.getValue());
+            if (manifestEntries != null) {
+                for (Map.Entry<String, Object> entry : manifestEntries.entrySet()) {
+                    if (entry.getValue() == null) {
+                        attributes.remove(new Attributes.Name(entry.getKey()));
+                    } else {
+                        attributes.put(new Attributes.Name(entry.getKey()), entry.getValue());
+                    }
                 }
             }
-        }
 
-        JarEntry jarEntry = new JarEntry(JarFile.MANIFEST_NAME);
-        jarEntry.setTime(time);
-        jos.putNextEntry(jarEntry);
-        manifest.write(jos);
+            if (forceMultiRelease) {
+                attributes.putValue("Multi-Release", "true");
+            }
+            if (forceAutomaticModuleName != null) {
+                attributes.putValue("Automatic-Module-Name", forceAutomaticModuleName);
+            }
+
+            JarEntry jarEntry = new JarEntry(JarFile.MANIFEST_NAME);
+            jarEntry.setTime(time);
+            jos.putNextEntry(jarEntry);
+            outputManifest.write(jos);
+        } finally {
+            forceMultiRelease = false;
+            forceAutomaticModuleName = null;
+        }
     }
 
     private String relocate(String originalValue, List<Relocator> relocators) {
