@@ -18,11 +18,21 @@
  */
 package org.apache.maven.plugins.shade.resource;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 
+import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -56,5 +66,31 @@ public class XmlAppendingTransformerTest {
         assertTrue(transformer.canTransformResource("abcdefghijklmnopqrstuvwxyz"));
         assertTrue(transformer.canTransformResource("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
         assertFalse(transformer.canTransformResource("META-INF/MANIFEST.MF"));
+    }
+
+    /**
+     * The DOCTYPE of this document points at a DTD that does not exist: the transformer must not try to load it.
+     */
+    @Test
+    public void testDtdIsNotResolved() throws IOException {
+        transformer.resource = "test.xml";
+        String xml = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
+                + "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"xhtml1-invalid.missing\">\n"
+                + "<html>\n  <!-- the DTD would fail the parsing if it was resolved -->\n</html>\n";
+
+        transformer.processResource(
+                "test.xml",
+                new ByteArrayInputStream(xml.getBytes(StandardCharsets.ISO_8859_1)),
+                Collections.<Relocator>emptyList(),
+                0);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (JarOutputStream jar = new JarOutputStream(out)) {
+            transformer.modifyOutputStream(jar);
+        }
+        try (JarInputStream in = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            JarEntry entry = in.getNextJarEntry();
+            assertEquals("test.xml", entry.getName());
+        }
     }
 }

@@ -20,8 +20,16 @@ package org.apache.maven.plugins.shade.relocation;
 
 import java.util.Collections;
 
+import org.apache.maven.plugins.shade.mojo.PackageRelocation;
+import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
+import org.codehaus.plexus.component.configurator.converters.lookup.ConverterLookup;
+import org.codehaus.plexus.component.configurator.converters.lookup.DefaultConverterLookup;
+import org.codehaus.plexus.component.configurator.expression.DefaultExpressionEvaluator;
+import org.codehaus.plexus.configuration.DefaultPlexusConfiguration;
+import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class SimpleRelocatorParameterTest {
@@ -29,6 +37,42 @@ public class SimpleRelocatorParameterTest {
     @Test
     public void testThatNullShadedPatternInConstructorShouldNotThrowNullPointerException() {
         constructThenFailOnNullPointerException("", null);
+    }
+
+    @Test
+    public void testNullShadedPatternDefaultsToHiddenPrefix() {
+        SimpleRelocator relocator = new SimpleRelocator(
+                "org.example", null, Collections.<String>emptyList(), Collections.<String>emptyList());
+
+        assertEquals("hidden.org.example.Foo", relocator.relocateClass("org.example.Foo"));
+        assertEquals("hidden/org/example/Foo.class", relocator.relocatePath("org/example/Foo.class"));
+    }
+
+    /**
+     * An empty {@code <shadedPattern/>} in the POM reaches the relocator as {@code null}, which gives the default.
+     */
+    @Test
+    public void testEmptyShadedPatternElementDefaultsToHiddenPrefix() throws ComponentConfigurationException {
+        PlexusConfiguration configuration = new DefaultPlexusConfiguration("configuration");
+        configuration.addChild("pattern", "org.example");
+        configuration.addChild("shadedPattern", "");
+        ConverterLookup lookup = new DefaultConverterLookup();
+        PackageRelocation relocation = (PackageRelocation) lookup.lookupConverterForType(PackageRelocation.class)
+                .fromConfiguration(
+                        lookup,
+                        configuration,
+                        PackageRelocation.class,
+                        PackageRelocation.class,
+                        Thread.currentThread().getContextClassLoader(),
+                        new DefaultExpressionEvaluator());
+
+        SimpleRelocator relocator = new SimpleRelocator(
+                relocation.getPattern(),
+                relocation.getShadedPattern(),
+                relocation.getIncludes(),
+                relocation.getExcludes());
+
+        assertEquals("hidden.org.example.Foo", relocator.relocateClass("org.example.Foo"));
     }
 
     private void constructThenFailOnNullPointerException(String pattern, String shadedPattern) {

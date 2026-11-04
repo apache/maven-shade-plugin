@@ -31,9 +31,13 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 
 import org.apache.maven.api.plugin.testing.InjectMojo;
 import org.apache.maven.api.plugin.testing.MojoTest;
@@ -46,6 +50,7 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.shade.ModuleInfoConfiguration;
 import org.apache.maven.plugins.shade.ModuleInfoMode;
 import org.apache.maven.plugins.shade.ShadeRequest;
@@ -53,10 +58,12 @@ import org.apache.maven.plugins.shade.Shader;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ManifestResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ResourceTransformer;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
@@ -80,6 +87,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -458,6 +466,128 @@ class ShadeMojoTest {
         File backup = new File(outputDirectory, "original-app-1.0.jar");
         assertTrue(backup.exists(), "the pre-shade artifact must be preserved in outputDirectory");
         assertEquals("original", new String(Files.readAllBytes(backup.toPath()), StandardCharsets.UTF_8));
+    }
+
+    /**
+     * MSHADE-382: a skipped execution returns before it touches the project, the shader or any file.
+     */
+    @Test
+    void testSkipDoesNothing() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        Log log = mock(Log.class);
+        Shader skippedShader = mock(Shader.class);
+        mojo.setLog(log);
+        // no project: the mojo fails with a NullPointerException as soon as it goes on after the skip
+        setVariableValueToObject(mojo, "skip", true);
+        setVariableValueToObject(mojo, "shader", skippedShader);
+
+        mojo.execute();
+
+        verify(log).info("Shading has been skipped.");
+        verify(skippedShader, never()).shade(any(ShadeRequest.class));
+    }
+
+    @Test
+    void testUnmatchedArtifactSetPatternsAreReported() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        Log log = mock(Log.class);
+        mojo.setLog(log);
+
+        File directory = new File(getBasedir(), "target/testUnmatchedArtifactSetPatternsAreReported");
+        directory.mkdirs();
+        File mainJar = new File(directory, "main-1.0.jar");
+        File dependencyJar = new File(directory, "slf4j-api-1.7.36.jar");
+        writeEmptyJar(mainJar);
+        writeEmptyJar(dependencyJar);
+
+        MavenProject mavenProject = new MavenProject();
+        Artifact main = new DefaultArtifact(
+                "org.apache.maven.its",
+                "main",
+                VersionRange.createFromVersion("1.0"),
+                "compile",
+                "jar",
+                null,
+                artifactHandler);
+        main.setFile(mainJar);
+        mavenProject.setArtifact(main);
+        Artifact dependency = new DefaultArtifact(
+                "org.slf4j",
+                "slf4j-api",
+                VersionRange.createFromVersion("1.7.36"),
+                "compile",
+                "jar",
+                null,
+                artifactHandler);
+        dependency.setFile(dependencyJar);
+        mavenProject.setArtifacts(new HashSet<>(singletonList(dependency)));
+
+        ArtifactSet artifactSet = new ArtifactSet();
+        setVariableValueToObject(
+                artifactSet, "includes", new LinkedHashSet<>(asList("org.slf4j:slf4j-api", "no.such:artifact")));
+        setVariableValueToObject(artifactSet, "excludes", new LinkedHashSet<>(singletonList("no.such:other")));
+        setVariableValueToObject(mojo, "project", mavenProject);
+        setVariableValueToObject(mojo, "artifactSet", artifactSet);
+        setVariableValueToObject(mojo, "shader", mock(Shader.class));
+        setVariableValueToObject(mojo, "projectHelper", mock(MavenProjectHelper.class));
+        setVariableValueToObject(mojo, "shadedArtifactAttached", true);
+        setVariableValueToObject(mojo, "shadedClassifierName", "shaded");
+        setVariableValueToObject(mojo, "outputFile", new File(directory, "shaded.jar"));
+
+        mojo.execute();
+
+        verify(log).warn("No artifact matching artifactSet include no.such:artifact");
+        verify(log).info("No artifact matching artifactSet exclude no.such:other");
+        verify(log, never()).warn("No artifact matching artifactSet include org.slf4j:slf4j-api");
+    }
+
+    /**
+     * The generated NOTICE names the Maven project, and ends its copyright line with the year of
+     * {@code project.build.outputTimestamp}.
+     */
+    @Test
+    void testApacheNoticeTransformerGetsProjectNameAndTimestampYear() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+        ApacheNoticeResourceTransformer notice = new ApacheNoticeResourceTransformer();
+        MavenProject mavenProject = new MavenProject();
+        mavenProject.setName("Maven Shade Notice Reproducer");
+        setVariableValueToObject(mojo, "project", mavenProject);
+        setVariableValueToObject(mojo, "transformers", new ResourceTransformer[] {notice});
+        setVariableValueToObject(mojo, "outputTimestamp", "2019-06-01T00:00:00Z");
+
+        Method getResourceTransformers = ShadeMojo.class.getDeclaredMethod("getResourceTransformers");
+        getResourceTransformers.setAccessible(true);
+        assertEquals(singletonList(notice), getResourceTransformers.invoke(mojo));
+
+        notice.processResource(
+                "META-INF/NOTICE",
+                new java.io.ByteArrayInputStream("Dependency notice\n".getBytes(StandardCharsets.UTF_8)),
+                Collections.<Relocator>emptyList(),
+                0);
+        java.io.ByteArrayOutputStream jar = new java.io.ByteArrayOutputStream();
+        try (JarOutputStream out = new JarOutputStream(jar)) {
+            notice.modifyOutputStream(out);
+        }
+        try (JarInputStream in = new JarInputStream(new java.io.ByteArrayInputStream(jar.toByteArray()))) {
+            JarEntry entry = in.getNextJarEntry();
+            assertEquals("META-INF/NOTICE", entry.getName());
+            java.io.ByteArrayOutputStream content = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[512];
+            int read;
+            while ((read = in.read(buffer)) >= 0) {
+                content.write(buffer, 0, read);
+            }
+            String text = new String(content.toByteArray(), StandardCharsets.UTF_8);
+            assertTrue(text.contains("Version 2.0, in this case for Maven Shade Notice Reproducer"), text);
+            assertTrue(text.contains("Copyright 2006-2019 The Apache Software Foundation"), text);
+        }
+    }
+
+    private static void writeEmptyJar(File file) throws Exception {
+        try (JarOutputStream out = new JarOutputStream(Files.newOutputStream(file.toPath()))) {
+            out.putNextEntry(new JarEntry("README"));
+            out.write('x');
+        }
     }
 
     private void shaderWithPattern(String shadedPattern, File jar) throws Exception {

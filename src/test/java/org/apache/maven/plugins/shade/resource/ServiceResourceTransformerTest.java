@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -81,6 +82,36 @@ public class ServiceResourceTransformerTest {
                 assertEquals("borg.foo.Service" + newline + "org.foo.exclude.OtherService" + newline, xformedContent);
             } finally {
                 jarFile.close();
+            }
+        } finally {
+            tempJar.delete();
+        }
+    }
+
+    /**
+     * MSHADE-182: the name and the content of a service file are relocated by a pattern of a single segment.
+     */
+    @Test
+    public void relocatedSingleSegmentPattern() throws Exception {
+        relocators.add(new SimpleRelocator("relocateme", "relocated", null, null));
+
+        ServicesResourceTransformer xformer = new ServicesResourceTransformer();
+        try (InputStream contentStream =
+                new ByteArrayInputStream("relocateme.ServiceImpl\n".getBytes(StandardCharsets.UTF_8))) {
+            xformer.processResource("META-INF/services/relocateme.Service", contentStream, relocators, 0);
+        }
+
+        File tempJar = File.createTempFile("shade.", ".jar");
+        tempJar.deleteOnExit();
+        try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(tempJar))) {
+            xformer.modifyOutputStream(jos);
+        }
+        try (JarFile jarFile = new JarFile(tempJar)) {
+            JarEntry jarEntry = jarFile.getJarEntry("META-INF/services/relocated.Service");
+            assertNotNull(jarEntry);
+            assertNull(jarFile.getJarEntry("META-INF/services/relocateme.Service"));
+            try (InputStream entryStream = jarFile.getInputStream(jarEntry)) {
+                assertEquals("relocated.ServiceImpl" + newline, toString(entryStream, StandardCharsets.UTF_8));
             }
         } finally {
             tempJar.delete();

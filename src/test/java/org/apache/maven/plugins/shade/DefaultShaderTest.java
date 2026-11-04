@@ -258,6 +258,39 @@ public class DefaultShaderTest {
         }
     }
 
+    /**
+     * MSHADE-258: shading warns about a module descriptor, and the default mode leaves it out of the shaded jar.
+     */
+    @Test
+    public void testModuleDescriptorIsDiscardedWithAWarning(@TempDir File tempDir) throws Exception {
+        File input = new File(tempDir, "modular.jar");
+        try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(input.toPath()))) {
+            writeModuleDescriptor(
+                    output, "org.example.modular", new String[0], new String[] {"org/example/api"}, null, null);
+            writeClass(output, "org/example/api/Api");
+        }
+        File shaded = new File(tempDir, "shaded.jar");
+
+        ShadeRequest request = new ShadeRequest();
+        request.setJars(singleton(input));
+        request.setUberJar(shaded);
+        request.setFilters(Collections.<Filter>emptyList());
+        request.setRelocators(Collections.<Relocator>singletonList(
+                new SimpleRelocator("org.example", "org.shaded.example", null, null)));
+        request.setResourceTransformers(Collections.<ResourceTransformer>emptyList());
+        newShader().shade(request);
+
+        assertTrue(
+                warnMessages
+                        .getAllValues()
+                        .contains("Discovered module-info.class. Shading will break its strong encapsulation."),
+                warnMessages.getAllValues().toString());
+        try (JarFile jar = new JarFile(shaded)) {
+            assertEquals(null, jar.getJarEntry("module-info.class"));
+            assertTrue(jar.getJarEntry("org/shaded/example/api/Api.class") != null);
+        }
+    }
+
     @Test
     public void testShaderWithDefaultShadedPattern() throws Exception {
         shaderWithPattern(null, new File("target/foo-default.jar"), EXCLUDES);

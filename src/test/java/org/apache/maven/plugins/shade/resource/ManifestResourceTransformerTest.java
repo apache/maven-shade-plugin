@@ -33,10 +33,16 @@ import java.util.jar.Manifest;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
+import org.codehaus.plexus.component.configurator.converters.lookup.ConverterLookup;
+import org.codehaus.plexus.component.configurator.converters.lookup.DefaultConverterLookup;
+import org.codehaus.plexus.component.configurator.expression.DefaultExpressionEvaluator;
+import org.codehaus.plexus.configuration.DefaultPlexusConfiguration;
+import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ManifestResourceTransformerTest {
@@ -181,6 +187,69 @@ public class ManifestResourceTransformerTest {
         Attributes second = writeManifest().getMainAttributes();
         assertNull(second.getValue("Automatic-Module-Name"));
         assertNull(second.getValue("Multi-Release"));
+    }
+
+    @Test
+    public void configuredMainClassAndEntriesOverrideTheProjectManifest() throws Exception {
+        Manifest manifest = new Manifest();
+        Attributes attributes = manifest.getMainAttributes();
+        attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        attributes.put(Attributes.Name.MAIN_CLASS, "org.apache.maven.Main");
+        attributes.putValue("Test-Entry", "FAILED");
+        attributes.putValue("Original-Entry", "PASSED");
+
+        transformer.setMainClass("org.apache.maven.Shade");
+        transformer.setManifestEntries(Collections.<String, Object>singletonMap("Test-Entry", "PASSED"));
+
+        Attributes result = jarManifest(transform(manifest, Collections.<Relocator>emptyList()))
+                .getMainAttributes();
+
+        assertEquals("org.apache.maven.Shade", result.getValue("Main-Class"));
+        assertEquals("PASSED", result.getValue("Test-Entry"));
+        assertEquals("PASSED", result.getValue("Original-Entry"));
+    }
+
+    /**
+     * MSHADE-183: an empty configured manifest entry removes the entry instead of writing it with an empty value.
+     */
+    @Test
+    public void emptyConfiguredEntryRemovesTheOriginalEntry() throws Exception {
+        Manifest manifest = new Manifest();
+        Attributes attributes = manifest.getMainAttributes();
+        attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        attributes.putValue("Implementation-Build", "r12345");
+        attributes.putValue("Original-Entry", "PASSED");
+
+        PlexusConfiguration entries = new DefaultPlexusConfiguration("manifestEntries");
+        entries.addChild("Test-Entry", "PASSED");
+        entries.addChild("Implementation-Build", "");
+        PlexusConfiguration configuration = new DefaultPlexusConfiguration("configuration");
+        configuration.addChild(entries);
+        ConverterLookup lookup = new DefaultConverterLookup();
+        transformer = (ManifestResourceTransformer) lookup.lookupConverterForType(ManifestResourceTransformer.class)
+                .fromConfiguration(
+                        lookup,
+                        configuration,
+                        ManifestResourceTransformer.class,
+                        ManifestResourceTransformer.class,
+                        Thread.currentThread().getContextClassLoader(),
+                        new DefaultExpressionEvaluator());
+
+        Attributes result = jarManifest(transform(manifest, Collections.<Relocator>emptyList()))
+                .getMainAttributes();
+
+        assertNull(result.getValue("Implementation-Build"), result.entrySet().toString());
+        assertEquals("PASSED", result.getValue("Test-Entry"));
+        assertEquals("PASSED", result.getValue("Original-Entry"));
+    }
+
+    private static Manifest jarManifest(ByteArrayOutputStream jar) throws IOException {
+        // JarInputStream, not JarFile: only the former sees a manifest that is the first entry of the jar
+        try (JarInputStream jis = new JarInputStream(new ByteArrayInputStream(jar.toByteArray()))) {
+            Manifest manifest = jis.getManifest();
+            assertNotNull(manifest, "META-INF/MANIFEST.MF is missing");
+            return manifest;
+        }
     }
 
     private Manifest writeManifest() throws IOException {

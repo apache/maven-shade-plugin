@@ -19,11 +19,16 @@
 package org.apache.maven.plugins.shade.resource;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Year;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 
 import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.junit.jupiter.api.BeforeEach;
@@ -157,6 +162,41 @@ public class ApacheNoticeResourceTransformerTest {
         ApacheNoticeResourceTransformer unconfigured = new ApacheNoticeResourceTransformer();
         unconfigured.setDefaultCopyrightYear("2019");
         assertEquals("2019", unconfigured.copyrightYear);
+    }
+
+    @Test
+    public void testGeneratedNoticeNamesTheProject() throws IOException {
+        transformer.setProjectNameIfUnset("Maven Shade Notice Reproducer");
+        transformer.processResource(
+                NOTICE_RESOURCE,
+                new ByteArrayInputStream("Dependency notice\n".getBytes(StandardCharsets.UTF_8)),
+                Collections.<Relocator>emptyList(),
+                0);
+
+        String notice = writeNotice();
+
+        assertTrue(
+                notice.contains("Version 2.0, in this case for Maven Shade Notice Reproducer"),
+                "project name missing from the license preamble: " + notice);
+        assertTrue(notice.contains("Dependency notice"), "notice of the dependency is lost: " + notice);
+    }
+
+    private String writeNotice() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (JarOutputStream jar = new JarOutputStream(out)) {
+            transformer.modifyOutputStream(jar);
+        }
+        try (JarInputStream jar = new JarInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            JarEntry entry = jar.getNextJarEntry();
+            assertEquals(NOTICE_RESOURCE, entry.getName());
+            ByteArrayOutputStream content = new ByteArrayOutputStream();
+            byte[] buffer = new byte[512];
+            int read;
+            while ((read = jar.read(buffer)) >= 0) {
+                content.write(buffer, 0, read);
+            }
+            return new String(content.toByteArray(), StandardCharsets.UTF_8);
+        }
     }
 
     private void processAndFailOnNullPointer(final String noticeText) throws IOException {
