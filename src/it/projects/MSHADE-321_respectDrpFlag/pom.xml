@@ -33,23 +33,10 @@ under the License.
     Shade plugin starts to create DRP even if the artifact has been renamed because of the configuration
   </description>
 
-  <repositories>
-    <repository>
-      <id>shade-it</id>
-      <url>file://${basedir}/repo</url>
-      <releases>
-        <checksumPolicy>ignore</checksumPolicy>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.maven.its.shade.drp</groupId>
-      <artifactId>a</artifactId>
+      <artifactId>mshade-321-a</artifactId>
       <version>0.1</version>
     </dependency>
 

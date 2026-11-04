@@ -28,18 +28,18 @@ under the License.
 
   <name>MSHADE-351</name>
   <description>
-    Test the merging of META-INF/services/** entries.
+    Test the merging of properties files that carry an ordinal, with the OpenWebBeans and Microprofile Config transformers.
   </description>
 
   <dependencies>
     <dependency>
       <groupId>org.apache.maven.its.shade.srt</groupId>
-      <artifactId>one</artifactId>
+      <artifactId>mshade-351-one</artifactId>
       <version>0.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.its.shade.srt</groupId>
-      <artifactId>two</artifactId>
+      <artifactId>mshade-351-two</artifactId>
       <version>0.1</version>
     </dependency>
   </dependencies>
@@ -62,7 +62,9 @@ under the License.
                 <transformer implementation=
                   "org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer" />
                 <transformer implementation=
-                  "org.apache.maven.plugins.shade.resource.properties.MicroprofileConfigTransformer" />
+                  "org.apache.maven.plugins.shade.resource.properties.MicroprofileConfigTransformer">
+                  <resource>META-INF/microprofile-config.properties</resource>
+                </transformer>
               </transformers>
             </configuration>
           </execution>
