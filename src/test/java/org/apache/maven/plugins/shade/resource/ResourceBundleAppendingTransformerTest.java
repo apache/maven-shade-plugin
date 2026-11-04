@@ -18,9 +18,21 @@
  */
 package org.apache.maven.plugins.shade.resource;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
+
+import org.apache.maven.plugins.shade.relocation.Relocator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,5 +58,67 @@ public class ResourceBundleAppendingTransformerTest {
         assertFalse(transformer.canTransformResource("a/b/c/ButtonLabel.class"));
         assertFalse(transformer.canTransformResource("c/ButtonLabel.properties"));
         assertFalse(transformer.canTransformResource("ButtonLabel.properties"));
+    }
+
+    /**
+     * MSHADE-232: every locale variant of a bundle keeps the entries of all jars that provide it.
+     */
+    @Test
+    public void testBundlesOfSeveralJarsAreMergedPerLocale() throws IOException {
+        transformer.setBasename("org/apache/maven/plugins/shade/its/Message");
+        String base = "org/apache/maven/plugins/shade/its/Message.properties";
+        String dutch = "org/apache/maven/plugins/shade/its/Message_nl.properties";
+
+        process(base, "one=one");
+        process(dutch, "one=een");
+        process(base, "two=two");
+        process(dutch, "two=twee");
+
+        JarEntryContents jar = writeJar();
+        Properties merged = jar.properties(base);
+        assertEquals("one", merged.getProperty("one"));
+        assertEquals("two", merged.getProperty("two"));
+        Properties mergedDutch = jar.properties(dutch);
+        assertEquals("een", mergedDutch.getProperty("one"));
+        assertEquals("twee", mergedDutch.getProperty("two"));
+    }
+
+    private void process(String resource, String content) throws IOException {
+        assertTrue(transformer.canTransformResource(resource), resource);
+        transformer.processResource(
+                resource,
+                new ByteArrayInputStream(content.getBytes(StandardCharsets.ISO_8859_1)),
+                Collections.<Relocator>emptyList(),
+                0);
+    }
+
+    private JarEntryContents writeJar() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (JarOutputStream jar = new JarOutputStream(out)) {
+            transformer.modifyOutputStream(jar);
+        }
+        return new JarEntryContents(out.toByteArray());
+    }
+
+    private static final class JarEntryContents {
+        private final byte[] jar;
+
+        JarEntryContents(byte[] jar) {
+            this.jar = jar;
+        }
+
+        Properties properties(String name) throws IOException {
+            try (JarInputStream in = new JarInputStream(new ByteArrayInputStream(jar))) {
+                JarEntry entry;
+                while ((entry = in.getNextJarEntry()) != null) {
+                    if (entry.getName().equals(name)) {
+                        Properties properties = new Properties();
+                        properties.load(in);
+                        return properties;
+                    }
+                }
+            }
+            throw new AssertionError(name + " is not in the merged jar");
+        }
     }
 }

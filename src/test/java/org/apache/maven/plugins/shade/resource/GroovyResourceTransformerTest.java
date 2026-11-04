@@ -116,6 +116,26 @@ public class GroovyResourceTransformerTest {
         assertEquals("some.staticExt", desc.getProperty("staticExtensionClasses"));
     }
 
+    /**
+     * MSHADE-368: a descriptor without static extension classes keeps none after the module name and version are set.
+     */
+    @Test
+    public void testSpecifyModuleNameWithoutStaticExtensions() throws Exception {
+        GroovyResourceTransformer transformer = new GroovyResourceTransformer();
+        transformer.setExtModuleName("shaded-groovy-sql");
+        transformer.setExtModuleVersion("1.0");
+        transformer.processResource(
+                GroovyResourceTransformer.EXT_MODULE_NAME,
+                module("groovy-sql", "4.0.0", "org.apache.groovy.sql.extensions.SqlExtensions", null),
+                Collections.<Relocator>emptyList(),
+                0);
+        Properties desc = transform(transformer);
+        assertEquals("shaded-groovy-sql", desc.getProperty("moduleName"));
+        assertEquals("1.0", desc.getProperty("moduleVersion"));
+        assertEquals("org.apache.groovy.sql.extensions.SqlExtensions", desc.getProperty("extensionClasses"));
+        assertNull(desc.getProperty("staticExtensionClasses"));
+    }
+
     @Test
     public void testConcatenation() throws Exception {
         GroovyResourceTransformer transformer = new GroovyResourceTransformer();
