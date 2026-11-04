@@ -16,11 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
-import java.util.jar.*;
-import org.codehaus.plexus.util.*;
+import java.util.jar.JarFile
 
-JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
-JarEntry jarEntry = jarFile.getEntry( "META-INF/services/org.apache.maven.Shade" );
-String service = IOUtil.toString( jarFile.getInputStream( jarEntry ), "UTF-8" );
-jarFile.close();
+JarFile jarFile = new JarFile(new File(basedir, "target/test-1.0.jar"))
+try {
+    def load = { String name ->
+        def entry = jarFile.getJarEntry(name)
+        assert entry != null : name + " is missing from the shaded jar"
+        def properties = new Properties()
+        jarFile.getInputStream(entry).withCloseable { properties.load(it) }
+        return properties
+    }
+
+    // Microprofile Config: the default ordinal is 1000, so the 2000 of "one" wins over "two"
+    def microprofile = load("META-INF/microprofile-config.properties")
+    assert microprofile.getProperty("shared") == "one" : microprofile
+    assert microprofile.getProperty("only.one") == "1" : microprofile
+    assert microprofile.getProperty("only.two") == "2" : microprofile
+    assert microprofile.getProperty("config_ordinal") == null : microprofile
+
+    // OpenWebBeans: the default ordinal is 100, so "two" wins over the 50 of "one"
+    def openWebBeans = load("META-INF/openwebbeans/openwebbeans.properties")
+    assert openWebBeans.getProperty("shared") == "two" : openWebBeans
+    assert openWebBeans.getProperty("only.one") == "1" : openWebBeans
+    assert openWebBeans.getProperty("only.two") == "2" : openWebBeans
+    assert openWebBeans.getProperty("configuration.ordinal") == null : openWebBeans
+} finally {
+    jarFile.close()
+}
