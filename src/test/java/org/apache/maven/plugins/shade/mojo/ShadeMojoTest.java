@@ -546,10 +546,12 @@ class ShadeMojoTest {
      * The generated NOTICE ends its copyright line with the year of {@code project.build.outputTimestamp}.
      */
     @Test
-    void testApacheNoticeTransformerGetsTimestampYear() throws Exception {
+    void testApacheNoticeTransformerGetsProjectNameAndTimestampYear() throws Exception {
         ShadeMojo mojo = new ShadeMojo();
         ApacheNoticeResourceTransformer notice = new ApacheNoticeResourceTransformer();
-        setVariableValueToObject(mojo, "project", new MavenProject());
+        MavenProject mavenProject = new MavenProject();
+        mavenProject.setName("Maven Shade Notice Reproducer");
+        setVariableValueToObject(mojo, "project", mavenProject);
         setVariableValueToObject(mojo, "transformers", new ResourceTransformer[] {notice});
         setVariableValueToObject(mojo, "outputTimestamp", "2019-06-01T00:00:00Z");
 
@@ -576,6 +578,7 @@ class ShadeMojoTest {
                 content.write(buffer, 0, read);
             }
             String text = new String(content.toByteArray(), StandardCharsets.UTF_8);
+            assertTrue(text.contains("Version 2.0, in this case for Maven Shade Notice Reproducer"), text);
             assertTrue(text.contains("Copyright 2006-2019 The Apache Software Foundation"), text);
         }
     }
