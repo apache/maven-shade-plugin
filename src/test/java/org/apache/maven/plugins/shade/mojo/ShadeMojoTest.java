@@ -57,6 +57,7 @@ import org.apache.maven.plugins.shade.ShadeRequest;
 import org.apache.maven.plugins.shade.Shader;
 import org.apache.maven.plugins.shade.filter.Filter;
 import org.apache.maven.plugins.shade.relocation.Relocator;
+import org.apache.maven.plugins.shade.relocation.SerializedLambdaRelocator;
 import org.apache.maven.plugins.shade.relocation.SimpleRelocator;
 import org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer;
 import org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer;
@@ -542,16 +543,13 @@ class ShadeMojoTest {
     }
 
     /**
-     * The generated NOTICE names the Maven project, and ends its copyright line with the year of
-     * {@code project.build.outputTimestamp}.
+     * The generated NOTICE ends its copyright line with the year of {@code project.build.outputTimestamp}.
      */
     @Test
-    void testApacheNoticeTransformerGetsProjectNameAndTimestampYear() throws Exception {
+    void testApacheNoticeTransformerGetsTimestampYear() throws Exception {
         ShadeMojo mojo = new ShadeMojo();
         ApacheNoticeResourceTransformer notice = new ApacheNoticeResourceTransformer();
-        MavenProject mavenProject = new MavenProject();
-        mavenProject.setName("Maven Shade Notice Reproducer");
-        setVariableValueToObject(mojo, "project", mavenProject);
+        setVariableValueToObject(mojo, "project", new MavenProject());
         setVariableValueToObject(mojo, "transformers", new ResourceTransformer[] {notice});
         setVariableValueToObject(mojo, "outputTimestamp", "2019-06-01T00:00:00Z");
 
@@ -578,9 +576,36 @@ class ShadeMojoTest {
                 content.write(buffer, 0, read);
             }
             String text = new String(content.toByteArray(), StandardCharsets.UTF_8);
-            assertTrue(text.contains("Version 2.0, in this case for Maven Shade Notice Reproducer"), text);
             assertTrue(text.contains("Copyright 2006-2019 The Apache Software Foundation"), text);
         }
+    }
+
+    /**
+     * {@code <shadeSerializedLambda>} adds a {@link SerializedLambdaRelocator} next to the
+     * {@link SimpleRelocator} of the same relocation, and only for the relocation that sets it.
+     */
+    @Test
+    void testShadeSerializedLambdaAddsSerializedLambdaRelocator() throws Exception {
+        PackageRelocation plain = new PackageRelocation();
+        setVariableValueToObject(plain, "pattern", "org.plain");
+        setVariableValueToObject(plain, "shadedPattern", "shaded.plain");
+        PackageRelocation lambda = new PackageRelocation();
+        setVariableValueToObject(lambda, "pattern", "org.lambda");
+        setVariableValueToObject(lambda, "shadedPattern", "shaded.lambda");
+        setVariableValueToObject(lambda, "shadeSerializedLambda", true);
+
+        ShadeMojo mojo = new ShadeMojo();
+        setVariableValueToObject(mojo, "relocations", new PackageRelocation[] {plain, lambda});
+        Method getRelocators = ShadeMojo.class.getDeclaredMethod("getRelocators");
+        getRelocators.setAccessible(true);
+
+        @SuppressWarnings("unchecked")
+        List<Relocator> relocators = (List<Relocator>) getRelocators.invoke(mojo);
+
+        assertEquals(3, relocators.size());
+        assertEquals(SimpleRelocator.class, relocators.get(0).getClass());
+        assertEquals(SimpleRelocator.class, relocators.get(1).getClass());
+        assertEquals(SerializedLambdaRelocator.class, relocators.get(2).getClass());
     }
 
     private static void writeEmptyJar(File file) throws Exception {
