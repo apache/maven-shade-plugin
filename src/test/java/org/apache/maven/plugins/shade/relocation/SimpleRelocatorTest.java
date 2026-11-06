@@ -232,23 +232,18 @@ public class SimpleRelocatorTest {
             + "    throw org.apache.maven.Error.newError();\n"
             + "    throw new org.apache.maven.Error();\n"
             + "    boolean flag1 = bar instanceof org.apache.maven.Bar;\n"
-
             + "    boolean flag11 = org.apache.maven.Utils.yes() ? org.apache.maven.Utils.one() : org.apache.maven.Utils.zero() ; \n"
             + "    boolean flag12 = org.apache.maven.Utils.yes() || org.apache.maven.Utils.no() ; \n"
             + "    boolean flag13 = org.apache.maven.Utils.yes() && org.apache.maven.Utils.no() ; \n"
-
             + "    boolean flag21=org.apache.maven.Utils.yes()?org.apache.maven.Utils.one():org.apache.maven.Utils.zero();\n"
             + "    boolean flag22=org.apache.maven.Utils.yes()||org.apache.maven.Utils.no();\n"
             + "    boolean flag23=org.apache.maven.Utils.yes()&&org.apache.maven.Utils.no();\n"
-
             + "    boolean flag31 = org.apache.maven.Utils.yes ? org.apache.maven.Utils.one : org.apache.maven.Utils.zero ; \n"
             + "    boolean flag32 = org.apache.maven.Utils.yes || org.apache.maven.Utils.no ; \n"
             + "    boolean flag33 = org.apache.maven.Utils.yes && org.apache.maven.Utils.no ; \n"
-
             + "    boolean flag41=org.apache.maven.Utils.yes?org.apache.maven.Utils.one:org.apache.maven.Utils.zero;\n"
             + "    boolean flag42=org.apache.maven.Utils.yes||org.apache.maven.Utils.no;\n"
             + "    boolean flag43=org.apache.maven.Utils.yes&&org.apache.maven.Utils.no;\n"
-
             + "    int value11 = org.apache.maven.Utils.x()   + org.apache.maven.Utils.y()   ; \n"
             + "    int value12 = org.apache.maven.Utils.x()   - org.apache.maven.Utils.y()   ; \n"
             + "    int value13 = org.apache.maven.Utils.x()   * org.apache.maven.Utils.y()   ; \n"
@@ -256,7 +251,6 @@ public class SimpleRelocatorTest {
             + "    int value15 = org.apache.maven.Utils.one() | org.apache.maven.Utils.two() ; \n"
             + "    int value16 = org.apache.maven.Utils.one() & org.apache.maven.Utils.two() ; \n"
             + "    int value17 = org.apache.maven.Utils.one() ^ org.apache.maven.Utils.two() ; \n"
-
             + "    int value21=org.apache.maven.Utils.x()+org.apache.maven.Utils.y();\n"
             + "    int value22=org.apache.maven.Utils.x()-org.apache.maven.Utils.y();\n"
             + "    int value23=org.apache.maven.Utils.x()*org.apache.maven.Utils.y();\n"
@@ -264,7 +258,6 @@ public class SimpleRelocatorTest {
             + "    int value25=org.apache.maven.Utils.one()|org.apache.maven.Utils.two();\n"
             + "    int value26=org.apache.maven.Utils.one()&org.apache.maven.Utils.two();\n"
             + "    int value27=org.apache.maven.Utils.one()^org.apache.maven.Utils.two();\n"
-
             + "    int value31 = org.apache.maven.Utils.x   + org.apache.maven.Utils.y   ; \n"
             + "    int value32 = org.apache.maven.Utils.x   - org.apache.maven.Utils.y   ; \n"
             + "    int value33 = org.apache.maven.Utils.x   * org.apache.maven.Utils.y   ; \n"
@@ -272,7 +265,6 @@ public class SimpleRelocatorTest {
             + "    int value35 = org.apache.maven.Utils.one | org.apache.maven.Utils.two ; \n"
             + "    int value36 = org.apache.maven.Utils.one & org.apache.maven.Utils.two ; \n"
             + "    int value37 = org.apache.maven.Utils.one ^ org.apache.maven.Utils.two ; \n"
-
             + "    int value41=org.apache.maven.Utils.x+org.apache.maven.Utils.y;\n"
             + "    int value42=org.apache.maven.Utils.x-org.apache.maven.Utils.y;\n"
             + "    int value43=org.apache.maven.Utils.x*org.apache.maven.Utils.y;\n"
@@ -280,7 +272,6 @@ public class SimpleRelocatorTest {
             + "    int value45=org.apache.maven.Utils.one|org.apache.maven.Utils.two;\n"
             + "    int value46=org.apache.maven.Utils.one&org.apache.maven.Utils.two;\n"
             + "    int value47=org.apache.maven.Utils.one^org.apache.maven.Utils.two;\n"
-
             + "    switch (org.apache.maven.Utils.getValue()) {\n"
             + "        case org.apache.maven.Utils.STATIC_VALUE: \n"
             + "            org.apache.maven.Utils.info(\"known value\");\n"
@@ -327,23 +318,18 @@ public class SimpleRelocatorTest {
             + "    throw com.acme.maven.Error.newError();\n"
             + "    throw new com.acme.maven.Error();\n"
             + "    boolean flag1 = bar instanceof com.acme.maven.Bar;\n"
-
             + "    boolean flag11 = com.acme.maven.Utils.yes() ? com.acme.maven.Utils.one() : com.acme.maven.Utils.zero() ; \n"
             + "    boolean flag12 = com.acme.maven.Utils.yes() || com.acme.maven.Utils.no() ; \n"
             + "    boolean flag13 = com.acme.maven.Utils.yes() && com.acme.maven.Utils.no() ; \n"
-
             + "    boolean flag21=com.acme.maven.Utils.yes()?com.acme.maven.Utils.one():com.acme.maven.Utils.zero();\n"
             + "    boolean flag22=com.acme.maven.Utils.yes()||com.acme.maven.Utils.no();\n"
             + "    boolean flag23=com.acme.maven.Utils.yes()&&com.acme.maven.Utils.no();\n"
-
             + "    boolean flag31 = com.acme.maven.Utils.yes ? com.acme.maven.Utils.one : com.acme.maven.Utils.zero ; \n"
             + "    boolean flag32 = com.acme.maven.Utils.yes || com.acme.maven.Utils.no ; \n"
             + "    boolean flag33 = com.acme.maven.Utils.yes && com.acme.maven.Utils.no ; \n"
-
             + "    boolean flag41=com.acme.maven.Utils.yes?com.acme.maven.Utils.one:com.acme.maven.Utils.zero;\n"
             + "    boolean flag42=com.acme.maven.Utils.yes||com.acme.maven.Utils.no;\n"
             + "    boolean flag43=com.acme.maven.Utils.yes&&com.acme.maven.Utils.no;\n"
-
             + "    int value11 = com.acme.maven.Utils.x()   + com.acme.maven.Utils.y()   ; \n"
             + "    int value12 = com.acme.maven.Utils.x()   - com.acme.maven.Utils.y()   ; \n"
             + "    int value13 = com.acme.maven.Utils.x()   * com.acme.maven.Utils.y()   ; \n"
@@ -351,7 +337,6 @@ public class SimpleRelocatorTest {
             + "    int value15 = com.acme.maven.Utils.one() | com.acme.maven.Utils.two() ; \n"
             + "    int value16 = com.acme.maven.Utils.one() & com.acme.maven.Utils.two() ; \n"
             + "    int value17 = com.acme.maven.Utils.one() ^ com.acme.maven.Utils.two() ; \n"
-
             + "    int value21=com.acme.maven.Utils.x()+com.acme.maven.Utils.y();\n"
             + "    int value22=com.acme.maven.Utils.x()-com.acme.maven.Utils.y();\n"
             + "    int value23=com.acme.maven.Utils.x()*com.acme.maven.Utils.y();\n"
@@ -359,7 +344,6 @@ public class SimpleRelocatorTest {
             + "    int value25=com.acme.maven.Utils.one()|com.acme.maven.Utils.two();\n"
             + "    int value26=com.acme.maven.Utils.one()&com.acme.maven.Utils.two();\n"
             + "    int value27=com.acme.maven.Utils.one()^com.acme.maven.Utils.two();\n"
-
             + "    int value31 = com.acme.maven.Utils.x   + com.acme.maven.Utils.y   ; \n"
             + "    int value32 = com.acme.maven.Utils.x   - com.acme.maven.Utils.y   ; \n"
             + "    int value33 = com.acme.maven.Utils.x   * com.acme.maven.Utils.y   ; \n"
@@ -367,7 +351,6 @@ public class SimpleRelocatorTest {
             + "    int value35 = com.acme.maven.Utils.one | com.acme.maven.Utils.two ; \n"
             + "    int value36 = com.acme.maven.Utils.one & com.acme.maven.Utils.two ; \n"
             + "    int value37 = com.acme.maven.Utils.one ^ com.acme.maven.Utils.two ; \n"
-
             + "    int value41=com.acme.maven.Utils.x+com.acme.maven.Utils.y;\n"
             + "    int value42=com.acme.maven.Utils.x-com.acme.maven.Utils.y;\n"
             + "    int value43=com.acme.maven.Utils.x*com.acme.maven.Utils.y;\n"
@@ -375,7 +358,6 @@ public class SimpleRelocatorTest {
             + "    int value45=com.acme.maven.Utils.one|com.acme.maven.Utils.two;\n"
             + "    int value46=com.acme.maven.Utils.one&com.acme.maven.Utils.two;\n"
             + "    int value47=com.acme.maven.Utils.one^com.acme.maven.Utils.two;\n"
-
             + "    switch (com.acme.maven.Utils.getValue()) {\n"
             + "        case com.acme.maven.Utils.STATIC_VALUE: \n"
             + "            com.acme.maven.Utils.info(\"known value\");\n"

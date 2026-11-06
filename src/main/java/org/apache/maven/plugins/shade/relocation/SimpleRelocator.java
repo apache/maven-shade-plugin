@@ -41,7 +41,8 @@ public class SimpleRelocator implements Relocator {
      *     <li>or space at the end of a string, where string does NOT end with operator (generic type, binary, trinary).</li>
      * </ul>
      */
-    private static final Pattern RX_ENDS_WITH_DOT_OR_SPACE_WITHOUT_OPERATOR = Pattern.compile("(\\.|[^<>?:+\\-*/^|&] )$");
+    private static final Pattern RX_ENDS_WITH_DOT_OR_SPACE_WITHOUT_OPERATOR =
+            Pattern.compile("(\\.|[^<>?:+\\-*/^|&] )$");
 
     /**
      * Match <ul>
