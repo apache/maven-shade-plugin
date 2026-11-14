@@ -41,7 +41,7 @@ public class PomWriter {
         if (namespaceDeclaration) {
             String modelVersion = newModel.getModelVersion();
 
-            Namespace pomNamespace = Namespace.getNamespace("", "http://maven.apache.org/POM/" + modelVersion);
+            Namespace pomNamespace = Namespace.getNamespace("http://maven.apache.org/POM/4.0.0");
 
             root.setNamespace(pomNamespace);
 
@@ -52,7 +52,7 @@ public class PomWriter {
             if (root.getAttribute("schemaLocation", xsiNamespace) == null) {
                 root.setAttribute(
                         "schemaLocation",
-                        "http://maven.apache.org/POM/" + modelVersion + " http://maven.apache.org/maven-v"
+                        "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v"
                                 + modelVersion.replace('.', '_') + ".xsd",
                         xsiNamespace);
             }
