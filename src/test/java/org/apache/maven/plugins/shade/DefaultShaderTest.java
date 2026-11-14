@@ -162,6 +162,26 @@ public class DefaultShaderTest {
     }
 
     @Test
+    public void testMultiReleaseManifestIsPropagatedWithoutTransformer() throws Exception {
+        File projectJar = createJar(newFile(temporaryFolder, "project.jar"), false, "project.txt");
+        File dependencyJar = createJar(newFile(temporaryFolder, "dependency.jar"), true, "dependency.txt");
+        File shadedJar = newFile(temporaryFolder, "shaded.jar");
+
+        ShadeRequest shadeRequest = new ShadeRequest();
+        shadeRequest.setJars(new LinkedHashSet<>(Arrays.asList(projectJar, dependencyJar)));
+        shadeRequest.setRelocators(Collections.emptyList());
+        shadeRequest.setResourceTransformers(Collections.emptyList());
+        shadeRequest.setFilters(Collections.emptyList());
+        shadeRequest.setUberJar(shadedJar);
+
+        newShader().shade(shadeRequest);
+
+        try (JarFile jarFile = new JarFile(shadedJar)) {
+            assertEquals("true", jarFile.getManifest().getMainAttributes().getValue("Multi-Release"));
+        }
+    }
+
+    @Test
     public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
         DefaultShader shader = newShader();
 

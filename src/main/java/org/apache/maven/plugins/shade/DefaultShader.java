@@ -85,8 +85,8 @@ import org.slf4j.LoggerFactory;
 public class DefaultShader implements Shader {
     private static final int BUFFER_SIZE = 32 * 1024;
 
-    private static final Pattern VERSIONED_CLASS_ENTRY =
-            Pattern.compile("^(META-INF/versions/[1-9][0-9]*/)(.+[.]class)$");
+    private static final Pattern MULTI_RELEASE_ENTRY_PATH =
+            Pattern.compile("^(META-INF/versions/(?:9|[1-9][0-9]+)/)(.+)$");
 
     private final Logger logger;
 
@@ -190,6 +190,9 @@ public class DefaultShader implements Shader {
                 }
                 forceMultiRelease = true;
             }
+        }
+        if (manifestTransformer == null && !findMultiReleaseInputs(shadeRequest).isEmpty()) {
+            manifestTransformer = new ManifestResourceTransformer();
         }
 
         final DefaultPackageMapper packageMapper = new DefaultPackageMapper(shadeRequest.getRelocators());
@@ -534,7 +537,7 @@ public class DefaultShader implements Shader {
             ModuleInfoProcessor moduleInfoProcessor)
             throws Exception {
         try (InputStream in = inputProvider.call()) {
-            String mappedName = packageMapper.map(name, true, false);
+            String mappedName = ArchiveEntry.parse(name).map(packageMapper);
 
             int idx = mappedName.lastIndexOf('/');
             if (idx != -1) {
@@ -768,7 +771,8 @@ public class DefaultShader implements Shader {
         // that use the constant pool to determine the dependencies of a class.
         ClassWriter cw = new ClassWriter(0);
 
-        final String pkg = name.substring(0, name.lastIndexOf('/') + 1);
+        ArchiveEntry classEntry = ArchiveEntry.parse(name);
+        final String pkg = classEntry.logicalName.substring(0, classEntry.logicalName.lastIndexOf('/') + 1);
         final ShadeClassRemapper cv = new ShadeClassRemapper(cw, pkg, packageMapper);
 
         try {
@@ -787,36 +791,49 @@ public class DefaultShader implements Shader {
             renamedClass = originalClass;
         }
 
-        // Need to take the .class off for remapping evaluation
-        String mappedName = mapClassEntry(name, packageMapper);
+        String mappedName = classEntry.mapClass(packageMapper);
 
         try {
-            // Now we put it back on so the class file is written out with the right extension.
-            JarEntry entry = new JarEntry(mappedName + ".class");
+            JarEntry entry = new JarEntry(mappedName);
             entry.setTime(time);
             jos.putNextEntry(entry);
 
             jos.write(renamedClass);
             if (moduleInfoProcessor != null) {
-                moduleInfoProcessor.recordClass(jar, mappedName + ".class", renamedClass);
+                moduleInfoProcessor.recordClass(jar, mappedName, renamedClass);
             }
-            return mappedName + ".class";
+            return mappedName;
         } catch (ZipException e) {
             logger.debug("We have a duplicate " + mappedName + " in " + jar);
             return null;
         }
     }
 
-    private static String mapClassEntry(String name, DefaultPackageMapper packageMapper) {
-        Matcher versionedClass = VERSIONED_CLASS_ENTRY.matcher(name);
-        String prefix = "";
-        String classEntry = name;
-        if (versionedClass.matches()) {
-            prefix = versionedClass.group(1);
-            classEntry = versionedClass.group(2);
+    private static final class ArchiveEntry {
+        private final String versionPrefix;
+
+        private final String logicalName;
+
+        private ArchiveEntry(String versionPrefix, String logicalName) {
+            this.versionPrefix = versionPrefix;
+            this.logicalName = logicalName;
         }
-        return prefix
-                + packageMapper.map(classEntry.substring(0, classEntry.length() - ".class".length()), true, false);
+
+        private static ArchiveEntry parse(String name) {
+            Matcher matcher = MULTI_RELEASE_ENTRY_PATH.matcher(name);
+            return matcher.matches()
+                    ? new ArchiveEntry(matcher.group(1), matcher.group(2))
+                    : new ArchiveEntry("", name);
+        }
+
+        private String map(PackageMapper packageMapper) {
+            return versionPrefix + packageMapper.map(logicalName, true, false);
+        }
+
+        private String mapClass(PackageMapper packageMapper) {
+            String name = logicalName.substring(0, logicalName.length() - ".class".length());
+            return versionPrefix + packageMapper.map(name, true, false) + ".class";
+        }
     }
 
     private boolean isFiltered(List<Filter> filters, String name) {
