@@ -136,6 +136,7 @@ public class DefaultShader implements Shader {
         return false;
     }
 
+    @Override
     public void shade(ShadeRequest shadeRequest) throws IOException, MojoExecutionException {
         Set<String> resources = new HashSet<>();
 

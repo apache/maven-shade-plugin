@@ -31,6 +31,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 @Singleton
 @Named("mock")
 public class MockShader implements Shader {
+    @Override
     public void shade(ShadeRequest shadeRequest) throws IOException, MojoExecutionException {
         System.out.println("Executing MockShader#shade");
     }
