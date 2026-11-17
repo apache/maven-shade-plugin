@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -636,7 +635,7 @@ public class DefaultShader implements Shader {
                 jarzS.add(jjar.getName());
             }
 
-            Collections.sort(jarzS); // deterministic messages to be able to compare outputs (useful on CI)
+            jarzS.sort(null); // deterministic messages to be able to compare outputs (useful on CI)
 
             List<String> classes = new LinkedList<>();
             List<String> resources = new LinkedList<>();
@@ -674,7 +673,7 @@ public class DefaultShader implements Shader {
                     + String.join(" and ", overlaps) + ": ");
             // CHECKSTYLE_ON: LineLength
 
-            Collections.sort(all);
+            all.sort(null);
 
             int max = 10;
 
@@ -923,7 +922,7 @@ public class DefaultShader implements Shader {
     /**
      * A package mapper based on a list of {@link Relocator}s.
      */
-    private static class DefaultPackageMapper implements PackageMapper {
+    private static final class DefaultPackageMapper implements PackageMapper {
         private static final Pattern CLASS_PATTERN = Pattern.compile("(\\[*)?L(.+);");
 
         private final List<Relocator> relocators;

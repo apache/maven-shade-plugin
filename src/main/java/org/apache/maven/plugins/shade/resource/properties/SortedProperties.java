@@ -19,7 +19,6 @@
 package org.apache.maven.plugins.shade.resource.properties;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -40,7 +39,7 @@ public class SortedProperties extends Properties {
     @Override
     public Set<Map.Entry<Object, Object>> entrySet() {
         final List<Map.Entry<Object, Object>> entries = new ArrayList<>(super.entrySet());
-        Collections.sort(entries, new Comparator<Map.Entry<Object, Object>>() {
+        entries.sort(new Comparator<Map.Entry<Object, Object>>() {
             @Override
             public int compare(Map.Entry<Object, Object> o1, Map.Entry<Object, Object> o2) {
                 return String.valueOf(o1.getKey()).compareTo(String.valueOf(o2.getKey()));
@@ -56,7 +55,7 @@ public class SortedProperties extends Properties {
         for (Object k : super.keySet()) {
             keys.add((String) k);
         }
-        Collections.sort(keys);
+        keys.sort(null);
         final Iterator<String> it = keys.iterator();
         return new Enumeration<Object>() {
             @Override

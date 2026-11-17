@@ -55,9 +55,9 @@ public class SerializedLambdaRelocator extends SimpleRelocator {
 
     @Override
     public String relocatePath(String path) {
-        return !shouldRelocate
-                ? path
-                : clazzInsideFunctionDefintionPattern.matcher(path).replaceAll(shadedPathPattern);
+        return shouldRelocate
+                ? clazzInsideFunctionDefintionPattern.matcher(path).replaceAll(shadedPathPattern)
+                : path;
     }
 
     @Override

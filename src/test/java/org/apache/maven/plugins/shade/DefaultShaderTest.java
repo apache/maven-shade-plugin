@@ -275,8 +275,8 @@ public class DefaultShaderTest {
         request.setJars(singleton(input));
         request.setUberJar(shaded);
         request.setFilters(Collections.<Filter>emptyList());
-        request.setRelocators(Collections.<Relocator>singletonList(
-                new SimpleRelocator("org.example", "org.shaded.example", null, null)));
+        request.setRelocators(
+                Collections.singletonList(new SimpleRelocator("org.example", "org.shaded.example", null, null)));
         request.setResourceTransformers(Collections.<ResourceTransformer>emptyList());
         newShader().shade(request);
 
@@ -377,7 +377,7 @@ public class DefaultShaderTest {
                 }
                 entries.add(jarEntry.getName());
             }
-            Collections.sort(entries);
+            entries.sort(null);
             assertEquals(
                     asList(
                             "META-INF/maven/org.apache.maven.plugins.shade/test-artifact/pom.properties",

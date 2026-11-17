@@ -175,7 +175,7 @@ public class MavenJDOMWriter {
      */
     protected Element findAndReplaceSimpleLists(
             Counter counter, Element parent, Collection<String> list, String parentName, String childName) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentName, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -281,7 +281,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateContributor(
             Counter counter, Element parent, Collection<Contributor> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -324,7 +324,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateDependency(
             Counter counter, Element parent, Collection<Dependency> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -367,7 +367,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateDeveloper(
             Counter counter, Element parent, Collection<Developer> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -410,7 +410,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateExclusion(
             Counter counter, Element parent, Collection<Exclusion> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -453,7 +453,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateExtension(
             Counter counter, Element parent, Collection<Extension> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -496,7 +496,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateLicense(
             Counter counter, Element parent, Collection<License> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -539,7 +539,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateMailingList(
             Counter counter, Element parent, Collection<MailingList> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -582,7 +582,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateNotifier(
             Counter counter, Element parent, Collection<Notifier> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -625,7 +625,7 @@ public class MavenJDOMWriter {
      */
     protected void iteratePlugin(
             Counter counter, Element parent, Collection<Plugin> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -668,7 +668,7 @@ public class MavenJDOMWriter {
      */
     protected void iteratePluginExecution(
             Counter counter, Element parent, Collection<PluginExecution> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -711,7 +711,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateProfile(
             Counter counter, Element parent, Collection<Profile> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -754,7 +754,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateReportPlugin(
             Counter counter, Element parent, Collection<ReportPlugin> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -797,7 +797,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateReportSet(
             Counter counter, Element parent, Collection<ReportSet> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -840,7 +840,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateRepository(
             Counter counter, Element parent, Collection<Repository> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -883,7 +883,7 @@ public class MavenJDOMWriter {
      */
     protected void iterateResource(
             Counter counter, Element parent, Collection<Resource> list, String parentTag, String childTag) {
-        boolean shouldExist = list != null && list.size() > 0;
+        boolean shouldExist = list != null && !list.isEmpty();
         Element element = updateElement(counter, parent, parentTag, shouldExist);
         if (shouldExist) {
             Iterator<Element> elIt =
@@ -1147,7 +1147,7 @@ public class MavenJDOMWriter {
         findAndReplaceSimpleElement(innerCount, root, "systemPath", value.getSystemPath(), null);
         iterateExclusion(innerCount, root, value.getExclusions(), "exclusions", "exclusion");
         findAndReplaceSimpleElement(
-                innerCount, root, "optional", !value.isOptional() ? null : String.valueOf(value.isOptional()), "false");
+                innerCount, root, "optional", value.isOptional() ? String.valueOf(value.isOptional()) : null, "false");
     }
 
     /**
@@ -1570,7 +1570,7 @@ public class MavenJDOMWriter {
                 innerCount,
                 root,
                 "extensions",
-                !value.isExtensions() ? null : String.valueOf(value.isExtensions()),
+                value.isExtensions() ? String.valueOf(value.isExtensions()) : null,
                 "false");
         iteratePluginExecution(innerCount, root, value.getExecutions(), "executions", "execution");
         iterateDependency(innerCount, root, value.getDependencies(), "dependencies", "dependency");
@@ -1765,7 +1765,7 @@ public class MavenJDOMWriter {
                     innerCount,
                     root,
                     "excludeDefaults",
-                    !value.isExcludeDefaults() ? null : String.valueOf(value.isExcludeDefaults()),
+                    value.isExcludeDefaults() ? String.valueOf(value.isExcludeDefaults()) : null,
                     "false");
             findAndReplaceSimpleElement(innerCount, root, "outputDirectory", value.getOutputDirectory(), null);
             iterateReportPlugin(innerCount, root, value.getPlugins(), "plugins", "plugin");
@@ -1847,7 +1847,7 @@ public class MavenJDOMWriter {
                 innerCount,
                 root,
                 "filtering",
-                !value.isFiltering() ? null : String.valueOf(value.isFiltering()),
+                value.isFiltering() ? String.valueOf(value.isFiltering()) : null,
                 "false");
         findAndReplaceSimpleElement(innerCount, root, "directory", value.getDirectory(), null);
         findAndReplaceSimpleLists(innerCount, root, value.getIncludes(), "includes", "include");

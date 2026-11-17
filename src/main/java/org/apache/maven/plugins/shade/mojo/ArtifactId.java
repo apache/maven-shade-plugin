@@ -44,10 +44,10 @@ class ArtifactId {
     }
 
     ArtifactId(String groupId, String artifactId, String type, String classifier) {
-        this.groupId = (groupId != null) ? groupId : "";
-        this.artifactId = (artifactId != null) ? artifactId : "";
-        this.type = (type != null) ? type : "";
-        this.classifier = (classifier != null) ? classifier : "";
+        this.groupId = groupId != null ? groupId : "";
+        this.artifactId = artifactId != null ? artifactId : "";
+        this.type = type != null ? type : "";
+        this.classifier = classifier != null ? classifier : "";
     }
 
     ArtifactId(String id) {
@@ -55,10 +55,10 @@ class ArtifactId {
         if (id != null && id.length() > 0) {
             tokens = id.split(":", -1);
         }
-        groupId = (tokens.length > 0) ? tokens[0] : "";
-        artifactId = (tokens.length > 1) ? tokens[1] : "*";
-        type = (tokens.length > 3) ? tokens[2] : "*";
-        classifier = (tokens.length > 3) ? tokens[3] : ((tokens.length > 2) ? tokens[2] : "*");
+        groupId = tokens.length > 0 ? tokens[0] : "";
+        artifactId = tokens.length > 1 ? tokens[1] : "*";
+        type = tokens.length > 3 ? tokens[2] : "*";
+        classifier = tokens.length > 3 ? tokens[3] : (tokens.length > 2 ? tokens[2] : "*");
     }
 
     public String getGroupId() {

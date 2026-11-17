@@ -56,7 +56,7 @@ public class SisuIndexResourceTransformerTest {
      */
     @Test
     public void testIndexesAreMergedAndRelocated() throws IOException {
-        List<Relocator> relocators = Collections.<Relocator>singletonList(new SimpleRelocator(
+        List<Relocator> relocators = Collections.singletonList(new SimpleRelocator(
                 "org.apache.one", "org.apache.two.org.apache.one", null, Collections.<String>emptyList()));
 
         process("org.apache.one.One", relocators);
