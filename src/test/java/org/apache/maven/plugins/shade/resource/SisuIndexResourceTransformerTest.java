@@ -55,7 +55,7 @@ public class SisuIndexResourceTransformerTest {
      * MSHADE-390: the index of every jar ends up in one index, with the class names relocated.
      */
     @Test
-    public void testIndexesAreMergedAndRelocated() throws IOException {
+    public void testIndexesAreMergedAndRelocated() throws Exception {
         List<Relocator> relocators = Collections.singletonList(new SimpleRelocator(
                 "org.apache.one", "org.apache.two.org.apache.one", null, Collections.<String>emptyList()));
 

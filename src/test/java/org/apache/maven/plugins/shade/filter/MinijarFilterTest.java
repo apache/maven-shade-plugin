@@ -72,7 +72,7 @@ public class MinijarFilterTest {
      * This test will fail on JDK 7 because jdependency needs at least JDK 8.
      */
     @Test
-    public void testWithMockProject() throws IOException {
+    public void testWithMockProject() throws Exception {
         assumeFalse(System.getProperty("java.version").startsWith("1.7"), "Expected to run under JDK8+");
 
         MavenProject mavenProject = mockProject(outputDirectory, emptyFile);
@@ -87,7 +87,7 @@ public class MinijarFilterTest {
     }
 
     @Test
-    public void testWithPomProject() throws IOException {
+    public void testWithPomProject() throws Exception {
         // project with pom packaging and no artifact.
         MavenProject mavenProject = mockProject(outputDirectory, null);
         mavenProject.setPackaging("pom");

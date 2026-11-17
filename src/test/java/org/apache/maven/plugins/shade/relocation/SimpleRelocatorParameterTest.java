@@ -21,7 +21,6 @@ package org.apache.maven.plugins.shade.relocation;
 import java.util.Collections;
 
 import org.apache.maven.plugins.shade.mojo.PackageRelocation;
-import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
 import org.codehaus.plexus.component.configurator.converters.lookup.ConverterLookup;
 import org.codehaus.plexus.component.configurator.converters.lookup.DefaultConverterLookup;
 import org.codehaus.plexus.component.configurator.expression.DefaultExpressionEvaluator;
@@ -52,7 +51,7 @@ public class SimpleRelocatorParameterTest {
      * An empty {@code <shadedPattern/>} in the POM reaches the relocator as {@code null}, which gives the default.
      */
     @Test
-    public void testEmptyShadedPatternElementDefaultsToHiddenPrefix() throws ComponentConfigurationException {
+    public void testEmptyShadedPatternElementDefaultsToHiddenPrefix() throws Exception {
         PlexusConfiguration configuration = new DefaultPlexusConfiguration("configuration");
         configuration.addChild("pattern", "org.example");
         configuration.addChild("shadedPattern", "");

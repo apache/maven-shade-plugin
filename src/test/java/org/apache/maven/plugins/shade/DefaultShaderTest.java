@@ -87,6 +87,7 @@ import static java.util.Objects.requireNonNull;
 import static org.codehaus.plexus.util.FileUtils.forceMkdir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -108,7 +109,7 @@ public class DefaultShaderTest {
     private static final String NEWLINE = "\n";
 
     @Test
-    public void testNoopWhenNotRelocated() throws IOException, MojoExecutionException {
+    public void testNoopWhenNotRelocated() throws Exception {
         File plexusJar = new File("src/test/jars/plexus-utils-1.4.1.jar");
         File shadedOutput = new File("target/foo-custom_testNoopWhenNotRelocated.jar");
 
@@ -162,7 +163,7 @@ public class DefaultShaderTest {
     }
 
     @Test
-    public void testOverlappingResourcesAreLogged() throws IOException, MojoExecutionException {
+    public void testOverlappingResourcesAreLogged() throws Exception {
         DefaultShader shader = newShader();
 
         // we will shade two jars and expect to see META-INF/MANIFEST.MF overlaps, this will always be true
@@ -286,7 +287,7 @@ public class DefaultShaderTest {
                         .contains("Discovered module-info.class. Shading will break its strong encapsulation."),
                 warnMessages.getAllValues().toString());
         try (JarFile jar = new JarFile(shaded)) {
-            assertEquals(null, jar.getJarEntry("module-info.class"));
+            assertNull(jar.getJarEntry("module-info.class"));
             assertTrue(jar.getJarEntry("org/shaded/example/api/Api.class") != null);
         }
     }
@@ -510,7 +511,7 @@ public class DefaultShaderTest {
         JarEntry entry = shadedJarFile.getJarEntry(innerJarFileName);
 
         // After shading, entry compression method should not be changed.
-        Assertions.assertEquals(entry.getMethod(), ZipEntry.STORED);
+        Assertions.assertEquals(ZipEntry.STORED, entry.getMethod());
 
         temporaryFolder.delete();
     }
@@ -745,7 +746,7 @@ public class DefaultShaderTest {
         try (JarFile shadedJar = new JarFile(shadedFile)) {
             assertTrue(readModuleProviders(shadedJar, "module-info.class", "app.module", "spi/Service")
                     .isEmpty());
-            assertTrue(shadedJar.getJarEntry("META-INF/services/spi.Service") == null);
+            assertNull(shadedJar.getJarEntry("META-INF/services/spi.Service"));
         }
 
         temporaryFolder.delete();
@@ -1093,7 +1094,7 @@ public class DefaultShaderTest {
             assertEquals("true", shadedJar.getManifest().getMainAttributes().getValue("Multi-Release"));
             assertEquals(
                     "app.module", shadedJar.getManifest().getMainAttributes().getValue("Automatic-Module-Name"));
-            assertTrue(shadedJar.getJarEntry("module-info.class") == null);
+            assertNull(shadedJar.getJarEntry("module-info.class"));
             assertTrue(shadedJar.getJarEntry("META-INF/versions/17/module-info.class") != null);
             assertTrue(shadedJar.getJarEntry("META-INF/versions/17/hidden/dep/versioned/LaterProvider.class") != null);
 
@@ -1302,8 +1303,8 @@ public class DefaultShaderTest {
                     readModulePackages(shadedJar, "META-INF/versions/17/module-info.class", "shaded.app.module"));
             assertTrue(shadedJar.getJarEntry("META-INF/versions/17/hidden/app/versioned/Feature.class") != null);
             assertTrue(shadedJar.getJarEntry("hidden/dep/api/Dependency.class") != null);
-            assertTrue(shadedJar.getJarEntry("META-INF/versions/17/app/versioned/Feature.class") == null);
-            assertTrue(shadedJar.getJarEntry("dep/api/Dependency.class") == null);
+            assertNull(shadedJar.getJarEntry("META-INF/versions/17/app/versioned/Feature.class"));
+            assertNull(shadedJar.getJarEntry("dep/api/Dependency.class"));
         }
 
         temporaryFolder.delete();
