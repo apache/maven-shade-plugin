@@ -64,7 +64,7 @@ public class ResourceBundleAppendingTransformerTest {
      * MSHADE-232: every locale variant of a bundle keeps the entries of all jars that provide it.
      */
     @Test
-    public void testBundlesOfSeveralJarsAreMergedPerLocale() throws IOException {
+    public void testBundlesOfSeveralJarsAreMergedPerLocale() throws Exception {
         transformer.setBasename("org/apache/maven/plugins/shade/its/Message");
         String base = "org/apache/maven/plugins/shade/its/Message.properties";
         String dutch = "org/apache/maven/plugins/shade/its/Message_nl.properties";

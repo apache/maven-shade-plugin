@@ -19,7 +19,6 @@
 package org.apache.maven.plugins.shade.mojo;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +42,7 @@ public class RelativizePathTest {
     static final String[] ANSWER = {"../pom", "b/pom", "../c/pom", "pom"};
 
     @Test
-    public void runTests() throws IOException {
+    public void runTests() throws Exception {
         for (int x = 0; x < PARENTS.length; x++) {
             File parent = new File(PARENTS[x]).getCanonicalFile();
             File child = new File(CHILDREN[x]).getCanonicalFile();

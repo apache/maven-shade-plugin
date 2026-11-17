@@ -45,7 +45,7 @@ class IncludeResourceTransformerTest {
     Path tempDir;
 
     @Test
-    void includesTheFile() throws IOException {
+    void includesTheFile() throws Exception {
         Path file = Files.write(tempDir.resolve("LICENSE"), "license text".getBytes(StandardCharsets.UTF_8));
         IncludeResourceTransformer transformer = new IncludeResourceTransformer();
         transformer.file = file.toFile();

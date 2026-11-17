@@ -92,42 +92,42 @@ public class ApacheNoticeResourceTransformerTest {
     }
 
     @Test
-    public void testNoParametersShouldNotThrowNullPointerWhenNoInput() throws IOException {
+    public void testNoParametersShouldNotThrowNullPointerWhenNoInput() throws Exception {
         processAndFailOnNullPointer("");
     }
 
     @Test
-    public void testNoParametersShouldNotThrowNullPointerWhenNoLinesOfInput() throws IOException {
+    public void testNoParametersShouldNotThrowNullPointerWhenNoLinesOfInput() throws Exception {
         processAndFailOnNullPointer("Some notice text");
     }
 
     @Test
-    public void testNoParametersShouldNotThrowNullPointerWhenOneLineOfInput() throws IOException {
+    public void testNoParametersShouldNotThrowNullPointerWhenOneLineOfInput() throws Exception {
         processAndFailOnNullPointer("Some notice text\n");
     }
 
     @Test
-    public void testNoParametersShouldNotThrowNullPointerWhenTwoLinesOfInput() throws IOException {
+    public void testNoParametersShouldNotThrowNullPointerWhenTwoLinesOfInput() throws Exception {
         processAndFailOnNullPointer("Some notice text\nSome notice text\n");
     }
 
     @Test
-    public void testNoParametersShouldNotThrowNullPointerWhenLineStartsWithSlashSlash() throws IOException {
+    public void testNoParametersShouldNotThrowNullPointerWhenLineStartsWithSlashSlash() throws Exception {
         processAndFailOnNullPointer("Some notice text\n//Some notice text\n");
     }
 
     @Test
-    public void testNoParametersShouldNotThrowNullPointerWhenLineIsSlashSlash() throws IOException {
+    public void testNoParametersShouldNotThrowNullPointerWhenLineIsSlashSlash() throws Exception {
         processAndFailOnNullPointer("//\n");
     }
 
     @Test
-    public void testNoParametersShouldNotThrowNullPointerWhenLineIsEmpty() throws IOException {
+    public void testNoParametersShouldNotThrowNullPointerWhenLineIsEmpty() throws Exception {
         processAndFailOnNullPointer("\n");
     }
 
     @Test
-    public void testCopyrightYearEndsTheCopyrightLine() throws IOException {
+    public void testCopyrightYearEndsTheCopyrightLine() throws Exception {
         transformer.copyrightYear = "2019";
         transformer.processResource(
                 NOTICE_RESOURCE, new ByteArrayInputStream(new byte[0]), Collections.<Relocator>emptyList(), 0);
@@ -138,7 +138,7 @@ public class ApacheNoticeResourceTransformerTest {
     }
 
     @Test
-    public void testDefaultCopyrightYearUsesGregorianCalendar() throws IOException {
+    public void testDefaultCopyrightYearUsesGregorianCalendar() throws Exception {
         Locale previousFormatLocale = Locale.getDefault(Locale.Category.FORMAT);
         try {
             Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag("th-TH"));
@@ -165,7 +165,7 @@ public class ApacheNoticeResourceTransformerTest {
     }
 
     @Test
-    public void testGeneratedNoticeNamesTheProject() throws IOException {
+    public void testGeneratedNoticeNamesTheProject() throws Exception {
         transformer.setProjectNameIfUnset("Maven Shade Notice Reproducer");
         transformer.processResource(
                 NOTICE_RESOURCE,

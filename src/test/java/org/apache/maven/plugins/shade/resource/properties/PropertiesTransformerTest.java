@@ -20,7 +20,6 @@ package org.apache.maven.plugins.shade.resource.properties;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
@@ -41,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(TransformerTesterRule.class)
 public class PropertiesTransformerTest {
     @Test
-    public void propertiesRewritingIsStable() throws IOException {
+    public void propertiesRewritingIsStable() throws Exception {
         final Properties properties = new SortedProperties();
         properties.setProperty("a", "1");
         properties.setProperty("b", "2");

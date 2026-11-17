@@ -20,7 +20,6 @@ package org.apache.maven.plugins.shade.resource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Locale;
@@ -72,7 +71,7 @@ public class XmlAppendingTransformerTest {
      * The DOCTYPE of this document points at a DTD that does not exist: the transformer must not try to load it.
      */
     @Test
-    public void testDtdIsNotResolved() throws IOException {
+    public void testDtdIsNotResolved() throws Exception {
         transformer.resource = "test.xml";
         String xml = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
                 + "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"xhtml1-invalid.missing\">\n"
