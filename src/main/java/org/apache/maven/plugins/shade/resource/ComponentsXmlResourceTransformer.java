@@ -174,7 +174,7 @@ public class ComponentsXmlResourceTransformer extends AbstractCompatibilityTrans
     private static String getValue(Xpp3Dom dom, String element) {
         Xpp3Dom child = dom.getChild(element);
 
-        return (child != null && child.getValue() != null) ? child.getValue() : "";
+        return child != null && child.getValue() != null ? child.getValue() : "";
     }
 
     private static void setValue(Xpp3Dom dom, String element, String value) {

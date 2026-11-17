@@ -48,8 +48,8 @@ class ArtifactSelector {
 
     ArtifactSelector(Artifact projectArtifact, ArtifactSet artifactSet, String groupPrefix) {
         this(
-                (artifactSet != null) ? artifactSet.getIncludes() : null,
-                (artifactSet != null) ? artifactSet.getExcludes() : null,
+                artifactSet != null ? artifactSet.getIncludes() : null,
+                artifactSet != null ? artifactSet.getExcludes() : null,
                 groupPrefix);
 
         if (projectArtifact != null && !this.includes.isEmpty()) {

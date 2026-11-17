@@ -92,7 +92,7 @@ public class ManifestResourceTransformerTest {
     public void rewriteDefaultAttributes() throws Exception {
         final Manifest manifest = createTestManifest();
 
-        List<Relocator> relocators = Collections.<Relocator>singletonList(new SimpleRelocator(
+        List<Relocator> relocators = Collections.singletonList(new SimpleRelocator(
                 "javax", "jakarta", Collections.<String>emptyList(), Collections.<String>emptyList()));
 
         final ByteArrayOutputStream out = transform(manifest, relocators);
@@ -134,7 +134,7 @@ public class ManifestResourceTransformerTest {
     public void rewriteDefaultAttributesWithSameSuffix() throws Exception {
         final Manifest manifest = createTestManifest();
 
-        List<Relocator> relocators = Collections.<Relocator>singletonList(new SimpleRelocator(
+        List<Relocator> relocators = Collections.singletonList(new SimpleRelocator(
                 "javax", "shaded.javax", Collections.<String>emptyList(), Collections.<String>emptyList()));
 
         final ByteArrayOutputStream out = transform(manifest, relocators);
@@ -163,7 +163,7 @@ public class ManifestResourceTransformerTest {
         attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         attributes.putValue("description-custom", "This jar uses javax packages");
 
-        List<Relocator> relocators = Collections.<Relocator>singletonList(new SimpleRelocator(
+        List<Relocator> relocators = Collections.singletonList(new SimpleRelocator(
                 "javax", "jakarta", Collections.<String>emptyList(), Collections.<String>emptyList()));
 
         transformer.setAdditionalAttributes(Arrays.asList("description-custom", "attribute-unknown"));
@@ -199,7 +199,7 @@ public class ManifestResourceTransformerTest {
         attributes.putValue("Original-Entry", "PASSED");
 
         transformer.setMainClass("org.apache.maven.Shade");
-        transformer.setManifestEntries(Collections.<String, Object>singletonMap("Test-Entry", "PASSED"));
+        transformer.setManifestEntries(Collections.singletonMap("Test-Entry", "PASSED"));
 
         Attributes result = jarManifest(transform(manifest, Collections.<Relocator>emptyList()))
                 .getMainAttributes();

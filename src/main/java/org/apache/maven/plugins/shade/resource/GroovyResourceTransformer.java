@@ -85,7 +85,7 @@ public class GroovyResourceTransformer extends AbstractCompatibilityTransformer 
 
     @Override
     public boolean hasTransformedResource() {
-        return extensionClassesList.size() > 0 || staticExtensionClassesList.size() > 0;
+        return !extensionClassesList.isEmpty() || !staticExtensionClassesList.isEmpty();
     }
 
     @Override
@@ -98,10 +98,10 @@ public class GroovyResourceTransformer extends AbstractCompatibilityTransformer 
             Properties desc = new Properties();
             desc.put("moduleName", extModuleName);
             desc.put("moduleVersion", extModuleVersion);
-            if (extensionClassesList.size() > 0) {
+            if (!extensionClassesList.isEmpty()) {
                 desc.put("extensionClasses", join(extensionClassesList));
             }
-            if (staticExtensionClassesList.size() > 0) {
+            if (!staticExtensionClassesList.isEmpty()) {
                 desc.put("staticExtensionClasses", join(staticExtensionClassesList));
             }
             desc.store(os, null);

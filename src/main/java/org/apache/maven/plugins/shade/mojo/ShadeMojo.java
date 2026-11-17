@@ -598,7 +598,7 @@ public class ShadeMojo extends AbstractMojo {
             getLog().info("No artifact matching artifactSet exclude " + pattern);
         }
 
-        File outputJar = (outputFile != null) ? outputFile : shadedArtifactFileWithClassifier();
+        File outputJar = outputFile != null ? outputFile : shadedArtifactFileWithClassifier();
         File sourcesJar = shadedSourceArtifactFileWithClassifier();
         File testJar = shadedTestArtifactFileWithClassifier();
         File testSourcesJar = shadedTestSourceArtifactFileWithClassifier();
@@ -1546,7 +1546,7 @@ public class ShadeMojo extends AbstractMojo {
     }
 
     private String getId(String groupId, String artifactId, String type, String classifier) {
-        return groupId + ":" + artifactId + ":" + type + ":" + ((classifier != null) ? classifier : "");
+        return groupId + ":" + artifactId + ":" + type + ":" + (classifier != null ? classifier : "");
     }
 
     /**

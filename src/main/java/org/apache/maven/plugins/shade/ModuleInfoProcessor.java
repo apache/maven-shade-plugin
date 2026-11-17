@@ -1247,7 +1247,7 @@ final class ModuleInfoProcessor {
         logger.warn("Automatic-Module-Name has been set to keep the module name stable.");
         logger.warn("Reasons:");
         List<FloorReason> reasons = new ArrayList<>(floorReasons);
-        Collections.sort(reasons);
+        reasons.sort(null);
         for (FloorReason reason : reasons) {
             logger.warn("  - " + reason.describe());
         }

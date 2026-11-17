@@ -72,7 +72,7 @@ public class SimpleFilter implements Filter {
             final Set<String> includes,
             final Set<String> excludes,
             final boolean excludeDefaults) {
-        this.jars = (jars != null) ? Collections.<File>unmodifiableSet(jars) : Collections.<File>emptySet();
+        this.jars = jars != null ? Collections.<File>unmodifiableSet(jars) : Collections.<File>emptySet();
         this.includes = normalizePatterns(includes);
         this.excludes = normalizePatterns(excludes);
         this.excludeDefaults = excludeDefaults;
@@ -138,7 +138,7 @@ public class SimpleFilter implements Filter {
     }
 
     private String normalizePath(String path) {
-        return (path != null) ? path.replace(File.separatorChar == '/' ? '\\' : '/', File.separatorChar) : null;
+        return path != null ? path.replace(File.separatorChar == '/' ? '\\' : '/', File.separatorChar) : null;
     }
 
     private Set<String> normalizePatterns(Set<String> patterns) {

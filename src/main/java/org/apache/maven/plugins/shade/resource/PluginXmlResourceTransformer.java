@@ -172,7 +172,7 @@ public class PluginXmlResourceTransformer extends AbstractCompatibilityTransform
     private static String getValue(Xpp3Dom dom, String element) {
         Xpp3Dom child = dom.getChild(element);
 
-        return (child != null && child.getValue() != null) ? child.getValue() : "";
+        return child != null && child.getValue() != null ? child.getValue() : "";
     }
 
     private static void setValue(Xpp3Dom dom, String element, String value) {
@@ -186,7 +186,7 @@ public class PluginXmlResourceTransformer extends AbstractCompatibilityTransform
     }
 
     private static String getAttribute(Xpp3Dom dom, String attribute) {
-        return (dom.getAttribute(attribute) != null) ? dom.getAttribute(attribute) : "";
+        return dom.getAttribute(attribute) != null ? dom.getAttribute(attribute) : "";
     }
 
     private static void setAttribute(Xpp3Dom dom, String attribute, String value) {
