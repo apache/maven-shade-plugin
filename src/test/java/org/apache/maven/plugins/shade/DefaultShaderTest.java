@@ -378,7 +378,7 @@ public class DefaultShaderTest {
                 }
                 entries.add(jarEntry.getName());
             }
-            entries.sort(null);
+            Collections.sort(entries);
             assertEquals(
                     asList(
                             "META-INF/maven/org.apache.maven.plugins.shade/test-artifact/pom.properties",
