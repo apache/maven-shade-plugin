@@ -1355,7 +1355,26 @@ public class ShadeMojo extends AbstractMojo {
         // by Maven" and being used by other projects/plugins. Modifying those will break the
         // correctness of the build - or cause an endless loop.
         List<Dependency> origDeps = new ArrayList<>();
-        List<Dependency> source = promoteTransitiveDependencies ? transitiveDeps : project.getDependencies();
+        List<Dependency> source;
+        if (promoteTransitiveDependencies) {
+            source = transitiveDeps;
+        } else {
+            // MSHADE-739: project.getDependencies() returns the *effective* dependency list, which
+            // also includes dependencies inherited from a parent POM. The reduced POM keeps the same
+            // <parent> reference, so an inherited dependency still applies without being re-declared;
+            // writing it here too is redundant and, since Maven 4.0.0-rc-3, rejected as a duplicate.
+            // Keep only the dependencies this project's own POM actually declares.
+            Set<String> declaredHere = new HashSet<>();
+            for (Dependency d : model.getDependencies()) {
+                declaredHere.add(getId(d));
+            }
+            source = new ArrayList<>();
+            for (Dependency d : project.getDependencies()) {
+                if (declaredHere.contains(getId(d))) {
+                    source.add(d);
+                }
+            }
+        }
         for (Dependency d : source) {
             origDeps.add(d.clone());
         }
