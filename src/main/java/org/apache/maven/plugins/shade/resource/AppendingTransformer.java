@@ -38,6 +38,8 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
 
     private long time = Long.MIN_VALUE;
 
+    private boolean processed;
+
     @Override
     public boolean canTransformResource(String r) {
         return resource != null && resource.equalsIgnoreCase(r);
@@ -46,8 +48,12 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
     @Override
     public void processResource(String resource, InputStream is, List<Relocator> relocators, long time)
             throws IOException {
+        if (processed) {
+            // Append the EOL before the new content to ensure the EOL is not at the end of the file.
+            data.write('\n');
+        }
         IOUtil.copy(is, data);
-        data.write('\n');
+        processed = true;
         if (time > this.time) {
             this.time = time;
         }
@@ -55,7 +61,8 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
 
     @Override
     public boolean hasTransformedResource() {
-        return data.size() > 0;
+        // Track processed resources rather than the data size, so empty resources are still written out.
+        return processed;
     }
 
     @Override
@@ -66,5 +73,6 @@ public class AppendingTransformer extends AbstractCompatibilityTransformer {
 
         jos.write(data.toByteArray());
         data.reset();
+        processed = false;
     }
 }
