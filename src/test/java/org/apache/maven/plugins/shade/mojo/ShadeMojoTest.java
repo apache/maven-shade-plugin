@@ -431,6 +431,42 @@ class ShadeMojoTest {
     }
 
     /**
+     * #709 / MSHADE-451: the classifier-attached shaded artifact ignored a customized {@code <build><finalName>},
+     * unlike its sibling {@link ShadeMojo#shadedArtifactFile(String)} used when the shaded jar replaces the
+     * original artifact.
+     */
+    @Test
+    void testShadedArtifactFileWithClassifierUsesCustomFinalName() throws Exception {
+        ShadeMojo mojo = new ShadeMojo();
+
+        File outputDirectory = new File(getBasedir(), "target/testShadedArtifactFileWithClassifierUsesCustomFinalName");
+        setVariableValueToObject(mojo, "outputDirectory", outputDirectory);
+        setVariableValueToObject(mojo, "shadedArtifactId", "bar");
+        setVariableValueToObject(mojo, "shadedClassifierName", "aws-lambda");
+
+        ArtifactHandler jarHandler = container.lookup(ArtifactHandler.class, "jar");
+        Artifact artifact = new DefaultArtifact(
+                "org.apache.maven.plugins.shade.test",
+                "bar",
+                VersionRange.createFromVersion("1.2.3"),
+                "compile",
+                "jar",
+                null,
+                jarHandler);
+        MavenProject mavenProject = new MavenProject();
+        mavenProject.setArtifact(artifact);
+        mavenProject.getBuild().setFinalName("foo-bar-1.2.3");
+        setVariableValueToObject(mojo, "project", mavenProject);
+
+        Method shadedArtifactFileWithClassifier = ShadeMojo.class.getDeclaredMethod("shadedArtifactFileWithClassifier");
+        shadedArtifactFileWithClassifier.setAccessible(true);
+
+        assertEquals(
+                new File(outputDirectory, "foo-bar-1.2.3-aws-lambda.jar"),
+                shadedArtifactFileWithClassifier.invoke(mojo));
+    }
+
+    /**
      * Reproduces MSHADE-354: when the pre-shade artifact does not already live where the shaded artifact belongs
      * (e.g. {@code outputDirectory} differs from the default build directory), {@code replaceFile} must still move
      * the shaded content to the configured destination and back up the pre-shade content there, rather than
