@@ -118,6 +118,38 @@ public class ServiceResourceTransformerTest {
         }
     }
 
+    /**
+     * MSHADE-452: a service file entry must be relocated even when the matched pattern isn't followed by a
+     * separator character, e.g. "org.apache.demo1" against pattern "org.apache.demo".
+     */
+    @Test
+    public void relocatedContentNotFollowedBySeparator() throws Exception {
+        relocators.add(new SimpleRelocator("org.apache.demo", "shaded.org.apache.demo", null, null));
+
+        ServicesResourceTransformer xformer = new ServicesResourceTransformer();
+        try (InputStream contentStream = new ByteArrayInputStream(
+                ("org.apache.demo1" + newline + "org.apache.demo2" + newline).getBytes(StandardCharsets.UTF_8))) {
+            xformer.processResource("META-INF/services/org.apache.demo.Service", contentStream, relocators, 0);
+        }
+
+        File tempJar = File.createTempFile("shade.", ".jar");
+        tempJar.deleteOnExit();
+        try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(tempJar))) {
+            xformer.modifyOutputStream(jos);
+        }
+        try (JarFile jarFile = new JarFile(tempJar)) {
+            JarEntry jarEntry = jarFile.getJarEntry("META-INF/services/shaded.org.apache.demo.Service");
+            assertNotNull(jarEntry);
+            try (InputStream entryStream = jarFile.getInputStream(jarEntry)) {
+                assertEquals(
+                        "shaded.org.apache.demo1" + newline + "shaded.org.apache.demo2" + newline,
+                        toString(entryStream, StandardCharsets.UTF_8));
+            }
+        } finally {
+            tempJar.delete();
+        }
+    }
+
     @Test
     public void mergeRelocatedFiles() throws Exception {
         SimpleRelocator relocator =
