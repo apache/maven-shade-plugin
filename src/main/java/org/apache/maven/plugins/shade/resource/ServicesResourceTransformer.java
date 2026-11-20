@@ -86,7 +86,11 @@ public class ServicesResourceTransformer extends AbstractCompatibilityTransforme
             String relContent = scanner.nextLine();
             for (Relocator relocator : relocators) {
                 if (relocator.canRelocateClass(relContent)) {
-                    relContent = relocator.applyToSourceContent(relContent);
+                    // a service file entry is a fully qualified class name, not Java source, so relocate it
+                    // the same way the service file's own name is relocated above, not via applyToSourceContent,
+                    // which requires a word boundary on both sides of the pattern and misses a class name that
+                    // isn't followed by a separator (e.g. "org.apache.demo1" against pattern "org.apache.demo")
+                    relContent = relocator.relocateClass(relContent);
                 }
             }
             out.add(relContent);
