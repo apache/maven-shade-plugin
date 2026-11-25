@@ -18,12 +18,7 @@
  */
 
 import java.io.*;
-import java.util.*;
-
-import org.codehaus.plexus.util.*;
 
 File file = new File( localRepositoryPath, "org/apache/maven/its/shade/aalf" );
 System.out.println( "Deleting " + file );
-FileUtils.deleteDirectory( file );
-
-return true;
+assert file.deleteDir();

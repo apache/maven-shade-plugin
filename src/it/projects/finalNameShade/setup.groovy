@@ -17,13 +17,10 @@
  * under the License.
  */
 import java.io.*;
-import java.util.*;
-
-import org.codehaus.plexus.util.*;
 
 File file = new File( localRepositoryPath, "org/apache/maven/its/shade/fns" );
 System.out.println( "Deleting " + file );
-FileUtils.deleteDirectory( file );
+assert file.deleteDir();
 
 return true;
 

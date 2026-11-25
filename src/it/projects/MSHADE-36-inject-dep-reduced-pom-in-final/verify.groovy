@@ -19,8 +19,6 @@
 
 import java.io.*;
 import java.util.jar.*;
-import java.util.Arrays;
-import org.codehaus.plexus.util.*;
 
 String[] wanted =
 [
@@ -57,7 +55,7 @@ try
     }
 
     JarEntry jarEntry = jarFile.getEntry( "META-INF/maven/org.apache.maven.its.shade.drp/test/pom.xml" );
-    String pomFile = IOUtil.toString( jarFile.getInputStream( jarEntry ), "UTF-8" );
+    String pomFile = jarFile.getInputStream( jarEntry ).getText( 'UTF-8' );
 
     if ( pomFile.contains( "<groupId>org.codehaus.plexus</groupId>" ) )
     {

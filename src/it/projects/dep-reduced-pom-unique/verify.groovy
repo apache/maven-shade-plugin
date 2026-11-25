@@ -33,8 +33,6 @@ assert pom[ns.dependencies][ns.dependency].size() == 0
 
 def props = new File( basedir, "target/project.properties" )
 Properties properties = new Properties();
-FileInputStream inp = new FileInputStream( props );
-properties.load( inp );
-inp.close();
+props.withInputStream { properties.load( it ) };
 
 assert properties["maven.shade.dependency-reduced-pom"] != null

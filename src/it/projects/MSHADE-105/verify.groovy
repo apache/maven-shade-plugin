@@ -19,7 +19,6 @@
 
 import java.io.*;
 import java.util.jar.*;
-import java.util.*;
 
 JarFile jarFile = new JarFile( new File( basedir, "bundle/target/MSHADE-105-BUNDLE-1.0-SNAPSHOT.jar" ) );
 

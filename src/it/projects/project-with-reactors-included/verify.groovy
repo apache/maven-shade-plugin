@@ -20,7 +20,6 @@
 import java.io.*;
 import java.util.jar.*;
 
-import org.codehaus.plexus.util.*;
 
 String[] wanted =
 [
@@ -44,7 +43,7 @@ jarFile.close();
 
 // MSHADE-225 Writing output only once
 File logFile = new File( basedir, "build.log" );
-String log = FileUtils.fileRead( logFile );
+String log = logFile.getText( 'UTF-8' );
 
 int index = log.indexOf( "[INFO] Dependency-reduced POM written at: " );
 if ( log.indexOf( "[INFO] Dependency-reduced POM written at: ", index+1 ) >= 0 )

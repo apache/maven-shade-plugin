@@ -17,43 +17,24 @@
  * under the License.
  */
 import java.io.*;
-import java.util.*;
-import java.util.regex.*;
 
-try
+// check for primary artifact, which is the unshaded one!
+File file = new File( basedir, "target/finalNameShade-1.0.jar" );
+System.out.println( "file with finalName : " + file );
+assert file.exists() : "file with finalName does not exist: " + file;
+
+// check for the shaded jar
+File shaded = new File( basedir, "target/MyFinalShadeName.jar" );
+System.out.println( "shaded file with name : " + shaded );
+assert shaded.exists() : "shaded file does not exist: " + shaded;
+
+// check for the artifact in the repo
+File rfile = new File( localRepositoryPath
+                     ,  "org/apache/maven/its/shade/fns/finalNameShade/1.0/finalNameShade-1.0.jar" );
+System.out.println( "Checking for existence in repo: " + rfile );
+if ( !rfile.isFile() )
 {
-    // check for primary artifact, which is the unshaded one!
-    File file = new File( basedir, "target/finalNameShade-1.0.jar" );
-    System.out.println( "file with finalName : " + file );
-    if ( !file.exists() )
-    {
-        System.out.println( "file with finalName does not exist: " + file );
-        return false;
-    }
-
-    // check for the shaded jar
-    File shaded = new File( basedir, "target/MyFinalShadeName.jar" );
-    System.out.println( "shaded file with name : " + shaded );
-    if ( !shaded.exists() )
-    {
-        System.out.println( "shaded file does not exist: " + shaded );
-        return false;
-    }
-
-    // check for the artifact in the repo
-    File rfile = new File( localRepositoryPath
-                         ,  "org/apache/maven/its/shade/fns/finalNameShade/1.0/finalNameShade-1.0.jar" );
-    System.out.println( "Checking for existence in repo: " + rfile );
-    if ( !rfile.isFile() )
-    {
-        throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() );
-    }
-
-}
-catch( Throwable t )
-{
-    t.printStackTrace();
-    return false;
+    throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() );
 }
 
 return true;

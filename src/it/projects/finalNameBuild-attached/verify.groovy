@@ -17,51 +17,33 @@
  * under the License.
  */
 import java.io.*;
-import java.util.*;
-import java.util.regex.*;
 
-try
+// check for primary artifact, which is the unshaded one!
+File file = new File( basedir, "target/MyFinalName.jar" );
+System.out.println( "file with finalName : " + file );
+assert file.exists() : "file with finalName does not exist: " + file;
+
+// check for the shaded jar
+File shaded = new File( basedir, "target/finalNameBuildAttached-1.0-shaded.jar" );
+System.out.println( "shaded file with name : " + shaded );
+assert shaded.exists() : "shaded file does not exist: " + shaded;
+
+// check for the artifact in the repo (unshaded)
+File rfile = new File( localRepositoryPath
+                     ,  "org/apache/maven/its/shade/fnba/finalNameBuildAttached/1.0/finalNameBuildAttached-1.0.jar" );
+System.out.println( "Checking for existence in repo: " + rfile );
+if ( !rfile.isFile() )
 {
-    // check for primary artifact, which is the unshaded one!
-    File file = new File( basedir, "target/MyFinalName.jar" );
-    System.out.println( "file with finalName : " + file );
-    if ( !file.exists() )
-    {
-        System.out.println( "file with finalName does not exist: " + file );
-        return false;
-    }
-
-    // check for the shaded jar
-    File shaded = new File( basedir, "target/finalNameBuildAttached-1.0-shaded.jar" );
-    System.out.println( "shaded file with name : " + shaded );
-    if ( !shaded.exists() )
-    {
-        System.out.println( "shaded file does not exist: " + shaded );
-        return false;
-    }
-
-    // check for the artifact in the repo (unshaded)
-    File rfile = new File( localRepositoryPath
-                         ,  "org/apache/maven/its/shade/fnba/finalNameBuildAttached/1.0/finalNameBuildAttached-1.0.jar" );
-    System.out.println( "Checking for existence in repo: " + rfile );
-    if ( !rfile.isFile() )
-    {
-        throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() );
-    }
-
-    // check for the shaded artifact in the repo (shaded as attached artifact)
-    File afile = new File( localRepositoryPath
-                         ,  "org/apache/maven/its/shade/fnba/finalNameBuildAttached/1.0/finalNameBuildAttached-1.0-shaded.jar" );
-    System.out.println( "Checking for existence in repo: " + afile );
-    if ( !afile.isFile() )
-    {
-        throw new FileNotFoundException( "Missing: " + afile.getAbsolutePath() );
-    }
+    throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() );
 }
-catch( Throwable t )
+
+// check for the shaded artifact in the repo (shaded as attached artifact)
+File afile = new File( localRepositoryPath
+                     ,  "org/apache/maven/its/shade/fnba/finalNameBuildAttached/1.0/finalNameBuildAttached-1.0-shaded.jar" );
+System.out.println( "Checking for existence in repo: " + afile );
+if ( !afile.isFile() )
 {
-    t.printStackTrace();
-    return false;
+    throw new FileNotFoundException( "Missing: " + afile.getAbsolutePath() );
 }
 
 return true;
