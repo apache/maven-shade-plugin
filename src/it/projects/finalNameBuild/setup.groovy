@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*
 
 File file = new File(localRepositoryPath, "org/apache/maven/its/shade/fnb")
 System.out.println("Deleting " + file)

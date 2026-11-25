@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*
 import java.util.jar.*
 
 JarFile jarFile = new JarFile(new File(basedir, "target/test-1.0-shaded.jar"))
