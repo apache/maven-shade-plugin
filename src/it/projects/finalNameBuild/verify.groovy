@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*
 
 // check for primary artifact, which is actually the shaded one!
 File file = new File(basedir, "target/MyFinalName.jar")

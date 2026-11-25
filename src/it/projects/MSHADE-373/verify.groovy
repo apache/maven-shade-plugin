@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*
 import java.util.jar.*
 
 // NOTE: We deliberately use JarInputStream and not JarFile here!

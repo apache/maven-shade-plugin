@@ -17,7 +17,6 @@
  * under the License.
  */
 
-import java.io.*
 import java.util.Properties
 import groovy.xml.XmlParser
 
