@@ -17,23 +17,18 @@
  * under the License.
  */
 
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
 String[] wanted =
-[
-    "org/slf4j/Logger.class",
-    "org/slf4j/impl/SimpleLogger.class"
-];
+        ["org/slf4j/Logger.class", "org/slf4j/impl/SimpleLogger.class"]
 
-JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0-shaded.jar" ) );
+JarFile jarFile = new JarFile(new File(basedir, "target/test-1.0-shaded.jar"))
 
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
-    {
-        throw new IllegalStateException( "wanted path is missing: " + path );
+for (String path : wanted) {
+    if (jarFile.getEntry(path) == null) {
+        throw new IllegalStateException("wanted path is missing: " + path)
     }
 }
 
-jarFile.close();
+jarFile.close()

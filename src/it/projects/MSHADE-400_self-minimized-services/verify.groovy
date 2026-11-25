@@ -16,45 +16,41 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
 String[] wanted =
-[
-    "META-INF/services/org.acme.UsedService",
-    "org/acme/Application.class",
-    "org/acme/UsedClass.class",
-    "org/acme/UsedService.class",
-    "org/acme/UsedServiceUsedImpl.class"
-];
+        [
+            "META-INF/services/org.acme.UsedService",
+            "org/acme/Application.class",
+            "org/acme/UsedClass.class",
+            "org/acme/UsedService.class",
+            "org/acme/UsedServiceUsedImpl.class"
+        ]
 
 String[] unwanted =
-[
-    // Unused SPI config files are not removed
-    //"META-INF/services/org.acme.UnusedService",
-    "org/acme/UsedServiceUnusedImpl.class",
-    "org/acme/UnusedClass.class",
-    "org/acme/UnusedService.class",
-    "org/acme/UnusedServiceImplA.class",
-    "org/acme/UnusedServiceImplB.class"
-];
+        [
+            // Unused SPI config files are not removed
+            //"META-INF/services/org.acme.UnusedService",
+            "org/acme/UsedServiceUnusedImpl.class",
+            "org/acme/UnusedClass.class",
+            "org/acme/UnusedService.class",
+            "org/acme/UnusedServiceImplA.class",
+            "org/acme/UnusedServiceImplB.class"
+        ]
 
-JarFile jarFile = new JarFile( new File( basedir, "target/module-with-services-1.0.jar" ) );
+JarFile jarFile = new JarFile(new File(basedir, "target/module-with-services-1.0.jar"))
 
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
-    {
-        throw new IllegalStateException( "wanted path is missing: " + path );
+for (String path : wanted) {
+    if (jarFile.getEntry(path) == null) {
+        throw new IllegalStateException("wanted path is missing: " + path)
     }
 }
 
-for ( String path : unwanted )
-{
-    if ( jarFile.getEntry( path ) != null )
-    {
-        throw new IllegalStateException( "unwanted path is present: " + path );
+for (String path : unwanted) {
+    if (jarFile.getEntry(path) != null) {
+        throw new IllegalStateException("unwanted path is present: " + path)
     }
 }
 
-jarFile.close();
+jarFile.close()

@@ -17,55 +17,44 @@
  * under the License.
  */
 
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
 String[] wanted =
-[
-    "com/example/Main.class",
-    "junit/runner/logo.gif",
-    "com/example/shaded/org/codehaus/plexus/util/StringUtils.class",
-];
+        [
+            "com/example/Main.class",
+            "junit/runner/logo.gif",
+            "com/example/shaded/org/codehaus/plexus/util/StringUtils.class",
+        ]
 
 String[] unwanted =
-[
-    "junit/textui/TestRunner.class",
-    "org/codehaus/plexus/util/StringUtils.class",
-];
+        ["junit/textui/TestRunner.class", "org/codehaus/plexus/util/StringUtils.class",]
 
-JarFile jarFile = null;
-try
-{
-    jarFile = new JarFile ( new File( basedir, "target/test-1.0.jar" ) );
+JarFile jarFile = null
+try {
+    jarFile = new JarFile(new File(basedir, "target/test-1.0.jar"))
 
-    for ( String path:wanted )
-    {
-        if ( jarFile.getEntry( path ) == null )
-        {
-            throw new IllegalStateException( "wanted path is missing: "+path );
+    for (String path: wanted) {
+        if (jarFile.getEntry(path) == null) {
+            throw new IllegalStateException("wanted path is missing: "+path)
         }
     }
 
-    for ( String path:unwanted )
-    {
-        if ( jarFile.getEntry( path ) != null )
-        {
-            throw new IllegalStateException ( "unwanted path is present: "+path );
+    for (String path: unwanted) {
+        if (jarFile.getEntry(path) != null) {
+            throw new IllegalStateException("unwanted path is present: "+path)
         }
     }
 
-    JarEntry jarEntry = jarFile.getEntry( "META-INF/maven/org.apache.maven.its.shade.drp/test/pom.xml" );
-    String pomFile = jarFile.getInputStream( jarEntry ).getText( 'UTF-8' );
+    JarEntry jarEntry = jarFile.getEntry("META-INF/maven/org.apache.maven.its.shade.drp/test/pom.xml")
+    String pomFile = jarFile.getInputStream(jarEntry).getText('UTF-8')
 
-    if ( pomFile.contains( "<groupId>org.codehaus.plexus</groupId>" ) )
-    {
-        throw new IllegalStateException( "The pom.xml still contains a reference to the org.codehaus.plexus dependency" );
+    if (pomFile.contains("<groupId>org.codehaus.plexus</groupId>")) {
+        throw new IllegalStateException("The pom.xml still contains a reference to the org.codehaus.plexus dependency")
     }
-
 }
-finally
-{
-    if ( jarFile != null ) {
-        jarFile.close();
+finally {
+    if (jarFile != null) {
+        jarFile.close()
     }
 }

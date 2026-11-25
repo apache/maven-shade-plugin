@@ -23,12 +23,11 @@ import java.util.jar.JarFile
 String describeEntry(JarFile jar, String name, long time) {
     def entry = jar.getEntry(name)
     return String.format("  - %-47s: time = %d, lastModified = %s = diff %d min., extra = %b", name, entry.getTime(), entry.getLastModifiedTime().toString(),
-           (long)((entry.getTime() / 1000L - time)/60L), entry.getExtra() != null)
+            (long)((entry.getTime() / 1000L - time)/60L), entry.getExtra() != null)
 }
 
 String describeJar(JarFile jar) {
-    return describeEntry(jar, "com/sun/jna/openbsd-x86-64/libjnidispatch.so", 1671223758L) + '\n'\
-         + describeEntry(jar, "com/sun/jna/linux-loongarch64/libjnidispatch.so", 1671223358L)
+    return describeEntry(jar, "com/sun/jna/openbsd-x86-64/libjnidispatch.so", 1671223758L) + '\n' + describeEntry(jar, "com/sun/jna/linux-loongarch64/libjnidispatch.so", 1671223358L)
 }
 
 String describe(String name) {
@@ -36,8 +35,7 @@ String describe(String name) {
     def jar = new JarFile(file)
 
     println(name)
-    return "sha1 = " + MessageDigest.getInstance("SHA1").digest(file.bytes).encodeHex().toString()\
-         + "\n" + describeJar(jar)
+    return "sha1 = " + MessageDigest.getInstance("SHA1").digest(file.bytes).encodeHex().toString() + "\n" + describeJar(jar)
 }
 
 void describeTz(TimeZone tz) {

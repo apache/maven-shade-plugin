@@ -16,17 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import groovy.xml.XmlSlurper;
+import groovy.xml.XmlSlurper
 
-File pomFile = new File( basedir, "dependency-reduced-pom.xml" );
+File pomFile = new File(basedir, "dependency-reduced-pom.xml")
 assert pomFile.isFile()
 
-def project = new XmlSlurper().parse( pomFile )
+def project = new XmlSlurper().parse(pomFile)
 
 assert project.dependencies.dependency[0].artifactId == 'tools'
 assert project.dependencies.dependency[0].groupId == 'com.sun'
 assert project.dependencies.dependency[0].version == '1.6'
 assert project.dependencies.dependency[0].scope == 'system'
-// Check that the dependency-reduced pom does not have expand properties in 
+// Check that the dependency-reduced pom does not have expand properties in
 // dependencies. They should be left untouched.
 assert project.dependencies.dependency[0].systemPath == '${java.home}/../lib/tools.jar'

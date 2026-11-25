@@ -17,22 +17,24 @@
  * under the License.
  */
 
-import java.io.*;
-import java.util.Properties;
+import java.io.*
+import java.util.Properties
 import groovy.xml.XmlParser
 
-def drps = basedir.listFiles( { dir, file -> file ==~ "dependency-reduced-.*\\.xml" } as FilenameFilter )
+def drps = basedir.listFiles({ dir, file ->
+    file ==~ "dependency-reduced-.*\\.xml"
+} as FilenameFilter)
 
 File pomFile = drps[0]
 
-def ns = new groovy.xml.Namespace("http://maven.apache.org/POM/4.0.0") 
-def pom = new XmlParser().parse( pomFile )
+def ns = new groovy.xml.Namespace("http://maven.apache.org/POM/4.0.0")
+def pom = new XmlParser().parse(pomFile)
 
 assert pom[ns.modelVersion].size() == 1
 assert pom[ns.dependencies][ns.dependency].size() == 0
 
-def props = new File( basedir, "target/project.properties" )
-Properties properties = new Properties();
-props.withInputStream { properties.load( it ) };
+def props = new File(basedir, "target/project.properties")
+Properties properties = new Properties()
+props.withInputStream { properties.load(it) }
 
 assert properties["maven.shade.dependency-reduced-pom"] != null

@@ -17,36 +17,33 @@
  * under the License.
  */
 
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
 
 String[] wanted =
-[
-    "org/apache/maven/plugins/shade/its/one/AppOne.class",
-    "org/apache/maven/plugins/shade/its/one/App.class",
-    "org/apache/maven/plugins/shade/its/two/App.class"
-];
+        [
+            "org/apache/maven/plugins/shade/its/one/AppOne.class",
+            "org/apache/maven/plugins/shade/its/one/App.class",
+            "org/apache/maven/plugins/shade/its/two/App.class"
+        ]
 
 
-JarFile jarFile = new JarFile( new File( basedir, "two/target/two-1.0-SNAPSHOT.jar" ) );
+JarFile jarFile = new JarFile(new File(basedir, "two/target/two-1.0-SNAPSHOT.jar"))
 
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
-    {
-        throw new IllegalStateException( "wanted path is missing: " + path );
+for (String path : wanted) {
+    if (jarFile.getEntry(path) == null) {
+        throw new IllegalStateException("wanted path is missing: " + path)
     }
 }
 
-jarFile.close();
+jarFile.close()
 
 // MSHADE-225 Writing output only once
-File logFile = new File( basedir, "build.log" );
-String log = logFile.getText( 'UTF-8' );
+File logFile = new File(basedir, "build.log")
+String log = logFile.getText('UTF-8')
 
-int index = log.indexOf( "[INFO] Dependency-reduced POM written at: " );
-if ( log.indexOf( "[INFO] Dependency-reduced POM written at: ", index+1 ) >= 0 )
-{
-  throw new IllegalStateException( "'[INFO] Dependency-reduced POM written at: ' written more than once" + path );
+int index = log.indexOf("[INFO] Dependency-reduced POM written at: ")
+if (log.indexOf("[INFO] Dependency-reduced POM written at: ", index+1) >= 0) {
+    throw new IllegalStateException("'[INFO] Dependency-reduced POM written at: ' written more than once" + path)
 }

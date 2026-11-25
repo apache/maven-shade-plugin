@@ -17,15 +17,13 @@
  * under the License.
  */
 
-def testSourceJarFile = new java.util.jar.JarFile( new File( basedir, "uber/target/mshade-285-uber-1.0-test-sources.jar" ) )
-try
-{
-    assert null == testSourceJarFile.getJarEntry( "Api.java" )
-    assert null == testSourceJarFile.getJarEntry( "Impl.java" )
-    assert null != testSourceJarFile.getJarEntry( "ApiTest.java" )
-    assert null != testSourceJarFile.getJarEntry( "ImplTest.java" )
+def testSourceJarFile = new java.util.jar.JarFile(new File(basedir, "uber/target/mshade-285-uber-1.0-test-sources.jar"))
+try {
+    assert null == testSourceJarFile.getJarEntry("Api.java")
+    assert null == testSourceJarFile.getJarEntry("Impl.java")
+    assert null != testSourceJarFile.getJarEntry("ApiTest.java")
+    assert null != testSourceJarFile.getJarEntry("ImplTest.java")
 }
-finally
-{
+finally {
     testSourceJarFile.close()
 }

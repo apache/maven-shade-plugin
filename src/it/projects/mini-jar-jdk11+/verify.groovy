@@ -17,38 +17,32 @@
  * under the License.
  */
 
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
 String[] wanted =
-[
-    "Main.class",
-    "Main\$Nested.class",
-    "junit/framework/TestCase.class",
-    "junit/swingui/icons/error.gif",
-];
+        [
+            "Main.class",
+            "Main\$Nested.class",
+            "junit/framework/TestCase.class",
+            "junit/swingui/icons/error.gif",
+        ]
 
 String[] unwanted =
-[
-    "junit/swingui/TestRunner.class",
-];
+        ["junit/swingui/TestRunner.class",]
 
-JarFile jarFile = new JarFile( new File( basedir, "target/testmini-1.0.jar" ) );
+JarFile jarFile = new JarFile(new File(basedir, "target/testmini-1.0.jar"))
 
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
-    {
-        throw new IllegalStateException( "wanted path is missing: " + path );
+for (String path : wanted) {
+    if (jarFile.getEntry(path) == null) {
+        throw new IllegalStateException("wanted path is missing: " + path)
     }
 }
 
-for ( String path : unwanted )
-{
-    if ( jarFile.getEntry( path ) != null )
-    {
-        throw new IllegalStateException( "unwanted path is present: " + path );
+for (String path : unwanted) {
+    if (jarFile.getEntry(path) != null) {
+        throw new IllegalStateException("unwanted path is present: " + path)
     }
 }
 
-jarFile.close();
+jarFile.close()

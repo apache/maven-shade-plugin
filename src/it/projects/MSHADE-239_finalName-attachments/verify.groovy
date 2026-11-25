@@ -17,6 +17,6 @@
  * under the License.
  */
 
-assert new File( basedir, 'target/artifactId-version-crapola-exe.jar' ).exists() : "target/artifactId-version-crapola-exe.jar doesn't exist"
+assert new File(basedir, 'target/artifactId-version-crapola-exe.jar').exists() : "target/artifactId-version-crapola-exe.jar doesn't exist"
 assert new File( basedir, 'target/artifactId-version-crapola-exe-sources.jar' ).exists() : "target/artifactId-version-crapola-exe-sources.jar doesn't exist"
 assert new File( basedir, 'target/artifactId-version-crapola-exe-tests.jar' ).exists() : "target/artifactId-version-crapola-exe-tests.jar doesn't exist"

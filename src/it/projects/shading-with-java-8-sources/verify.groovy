@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-assert new File(basedir, 'build.log').exists();
+assert new File(basedir, 'build.log').exists()
 
-content = new File(basedir, 'build.log').text;
-assert content.contains( '=== RunnableTest ===');
-assert content.contains( 'Hello world one!');
-assert content.contains( 'Hello world two!');
+content = new File(basedir, 'build.log').text
+assert content.contains('=== RunnableTest ===')
+assert content.contains('Hello world one!')
+assert content.contains('Hello world two!')
