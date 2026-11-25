@@ -17,7 +17,6 @@
  * under the License.
  */
 import java.io.*;
-import java.util.*;
 
 String[] paths =
 [
@@ -34,5 +33,3 @@ for ( String path : paths )
         throw new FileNotFoundException( "Missing: " + file.getAbsolutePath() );
     }
 }
-
-return true;

@@ -17,42 +17,24 @@
  * under the License.
  */
 import java.io.*;
-import java.util.*;
-import java.util.regex.*;
 
-try
+// check for primary artifact, which is actually the shaded one!
+File file = new File( basedir, "target/MyFinalName.jar" );
+System.out.println( "file with finalName : " + file );
+assert file.exists() : "file with finalName does not exist: " + file;
+
+// check for original unshaded jar
+File original = new File( basedir, "target/original-MyFinalName.jar" );
+System.out.println( "'orifinal' file with name : " + original );
+assert original.exists() : "'original' file does not exist: " + original;
+
+// check for the artifact in the repo. This is the shaded one!
+File rfile = new File( localRepositoryPath
+                     ,  "org/apache/maven/its/shade/fnb/finalNameBuild/1.0/finalNameBuild-1.0.jar" );
+System.out.println( "Checking for existence in repo: " + rfile );
+if ( !rfile.isFile() )
 {
-    // check for primary artifact, which is actually the shaded one!
-    File file = new File( basedir, "target/MyFinalName.jar" );
-    System.out.println( "file with finalName : " + file );
-    if ( !file.exists() )
-    {
-        System.out.println( "file with finalName does not exist: " + file );
-        return false;
-    }
-
-    // check for original unshaded jar
-    File original = new File( basedir, "target/original-MyFinalName.jar" );
-    System.out.println( "'orifinal' file with name : " + original );
-    if ( !original.exists() )
-    {
-        System.out.println( "'original' file does not exist: " + original );
-        return false;
-    }
-
-    // check for the artifact in the repo. This is the shaded one!
-    File rfile = new File( localRepositoryPath
-                         ,  "org/apache/maven/its/shade/fnb/finalNameBuild/1.0/finalNameBuild-1.0.jar" );
-    System.out.println( "Checking for existence in repo: " + rfile );
-    if ( !rfile.isFile() )
-    {
-        throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() );
-    }
-}
-catch( Throwable t )
-{
-    t.printStackTrace();
-    return false;
+    throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() );
 }
 
 return true;
