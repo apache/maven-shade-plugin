@@ -16,25 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
+import java.io.*
 
 // check for primary artifact, which is actually the shaded one!
-File file = new File( basedir, "target/MyFinalName.jar" );
-System.out.println( "file with finalName : " + file );
-assert file.exists() : "file with finalName does not exist: " + file;
+File file = new File(basedir, "target/MyFinalName.jar")
+System.out.println("file with finalName : " + file)
+assert file.exists() : "file with finalName does not exist: " + file
 
 // check for original unshaded jar
-File original = new File( basedir, "target/original-MyFinalName.jar" );
-System.out.println( "'orifinal' file with name : " + original );
-assert original.exists() : "'original' file does not exist: " + original;
+File original = new File( basedir, "target/original-MyFinalName.jar" )
+System.out.println( "'orifinal' file with name : " + original )
+assert original.exists() : "'original' file does not exist: " + original
 
 // check for the artifact in the repo. This is the shaded one!
 File rfile = new File( localRepositoryPath
-                     ,  "org/apache/maven/its/shade/fnb/finalNameBuild/1.0/finalNameBuild-1.0.jar" );
-System.out.println( "Checking for existence in repo: " + rfile );
-if ( !rfile.isFile() )
-{
-    throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() );
+        ,  "org/apache/maven/its/shade/fnb/finalNameBuild/1.0/finalNameBuild-1.0.jar" )
+System.out.println( "Checking for existence in repo: " + rfile )
+if ( !rfile.isFile() ) {
+    throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() )
 }
 
-return true;
+return true

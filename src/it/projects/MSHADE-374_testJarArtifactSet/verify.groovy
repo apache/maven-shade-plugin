@@ -17,37 +17,33 @@
  * under the License.
  */
 
-def jarFile = new java.util.jar.JarFile( new File( basedir, "uber/target/mshade-374-uber-1.0.jar" ) )
-try
-{
+def jarFile = new java.util.jar.JarFile(new File(basedir, "uber/target/mshade-374-uber-1.0.jar"))
+try {
     // modified to get an exception
-    assert null != jarFile.getJarEntry( "Api.class" )
-    assert null != jarFile.getJarEntry( "api-resource.txt" )
-    assert null != jarFile.getJarEntry( "Impl.class" )
-    assert null != jarFile.getJarEntry( "impl-resource.txt" )
-    assert null == jarFile.getJarEntry( "ApiTest.class" )
-    assert null == jarFile.getJarEntry( "api-test-resource.txt" )
-    assert null == jarFile.getJarEntry( "ImplTest.class" )
-    assert null == jarFile.getJarEntry( "impl-test-resource.txt" )
+    assert null != jarFile.getJarEntry("Api.class")
+    assert null != jarFile.getJarEntry("api-resource.txt")
+    assert null != jarFile.getJarEntry("Impl.class")
+    assert null != jarFile.getJarEntry("impl-resource.txt")
+    assert null == jarFile.getJarEntry("ApiTest.class")
+    assert null == jarFile.getJarEntry("api-test-resource.txt")
+    assert null == jarFile.getJarEntry("ImplTest.class")
+    assert null == jarFile.getJarEntry("impl-test-resource.txt")
 }
-finally
-{
+finally {
     jarFile.close()
 }
 
-def testJarFile = new java.util.jar.JarFile( new File( basedir, "uber/target/mshade-374-uber-1.0-tests.jar" ) )
-try
-{
-    assert null == testJarFile.getJarEntry( "Api.class" )
-    assert null == testJarFile.getJarEntry( "api-resource.txt" )
-    assert null == testJarFile.getJarEntry( "Impl.class" )
-    assert null == testJarFile.getJarEntry( "impl-resource.txt" )
-    assert null != testJarFile.getJarEntry( "ApiTest.class" )
-    assert null != testJarFile.getJarEntry( "api-test-resource.txt" )
-    assert null == testJarFile.getJarEntry( "ImplTest.class" )
-    assert null == testJarFile.getJarEntry( "impl-test-resource.txt" )
+def testJarFile = new java.util.jar.JarFile(new File(basedir, "uber/target/mshade-374-uber-1.0-tests.jar"))
+try {
+    assert null == testJarFile.getJarEntry("Api.class")
+    assert null == testJarFile.getJarEntry("api-resource.txt")
+    assert null == testJarFile.getJarEntry("Impl.class")
+    assert null == testJarFile.getJarEntry("impl-resource.txt")
+    assert null != testJarFile.getJarEntry("ApiTest.class")
+    assert null != testJarFile.getJarEntry("api-test-resource.txt")
+    assert null == testJarFile.getJarEntry("ImplTest.class")
+    assert null == testJarFile.getJarEntry("impl-test-resource.txt")
 }
-finally
-{
+finally {
     testJarFile.close()
 }

@@ -17,7 +17,6 @@
  * under the License.
  */
 
- def jarFile = new java.util.jar.JarFile( new File( basedir, "/target/MSHADE-133-1.0-SNAPSHOT.jar" ) )
- assert jarFile.getJarEntry("myConfig.yml") == null
- assert jarFile.getJarEntry("logback.xml") == null
- 
+def jarFile = new java.util.jar.JarFile(new File(basedir, "/target/MSHADE-133-1.0-SNAPSHOT.jar"))
+assert jarFile.getJarEntry("myConfig.yml") == null
+assert jarFile.getJarEntry("logback.xml") == null

@@ -16,20 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
+import java.io.*
 
 String[] paths =
-[
-    "org/apache/maven/its/shade/aalf/test/1.0/test-1.0-shade.jar",
-    "org/apache/maven/its/shade/aalf/test/1.0/test-1.0-sources.jar",
-];
+        [
+            "org/apache/maven/its/shade/aalf/test/1.0/test-1.0-shade.jar",
+            "org/apache/maven/its/shade/aalf/test/1.0/test-1.0-sources.jar",
+        ]
 
-for ( String path : paths )
-{
-    File file = new File( localRepositoryPath, path );
-    System.out.println( "Checking for existence of " + file );
-    if ( !file.isFile() )
-    {
-        throw new FileNotFoundException( "Missing: " + file.getAbsolutePath() );
+for (String path : paths) {
+    File file = new File(localRepositoryPath, path)
+    System.out.println("Checking for existence of " + file)
+    if (!file.isFile()) {
+        throw new FileNotFoundException("Missing: " + file.getAbsolutePath())
     }
 }

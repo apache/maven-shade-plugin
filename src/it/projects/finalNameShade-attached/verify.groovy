@@ -16,34 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
+import java.io.*
 
 // check for primary artifact, which is the unshaded one!
-File file = new File( basedir, "target/finalNameShadeAttached-1.0.jar" );
-System.out.println( "file with finalName : " + file );
-assert file.exists() : "file with finalName does not exist: " + file;
+File file = new File(basedir, "target/finalNameShadeAttached-1.0.jar")
+System.out.println("file with finalName : " + file)
+assert file.exists() : "file with finalName does not exist: " + file
 
 // check for the shaded jar
-File shaded = new File( basedir, "target/MyFinalShadeName.jar" );
-System.out.println( "shaded file with name : " + shaded );
-assert shaded.exists() : "shaded file does not exist: " + shaded;
+File shaded = new File( basedir, "target/MyFinalShadeName.jar" )
+System.out.println( "shaded file with name : " + shaded )
+assert shaded.exists() : "shaded file does not exist: " + shaded
 
 // check for the artifact in the repo
 File rfile = new File( localRepositoryPath
-                     ,  "org/apache/maven/its/shade/fnsa/finalNameShadeAttached/1.0/finalNameShadeAttached-1.0.jar" );
-System.out.println( "Checking for existence in repo: " + rfile );
-if ( !rfile.isFile() )
-{
-    throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() );
+        ,  "org/apache/maven/its/shade/fnsa/finalNameShadeAttached/1.0/finalNameShadeAttached-1.0.jar" )
+System.out.println( "Checking for existence in repo: " + rfile )
+if ( !rfile.isFile() ) {
+    throw new FileNotFoundException( "Missing: " + rfile.getAbsolutePath() )
 }
 
 // check for the shaded artifact in the repo
 File afile = new File( localRepositoryPath
-                     ,  "org/apache/maven/its/shade/fnsa/finalNameShadeAttached/1.0/finalNameShadeAttached-1.0-shaded.jar" );
-System.out.println( "Checking for existence in repo: " + afile );
-if ( !afile.isFile() )
-{
-    throw new FileNotFoundException( "Missing: " + afile.getAbsolutePath() );
+        ,  "org/apache/maven/its/shade/fnsa/finalNameShadeAttached/1.0/finalNameShadeAttached-1.0-shaded.jar" )
+System.out.println( "Checking for existence in repo: " + afile )
+if ( !afile.isFile() ) {
+    throw new FileNotFoundException( "Missing: " + afile.getAbsolutePath() )
 }
 
-return true;
+return true

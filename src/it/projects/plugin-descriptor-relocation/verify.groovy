@@ -18,9 +18,9 @@
  */
 import groovy.xml.XmlSlurper
 
-def shadedJar = new File( basedir, "app/target/mshade-135-1.0.jar")
-def pluginXml = new URL( "jar:" + shadedJar.toURL() + "!/META-INF/maven/plugin.xml" )
-def plugin = new XmlSlurper().parse( pluginXml.openStream() );
-assert plugin.mojos.mojo[0].implementation == "hidden.impl.TestMojo";
-assert plugin.mojos.mojo[0].parameters.parameter[0].type == "hidden.impl.Entry";
-assert plugin.mojos.mojo[0].requirements.requirement[0].role == "hidden.api.Component"; 
+def shadedJar = new File(basedir, "app/target/mshade-135-1.0.jar")
+def pluginXml = new URL("jar:" + shadedJar.toURL() + "!/META-INF/maven/plugin.xml")
+def plugin = new XmlSlurper().parse(pluginXml.openStream())
+assert plugin.mojos.mojo[0].implementation == "hidden.impl.TestMojo"
+assert plugin.mojos.mojo[0].parameters.parameter[0].type == "hidden.impl.Entry"
+assert plugin.mojos.mojo[0].requirements.requirement[0].role == "hidden.api.Component"

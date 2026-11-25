@@ -17,10 +17,10 @@
  * under the License.
  */
 
-File targetFolder = new File ( basedir, "target" )
+File targetFolder = new File(basedir, "target")
 
-File originalArtifact = new File ( targetFolder, "shadedartifactid-1.0.jar" )
+File originalArtifact = new File(targetFolder, "shadedartifactid-1.0.jar")
 assert originalArtifact.isFile()
 
-File shadedArtifact = new File ( targetFolder, "shadedartifactid-special-1.0-shaded.jar")
+File shadedArtifact = new File(targetFolder, "shadedartifactid-special-1.0-shaded.jar")
 assert shadedArtifact.isFile()

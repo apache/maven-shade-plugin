@@ -16,41 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
 // NOTE: We deliberately use JarInputStream and not JarFile here!
 Manifest extractManifest(name) {
-    def file = new File( basedir, "target/" + name );
-    if ( !file.exists() )
-    {
-        throw new IllegalStateException( "No file '" + file + "'" );
+    def file = new File(basedir, "target/" + name)
+    if (!file.exists()) {
+        throw new IllegalStateException("No file '" + file + "'")
     }
-    JarInputStream jarStream = new JarInputStream( new FileInputStream( file ) );
-    Manifest mf = jarStream.getManifest();
-    jarStream.close();
-    return mf;
+    JarInputStream jarStream = new JarInputStream(new FileInputStream(file))
+    Manifest mf = jarStream.getManifest()
+    jarStream.close()
+    return mf
 }
 
-void assertsEntries( name, expectedTestEntry, expectedOriginalEntry, expectedCustomEntry ) {
-    def attributes = extractManifest( name ).getMainAttributes();
+void assertsEntries(name, expectedTestEntry, expectedOriginalEntry, expectedCustomEntry) {
+    def attributes = extractManifest(name).getMainAttributes()
 
-    if ( !Objects.equals( expectedTestEntry, attributes.getValue( "Test-Entry" ) ) )
-    {
-        throw new IllegalStateException( "Test-Entry should have been '" + expectedTestEntry + "' in " + name + ": " + attributes.entrySet() );
+    if (!Objects.equals(expectedTestEntry, attributes.getValue("Test-Entry"))) {
+        throw new IllegalStateException("Test-Entry should have been '" + expectedTestEntry + "' in " + name + ": " + attributes.entrySet())
     }
 
-    if ( !Objects.equals( expectedOriginalEntry, attributes.getValue( "Original-Entry" ) ) )
-    {
-        throw new IllegalStateException( "Original-Entry should have been '" + expectedOriginalEntry + "' in " + name + ": " + attributes.entrySet() );
+    if (!Objects.equals(expectedOriginalEntry, attributes.getValue("Original-Entry"))) {
+        throw new IllegalStateException("Original-Entry should have been '" + expectedOriginalEntry + "' in " + name + ": " + attributes.entrySet())
     }
 
-    if ( !Objects.equals( expectedCustomEntry, attributes.getValue( "Custom-Entry" ) ) )
-    {
-        throw new IllegalStateException( "Custom-Entry should have been '" + expectedCustomEntry + "' in " + name + ": " + attributes.entrySet() );
+    if (!Objects.equals(expectedCustomEntry, attributes.getValue("Custom-Entry"))) {
+        throw new IllegalStateException("Custom-Entry should have been '" + expectedCustomEntry + "' in " + name + ": " + attributes.entrySet())
     }
 }
 
-assertsEntries( "test-1.0.jar", "PASSED", "PASSED", "SET" );
-assertsEntries( "test-1.0-sources.jar", "FAILED", null, null ); // specific config
-assertsEntries( "test-1.0-tests.jar", "PASSED", "PASSED", "SET" ); // inherits from the default transformer
+assertsEntries("test-1.0.jar", "PASSED", "PASSED", "SET")
+assertsEntries("test-1.0-sources.jar", "FAILED", null, null) // specific config
+assertsEntries("test-1.0-tests.jar", "PASSED", "PASSED", "SET") // inherits from the default transformer

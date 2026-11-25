@@ -16,43 +16,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
 String[] wanted =
-[
-    "a.properties",
-    "org/apache/a.properties",
-    "org/apache/maven/a.properties",
-    "b.properties",
-    "org/apache/maven/b.properties",
-];
+        [
+            "a.properties",
+            "org/apache/a.properties",
+            "org/apache/maven/a.properties",
+            "b.properties",
+            "org/apache/maven/b.properties",
+        ]
 
 String[] unwanted =
-[
-    "META-INF/maven/org.apache.maven.its.shade.fac/a/pom.properties",
-    "org/a.properties",
-    "org/b.properties",
-    "org/apache/b.properties",
-    "org/apache/maven/b/b.properties",
-];
+        [
+            "META-INF/maven/org.apache.maven.its.shade.fac/a/pom.properties",
+            "org/a.properties",
+            "org/b.properties",
+            "org/apache/b.properties",
+            "org/apache/maven/b/b.properties",
+        ]
 
-JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
+JarFile jarFile = new JarFile(new File(basedir, "target/test-1.0.jar"))
 
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
-    {
-        throw new IllegalStateException( "wanted path is missing: " + path );
+for (String path : wanted) {
+    if (jarFile.getEntry(path) == null) {
+        throw new IllegalStateException("wanted path is missing: " + path)
     }
 }
 
-for ( String path : unwanted )
-{
-    if ( jarFile.getEntry( path ) != null )
-    {
-        throw new IllegalStateException( "unwanted path is present: " + path );
+for (String path : unwanted) {
+    if (jarFile.getEntry(path) != null) {
+        throw new IllegalStateException("unwanted path is present: " + path)
     }
 }
 
-jarFile.close();
+jarFile.close()

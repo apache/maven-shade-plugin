@@ -16,21 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
-JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0-shaded.jar" ) );
-Manifest mf = jarFile.getManifest();
-jarFile.close();
+JarFile jarFile = new JarFile(new File(basedir, "target/test-1.0-shaded.jar"))
+Manifest mf = jarFile.getManifest()
+jarFile.close()
 
-if ( !"PASSED".equals( mf.getMainAttributes().getValue( "Test-Entry" ) ) )
-{
-    throw new IllegalStateException( "MANIFEST.MF is incomplete" );
+if (!"PASSED".equals(mf.getMainAttributes().getValue("Test-Entry"))) {
+    throw new IllegalStateException("MANIFEST.MF is incomplete")
 }
 
-if ( !"org.apache.maven.Main".equals( mf.getMainAttributes().getValue( "Main-Class" ) ) )
-{
-    throw new IllegalStateException( "MANIFEST.MF is incomplete" );
+if (!"org.apache.maven.Main".equals(mf.getMainAttributes().getValue("Main-Class"))) {
+    throw new IllegalStateException("MANIFEST.MF is incomplete")
 }
 
-return true;
+return true

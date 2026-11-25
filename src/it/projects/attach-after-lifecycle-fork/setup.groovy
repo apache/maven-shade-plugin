@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import java.io.*;
+import java.io.*
 
-File file = new File( localRepositoryPath, "org/apache/maven/its/shade/aalf" );
-System.out.println( "Deleting " + file );
-assert file.deleteDir();
+File file = new File(localRepositoryPath, "org/apache/maven/its/shade/aalf")
+System.out.println("Deleting " + file)
+assert file.deleteDir()

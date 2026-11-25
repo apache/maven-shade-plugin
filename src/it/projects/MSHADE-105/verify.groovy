@@ -17,21 +17,20 @@
  * under the License.
  */
 
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
-JarFile jarFile = new JarFile( new File( basedir, "bundle/target/MSHADE-105-BUNDLE-1.0-SNAPSHOT.jar" ) );
+JarFile jarFile = new JarFile(new File(basedir, "bundle/target/MSHADE-105-BUNDLE-1.0-SNAPSHOT.jar"))
 
-Manifest mf = jarFile.getManifest();
-jarFile.close();
+Manifest mf = jarFile.getManifest()
+jarFile.close()
 
-String importPackage = mf.getMainAttributes().getValue( "Import-Package" );
-System.out.println("importPackage:"+importPackage);
+String importPackage = mf.getMainAttributes().getValue("Import-Package")
+System.out.println("importPackage:"+importPackage)
 
-if ( importPackage.indexOf("org.apache.commons.io" ) >=0 )
-{
-    throw new IllegalStateException( "MANIFEST.MF has Import-Package entry with org.apache.commons.io" );
+if (importPackage.indexOf("org.apache.commons.io") >= 0) {
+    throw new IllegalStateException("MANIFEST.MF has Import-Package entry with org.apache.commons.io")
 }
 
 
-return true;
+return true

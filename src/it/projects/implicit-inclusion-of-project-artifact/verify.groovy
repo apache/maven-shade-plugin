@@ -16,22 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import java.io.*;
-import java.util.jar.*;
+import java.io.*
+import java.util.jar.*
 
 String[] wanted =
-[
-    "Passed.class",
-];
+        ["Passed.class",]
 
-JarFile jarFile = new JarFile( new File( basedir, "target/test-1.0.jar" ) );
+JarFile jarFile = new JarFile(new File(basedir, "target/test-1.0.jar"))
 
-for ( String path : wanted )
-{
-    if ( jarFile.getEntry( path ) == null )
-    {
-        throw new IllegalStateException( "wanted path is missing: " + path );
+for (String path : wanted) {
+    if (jarFile.getEntry(path) == null) {
+        throw new IllegalStateException("wanted path is missing: " + path)
     }
 }
 
-jarFile.close();
+jarFile.close()
